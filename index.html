@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <!-- FIREBASE (conexión base y autenticación) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <!-- NUEVO: Agregamos el módulo de Autenticación de Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+
+    <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBt0-unRabqCNAh467cGTkAJSytpLKVLEI",
+      authDomain: "la-era-de-newgate.firebaseapp.com",
+      projectId: "la-era-de-newgate",
+      storageBucket: "la-era-de-newgate.firebasestorage.app",
+      messagingSenderId: "1018442777833",
+      appId: "1:1018442777833:web:b39acae2d96b8d5c6a5c78",
+      measurementId: "G-9Y1BH12NG4"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth(); // Inicializamos la seguridad
+    console.log("🔥 Firebase conectado: Modo Producción Seguro");
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEW GATE | Streetwear Exclusivo</title>
+    <meta name="description" content="New Gate no es una marca, es un destino. Diseñamos para la tripulación que prefiere el asfalto.">
+    <meta property="og:title" content="NEW GATE | Streetwear Exclusivo">
+    <meta property="og:description" content="Explora nuestro catálogo de ropa Oversize de lujo.">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#d4af37', 
+                        dark: '#0a0a0a',
+                        darker: '#050505',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        graffiti: ['Permanent Marker', 'cursive'], 
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Permanent+Marker&display=swap');
+        
+        .section-fade {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+        
+        .section-fade.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 200;
+            backdrop-filter: blur(12px);
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #0f0f0f;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            max-width: 950px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        input[type="checkbox"]:checked + label {
+            background-color: #d4af37;
+            color: #0a0a0a;
+            border-color: #d4af37;
+        }
+
+        .editing-mode {
+            border: 2px solid #d4af37 !important;
+            background: rgba(212, 175, 55, 0.05) !important;
+        }
+
+        .measure-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px;
+            text-align: center;
+            font-size: 11px;
+            color: white;
+            outline: none;
+        }
+        .measure-input:focus { border-color: #d4af37; }
+        
+        .tab-btn.active {
+            border-bottom: 2px solid #d4af37;
+            color: #d4af37;
+        }
+
+        .hero-bg {
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+        }
+
+        .hero-overlay {
+            background: linear-gradient(
+                to bottom, 
+                rgba(10, 10, 10, 0.1) 0%, 
+                rgba(10, 10, 10, 0.7) 60%, 
+                rgba(10, 10, 10, 1) 100%
+            );
+        }
+
+        .hero-text-shadow {
+            text-shadow: 0px 4px 20px rgba(0,0,0,0.9);
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #d4af37; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Loader Animation */
+        .loader {
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #d4af37;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark">
+
+    <!-- HEADER -->
+    <header class="fixed w-full z-[100] bg-darker/90 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="font-graffiti text-3xl text-white tracking-wider cursor-pointer hover:text-primary transition-colors" onclick="showSection('inicio')">
+                NEW GATE<span class="text-primary">.</span>
+            </div>
+            
+            <nav class="hidden md:flex space-x-10 items-center">
+                <span onclick="showSection('inicio')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Tienda</span>
+                <span onclick="showSection('nosotros')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Nosotros</span>
+                <span onclick="tryAccessAdmin()" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-600 hover:text-primary transition-colors"><i class="fas fa-lock"></i> Panel Control</span>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MODAL LOGIN ADMIN -->
+    <div id="login-modal" class="modal-overlay" onclick="closeLoginModal(event)">
+        <div class="modal-content max-w-sm p-8 text-center" onclick="event.stopPropagation()">
+            <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
+            <p class="text-gray-500 text-[10px] uppercase tracking-widest mb-6">Ingresa tus credenciales de administrador</p>
+            <div class="space-y-4">
+                <!-- NUEVO: Agregado campo de correo para mayor seguridad -->
+                <input type="email" id="admin-email-input" placeholder="Correo de Admin" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center transition-colors">
+                <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center transition-colors">
+                
+                <button onclick="validateAdmin()" id="btn-login-submit" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar al Panel</button>
+                <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Credenciales Incorrectas</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PRODUCTO -->
+    <div id="product-modal" class="modal-overlay" onclick="closeModal(event)">
+        <div class="modal-content animate-in fade-in zoom-in duration-300" onclick="event.stopPropagation()">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-primary text-2xl z-10 transition-colors">
+                <i class="fas fa-times"></i>
+            </button>
+            <div class="grid grid-cols-1 lg:grid-cols-2">
+                <div class="h-[400px] lg:h-auto bg-darker flex items-center justify-center">
+                    <img id="modal-img" src="" alt="Producto" class="max-w-full max-h-full object-contain">
+                </div>
+                <div class="p-8 lg:p-10 flex flex-col justify-center">
+                    <p id="modal-cat" class="text-primary text-[10px] uppercase tracking-[0.4em] mb-2 font-bold"></p>
+                    <h2 id="modal-title" class="font-serif text-4xl text-white italic mb-1"></h2>
+                    <p id="modal-sku-display" class="text-gray-600 text-[10px] uppercase tracking-widest mb-4 font-bold"></p>
+                    <p id="modal-desc" class="text-gray-400 text-sm leading-relaxed mb-6"></p>
+                    
+                    <div id="modal-measures-container" class="mb-8 hidden">
+                        <h4 class="text-white text-[10px] uppercase tracking-widest mb-4 border-b border-white/10 pb-2 flex items-center gap-2 font-bold">
+                            <i class="fas fa-ruler text-primary"></i> Guía de Medidas (cm)
+                        </h4>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-[10px] text-gray-500 uppercase text-left">
+                                <thead>
+                                    <tr class="text-gray-300 border-b border-white/5">
+                                        <th class="py-2">Talla</th>
+                                        <th class="py-2 text-center">Pecho</th>
+                                        <th class="py-2 text-center">Largo</th>
+                                        <th class="py-2 text-center">Ancho</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="modal-measures-body" class="divide-y divide-white/5"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4 border-t border-white/5">
+                        <span id="modal-price" class="text-3xl font-serif text-white"></span>
+                        <button onclick="copyAndGoToContact()" class="w-full sm:w-auto bg-primary text-dark px-8 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">
+                            Pedir esta prenda
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN INICIO -->
+    <div id="inicio" class="section-fade active pt-20">
+        <section id="hero-display" class="h-[85vh] flex items-end justify-center text-center relative overflow-hidden hero-bg">
+            <div class="absolute inset-0 hero-overlay z-0"></div>
+            <div class="relative z-10 px-6 max-w-4xl pb-20">
+                <h1 id="display-hero-title" class="font-serif text-5xl md:text-8xl text-white italic mb-4 hero-text-shadow leading-tight"></h1>
+                <p id="display-hero-subtitle" class="text-primary uppercase tracking-[0.5em] text-xs md:text-sm font-bold hero-text-shadow"></p>
+                <div class="mt-10 flex justify-center gap-4">
+                    <button onclick="document.getElementById('productos').scrollIntoView({behavior: 'smooth'})" class="bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all shadow-2xl shadow-primary/20">Explorar Drop</button>
+                </div>
+            </div>
+        </section>
+
+        <section id="productos" class="py-24 max-w-7xl mx-auto px-6">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
+                <div>
+                    <h2 class="font-serif text-4xl text-white italic">Catálogo</h2>
+                    <p class="text-gray-500 uppercase tracking-widest text-xs mt-2" id="display-shop-slogan"></p>
+                </div>
+                <!-- Filtros se llenarán con las categorías reales -->
+                <div class="flex flex-wrap gap-6 text-xs uppercase tracking-widest text-gray-500" id="filter-container"></div>
+            </div>
+            
+            <!-- CONTENEDOR GALERÍA -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="gallery-grid">
+                <div class="col-span-full text-center py-20 flex flex-col items-center justify-center">
+                     <div class="loader !border-t-primary !border-white/10 !w-8 !h-8 mb-4 !block"></div>
+                     <p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Cargando colección exclusiva...</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contacto" class="py-24 bg-darker border-t border-white/5">
+            <div class="max-w-4xl mx-auto px-6">
+                <div class="text-center mb-16">
+                    <h2 class="font-serif text-4xl text-white italic">Haz tu Pedido</h2>
+                    <p class="text-gray-500 uppercase tracking-widest text-xs mt-2 italic font-bold">Confirmaremos disponibilidad vía WhatsApp</p>
+                </div>
+                <div class="space-y-6 bg-dark p-8 border border-white/5 shadow-2xl">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Nombre Completo</label>
+                            <input type="text" id="nombre" placeholder="Ej: Juan Pérez" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-sm transition-colors">
+                        </div>
+                        <div id="talla-input-container">
+                            <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Talla a Solicitar</label>
+                            <select id="talla" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-sm transition-colors cursor-pointer">
+                                <option value="" disabled selected>Elige una talla</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Producto Seleccionado</label>
+                        <input type="text" id="prenda-display" disabled class="w-full bg-darker/50 border border-white/5 px-6 py-4 text-primary text-sm font-bold uppercase tracking-widest" value="Ninguna seleccionada">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Mensaje Adicional</label>
+                        <textarea id="mensaje" rows="4" placeholder="Ej: ¿Tienen envío a domicilio?" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-sm transition-colors"></textarea>
+                    </div>
+                    <button onclick="enviarWhatsApp()" class="w-full py-5 bg-primary text-dark font-bold uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-primary/10 flex items-center justify-center gap-3">
+                        <i class="fab fa-whatsapp text-xl"></i> <span id="btn-wa-text">Enviar Pedido</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- PANEL DE ADMINISTRADOR -->
+    <div id="admin" class="section-fade pt-32 bg-darker min-h-screen">
+        <div class="max-w-6xl mx-auto px-6 pb-24">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-12 gap-4">
+                <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide">
+                    <button onclick="showAdminTab('inventario', event)" class="tab-btn active py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Inventario</button>
+                    <button onclick="showAdminTab('hero', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Sección Hero</button>
+                    <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Configuración Global</button>
+                </div>
+                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión Segura</button>
+            </div>
+
+            <!-- TAB INVENTARIO -->
+            <div id="tab-inventario" class="admin-tab">
+                
+                <!-- CONTENEDOR 1: FORMULARIO DE PRODUCTOS -->
+                <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
+                    <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
+                        <i class="fas fa-box-open"></i> Añadir Nuevo Producto
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Nombre de Producto</label>
+                                    <input type="text" id="new-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Código SKU</label>
+                                    <input type="text" id="new-sku" placeholder="Ej: NG-001" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white font-mono uppercase transition-colors">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio (Ej: L650.00)</label>
+                                    <input type="text" id="new-price" placeholder="L650.00" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Categoría</label>
+                                    <select id="new-cat" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-gray-300 transition-colors cursor-pointer"></select>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between bg-darker p-4 border border-white/5 rounded">
+                                <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Activar Guía de Tallas</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-measures" checked onchange="toggleMeasuresVisibility()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="measures-config-panel" class="bg-darker p-5 border border-white/10 rounded transition-all">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div>
+                                    <div class="flex-1 grid grid-cols-3 gap-2">
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Pecho</p>
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Largo</p>
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Ancho</p>
+                                    </div>
+                                </div>
+                                <div id="medidas-inputs-container" class="space-y-3"></div>
+                            </div>
+
+                            <div>
+                                <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Descripción corta</label>
+                                <textarea id="new-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none h-20 text-white transition-colors"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- COMPRESOR DE IMÁGENES INTEGRADO -->
+                        <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[300px]" onclick="document.getElementById('new-img').click()">
+                            <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" onchange="compressAndPreview(this, 'img-preview', 'img-preview-container', 'product')">
+                            <div id="img-preview-container" class="text-center">
+                                <i class="fas fa-image text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Subir Foto (JPG/PNG)</p>
+                                <p class="text-[8px] text-gray-600 mt-2 italic">Se optimizará automáticamente para la web</p>
+                            </div>
+                            <img id="img-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" src="">
+                            <!-- Capa de carga para compresión -->
+                            <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg">
+                                <div class="loader !block"></div>
+                                <p class="text-[10px] text-primary mt-2 uppercase tracking-widest font-bold">Optimizando...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-8">
+                        <button id="btn-submit-admin" onclick="addProduct()" class="flex-1 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-white transition-all flex justify-center items-center gap-2 shadow-lg">
+                            <span id="btn-submit-text">Guardar Producto en la Nube</span>
+                            <div id="btn-submit-loader" class="loader !border-t-dark !border-dark/30"></div>
+                        </button>
+                        <button id="btn-cancel-edit" onclick="cancelEdit()" class="hidden bg-red-600 text-white px-8 py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-red-500 transition-all">Cancelar</button>
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR 2: GESTIÓN DE CATEGORÍAS INDEPENDIENTE -->
+                <div class="bg-dark p-8 border border-white/5 rounded-lg mb-16 shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-4 italic flex items-center gap-2">
+                        <i class="fas fa-tags"></i> Gestión de Categorías
+                    </h3>
+                    <p class="text-gray-500 text-[10px] uppercase mb-6 tracking-widest">Añade o elimina categorías de forma independiente. Se sincronizarán automáticamente en la tienda.</p>
+                    
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <input type="text" id="new-category-name" placeholder="Escribe una nueva categoría (Ej. Jeans)" class="flex-1 bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                        <button onclick="addNewCategory()" class="bg-darker border border-primary/40 text-primary px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-dark transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-cloud-upload-alt"></i> Guardar Categoría
+                        </button>
+                    </div>
+                    <div id="categories-manager-list" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- LISTA ADMIN FIREBASE -->
+                <div class="mb-4 flex justify-between items-center border-b border-white/5 pb-2">
+                    <h4 class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Inventario en la Nube</h4>
+                    <span id="inventory-count" class="text-primary text-[10px] font-bold">0 Productos</span>
+                </div>
+                <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- TAB HERO CONFIG -->
+            <div id="tab-hero" class="admin-tab hidden">
+                <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic">Personalizar Sección Hero</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título Hero</label>
+                                <input type="text" id="config-hero-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Subtítulo Hero</label>
+                                <input type="text" id="config-hero-subtitle" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none transition-colors">
+                            </div>
+                        </div>
+                        <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[250px]" onclick="document.getElementById('new-hero-img').click()">
+                            <input type="file" id="new-hero-img" class="hidden" accept="image/*" onchange="compressAndPreview(this, 'hero-preview', 'hero-preview-container', 'hero')">
+                            <div id="hero-preview-container" class="text-center">
+                                <i class="fas fa-camera text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Cambiar Imagen de Fondo</p>
+                            </div>
+                            <img id="hero-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" src="">
+                            <div id="hero-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg">
+                                <div class="loader !block"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="saveHeroConfig(event)" class="w-full mt-10 bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-xl">Actualizar Hero</button>
+                </div>
+            </div>
+
+            <!-- TAB CONFIGURACIÓN GLOBAL -->
+            <div id="tab-config" class="admin-tab hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Textos de la Marca</h3>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Eslogan en Tienda</label>
+                            <input type="text" id="config-slogan" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título "Nosotros"</label>
+                            <input type="text" id="config-about-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Descripción "Nosotros"</label>
+                            <textarea id="config-about-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-32 transition-colors"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes</h3>
+                        
+                        <!-- NUEVO: Explicación de seguridad para el usuario -->
+                        <div class="bg-primary/10 border border-primary/30 p-4 rounded text-center">
+                            <i class="fas fa-shield-alt text-primary text-2xl mb-2"></i>
+                            <p class="text-[10px] text-gray-300 uppercase tracking-widest font-bold leading-relaxed">
+                                La contraseña ahora está encriptada y se gestiona directamente desde tu cuenta oficial de Firebase en la pestaña "Authentication".
+                            </p>
+                        </div>
+
+                        <hr class="border-white/5 mt-6 mb-6">
+                        
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp (Ej: 50499998888)</label>
+                            <input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label>
+                            <input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-facebook text-blue-500"></i> Facebook URL</label>
+                            <input type="text" id="config-facebook" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12">
+                    <button onclick="saveGlobalConfig()" class="w-full bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-2xl shadow-primary/20">Guardar Cambios Globales</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SECCIÓN NOSOTROS -->
+    <div id="nosotros" class="section-fade pt-32 bg-darker min-h-screen">
+        <div class="max-w-4xl mx-auto px-6 text-center">
+            <h1 class="font-graffiti text-5xl text-white mb-8 italic" id="display-about-title"></h1>
+            <p class="text-gray-400 leading-relaxed text-lg mb-12 italic font-serif" id="display-about-desc"></p>
+            <div class="w-24 h-1 bg-primary mx-auto mb-12"></div>
+            
+            <div class="flex justify-center gap-10">
+                <a href="#" id="link-instagram" target="_blank" class="text-2xl text-gray-600 hover:text-primary transition-colors hover:scale-110 transform"><i class="fab fa-instagram"></i></a>
+                <a href="#" id="link-facebook" target="_blank" class="text-2xl text-gray-600 hover:text-primary transition-colors hover:scale-110 transform"><i class="fab fa-facebook"></i></a>
+                <a href="#" id="link-whatsapp" target="_blank" class="text-2xl text-gray-600 hover:text-primary transition-colors hover:scale-110 transform"><i class="fab fa-whatsapp"></i></a>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-12 bg-dark text-center border-t border-white/5 mt-auto">
+        <p class="text-gray-700 text-[10px] uppercase tracking-[0.3em] font-bold">© <span id="current-year"></span> NEW GATE STREETWEAR | HONDURAS</p>
+    </footer>
+
+    <script>
+        document.getElementById('current-year').innerText = new Date().getFullYear();
+
+        // --- ESTADO GLOBAL Y CONFIGURACIÓN ---
+        // Se ha removido la contraseña plana de aquí por seguridad
+        const DEFAULT_CONFIG = {
+            slogan: "Nuestras piezas exclusivas",
+            aboutTitle: "Legacy Over Size",
+            aboutDesc: "New Gate no es una marca, es un destino. Diseñamos para la tripulación que prefiere el asfalto y el estilo que no se rinde ante el tiempo.",
+            whatsapp: "50400000000",
+            instagram: "#",
+            facebook: "#",
+            categories: ["urban", "anime", "autos"],
+            heroTitle: "ESTILO SIN LÍMITES",
+            heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE",
+            heroImage: ""
+        };
+
+        const DEFAULT_MEASURES = {
+            "S": { pecho: "00", largo: "00", ancho: "00" },
+            "M": { pecho: "00", largo: "00", ancho: "00" },
+            "L": { pecho: "00", largo: "00", ancho: "00" },
+            "XL": { pecho: "00", largo: "00", ancho: "00" }
+        };
+
+        let inventario = [];
+        let config = { ...DEFAULT_CONFIG };
+
+        let selectedBase64Img = "";
+        let selectedHeroImg = "";
+        let editId = null;
+        let isAdminAuthenticated = false;
+
+        // --- ARRANQUE ---
+        function init() {
+            renderConfig();
+            renderHeroConfig();
+            renderMedidasForm();
+            renderCategoryInputs();
+            renderCategoriesManager();
+            applyConfig();
+            
+            escucharFirebase(); 
+            escucharHero();
+            escucharConfigGlobal(); 
+        }
+
+        // --- FIREBASE CLOUD LISTENERS ---
+        function escucharConfigGlobal() {
+            db.collection("config").doc("global").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    config.slogan = data.slogan || config.slogan;
+                    config.aboutTitle = data.aboutTitle || config.aboutTitle;
+                    config.aboutDesc = data.aboutDesc || config.aboutDesc;
+                    config.whatsapp = data.whatsapp || config.whatsapp;
+                    config.instagram = data.instagram || config.instagram;
+                    config.facebook = data.facebook || config.facebook;
+                    if (data.categories && Array.isArray(data.categories)) {
+                        config.categories = data.categories;
+                    }
+                    applyConfig();
+                    renderConfig();
+                    renderCategoryInputs();
+                    renderCategoriesManager();
+                    renderFilters(); 
+                } else {
+                    saveConfigToFirebase();
+                }
+            }, (error) => {
+                console.error("❌ Error conectando Config Global:", error);
+            });
+        }
+
+        function escucharFirebase() {
+            db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+                inventario = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                renderGallery();
+                renderAdminList();
+            }, (error) => {
+                console.error("❌ Error Firebase (Puede ser por falta de permisos o indexación):", error);
+                document.getElementById('gallery-grid').innerHTML = '<p class="col-span-full text-center text-red-500 uppercase tracking-widest text-[10px]">Error al conectar con el servidor.</p>';
+            });
+        }
+
+        // --- NUEVO: SEGURIDAD Y LOGIN DE FIREBASE AUTH ---
+        
+        // Escuchador de sesión de Firebase: Mantiene la sesión abierta aunque recargues
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                isAdminAuthenticated = true;
+            } else {
+                isAdminAuthenticated = false;
+                // Si estaba en el panel y se cerró sesión, lo saca al inicio
+                const activeSection = Array.from(document.querySelectorAll('.section-fade')).find(s => s.classList.contains('active'))?.id;
+                if(activeSection === 'admin') {
+                    showSection('inicio');
+                }
+            }
+        });
+
+        function tryAccessAdmin() {
+            if (isAdminAuthenticated) {
+                showSection('admin');
+            } else {
+                document.getElementById('login-modal').classList.add('active');
+                document.getElementById('admin-email-input').value = "";
+                document.getElementById('admin-pass-input').value = "";
+                document.getElementById('admin-email-input').focus();
+            }
+        }
+        
+        function closeLoginModal() { 
+            document.getElementById('login-modal').classList.remove('active'); 
+            document.getElementById('login-error').classList.add('hidden');
+        }
+
+        // Validación oficial con Firebase Auth
+        function validateAdmin() {
+            const emailInput = document.getElementById('admin-email-input');
+            const passInput = document.getElementById('admin-pass-input');
+            const errorText = document.getElementById('login-error');
+            const btn = document.getElementById('btn-login-submit');
+            
+            const email = emailInput.value.trim();
+            const password = passInput.value.trim();
+
+            if(!email || !password) {
+                errorText.innerText = "Por favor llena ambos campos";
+                errorText.classList.remove('hidden');
+                return;
+            }
+
+            // Efecto visual de carga
+            btn.innerText = "Verificando Seguridad...";
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    // ¡Login Exitoso!
+                    closeLoginModal();
+                    showSection('admin');
+                    
+                    // Restaurar botón
+                    btn.innerText = "Entrar al Panel";
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                })
+                .catch((error) => {
+                    // Login Fallido
+                    console.error("Error Auth:", error);
+                    errorText.innerText = "Credenciales Incorrectas";
+                    errorText.classList.remove('hidden');
+                    
+                    passInput.value = ""; 
+                    passInput.classList.add('border-red-500');
+                    setTimeout(() => passInput.classList.remove('border-red-500'), 1500);
+
+                    // Restaurar botón
+                    btn.innerText = "Entrar al Panel";
+                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                });
+        }
+
+        function logoutAdmin() { 
+            auth.signOut().then(() => {
+                showSection('inicio'); 
+            });
+        }
+
+        // --- NAVEGACIÓN UI ---
+        function showAdminTab(tab, event) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            if(event) event.target.classList.add('active');
+        }
+        
+        function showSection(id) {
+            document.querySelectorAll('.section-fade').forEach(s => {
+                s.classList.remove('active');
+                s.style.display = 'none';
+            });
+            const target = document.getElementById(id);
+            if(target) {
+                target.style.display = 'block';
+                setTimeout(() => target.classList.add('active'), 50);
+            }
+            window.scrollTo({top: 0, behavior: 'smooth'});
+        }
+
+        // --- OPTIMIZADOR DE IMÁGENES ---
+        function compressAndPreview(input, previewId, containerId, targetType) {
+            if (!input.files || !input.files[0]) return;
+            
+            const file = input.files[0];
+            const loadingLayer = targetType === 'hero' ? document.getElementById('hero-loading') : document.getElementById('img-loading');
+            loadingLayer.classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; 
+                    const MAX_HEIGHT = 1000;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                    if(targetType === 'hero') {
+                        selectedHeroImg = compressedDataUrl;
+                    } else {
+                        selectedBase64Img = compressedDataUrl;
+                    }
+
+                    document.getElementById(previewId).src = compressedDataUrl;
+                    document.getElementById(previewId).classList.remove('hidden');
+                    document.getElementById(containerId).classList.add('hidden');
+                    loadingLayer.classList.add('hidden');
+                }
+            };
+        }
+
+        // --- GESTIÓN DE PRODUCTOS ---
+        function toggleMeasuresVisibility() {
+            const isChecked = document.getElementById('toggle-measures').checked;
+            document.getElementById('measures-config-panel').style.display = isChecked ? 'block' : 'none';
+        }
+
+        function toggleButtonLoading(isLoading) {
+            const btn = document.getElementById('btn-submit-admin');
+            const text = document.getElementById('btn-submit-text');
+            const loader = document.getElementById('btn-submit-loader');
+            
+            if(isLoading) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                text.innerText = "Subiendo...";
+                loader.style.display = "block";
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                text.innerText = editId ? "Actualizar Producto" : "Guardar Producto en la Nube";
+                loader.style.display = "none";
+            }
+        }
+
+        function addProduct() {
+            const title = document.getElementById('new-title').value.trim();
+            const sku = document.getElementById('new-sku').value.trim().toUpperCase();
+            const price = document.getElementById('new-price').value.trim();
+            
+            if(!title || !price || !selectedBase64Img) return alert("❌ Completa Título, Precio y selecciona una Foto.");
+
+            toggleButtonLoading(true);
+
+            const hasMeasures = document.getElementById('toggle-measures').checked;
+            const tallas = [];
+            const medidas = {};
+            
+            if(hasMeasures) {
+                ["s", "m", "l", "xl"].forEach(t => {
+                    if(document.getElementById(`t-${t}`).checked) {
+                        const tName = t.toUpperCase();
+                        tallas.push(tName);
+                        medidas[tName] = {
+                            pecho: document.getElementById(`${t}-pecho`).value,
+                            largo: document.getElementById(`${t}-largo`).value,
+                            ancho: document.getElementById(`${t}-ancho`).value
+                        };
+                    }
+                });
+            }
+
+            const productData = {
+                sku: sku,
+                categoria: document.getElementById('new-cat').value,
+                titulo: title,
+                descripcion: document.getElementById('new-desc').value,
+                precio: price,
+                hasMeasures: hasMeasures,
+                tallas: tallas,
+                medidas: medidas,
+                imagen: selectedBase64Img,
+                createdAt: editId ? undefined : firebase.firestore.FieldValue.serverTimestamp() 
+            };
+
+            const dbRef = editId ? db.collection("productos").doc(editId).update(productData) : db.collection("productos").add(productData);
+
+            dbRef.then(() => {
+                toggleButtonLoading(false);
+                cancelEdit(); 
+            }).catch((error) => {
+                console.error("❌ Error Firebase:", error);
+                alert("Hubo un error. Puede que tus permisos de seguridad de Firebase te lo bloqueen.");
+                toggleButtonLoading(false);
+            });
+        }
+
+        function deleteProduct(id) {
+            if(confirm("¿Eliminar este producto de forma irreversible?")) {
+                db.collection("productos").doc(id).delete()
+                .then(() => {
+                    alert("✅ Producto eliminado de la nube correctamente.");
+                })
+                .catch(e => {
+                    console.error("❌ Error al eliminar:", e);
+                    alert("Error al eliminar. Revisa los permisos (Reglas) en tu consola de Firebase.");
+                });
+            }
+        }
+
+        function startEdit(id) {
+            const p = inventario.find(x => x.id === id);
+            if(!p) return;
+            
+            editId = id;
+            showAdminTab('inventario');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            
+            document.getElementById('admin-form-container').classList.add('editing-mode');
+            document.getElementById('admin-form-title').innerHTML = `<i class="fas fa-edit"></i> Editando: ${p.titulo}`;
+            document.getElementById('btn-submit-text').innerText = "Actualizar Producto";
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            document.getElementById('new-title').value = p.titulo;
+            document.getElementById('new-sku').value = p.sku || "";
+            document.getElementById('new-price').value = p.precio;
+            document.getElementById('new-desc').value = p.descripcion;
+            document.getElementById('new-cat').value = p.categoria;
+            
+            document.getElementById('toggle-measures').checked = !!p.hasMeasures;
+            toggleMeasuresVisibility();
+
+            selectedBase64Img = p.imagen;
+            document.getElementById('img-preview').src = p.imagen;
+            document.getElementById('img-preview').classList.remove('hidden');
+            document.getElementById('img-preview-container').classList.add('hidden');
+            
+            if(p.hasMeasures && p.tallas) {
+                ["s", "m", "l", "xl"].forEach(t => {
+                    const label = t.toUpperCase();
+                    document.getElementById(`t-${t}`).checked = p.tallas.includes(label);
+                    if(p.medidas && p.medidas[label]) {
+                        document.getElementById(`${t}-pecho`).value = p.medidas[label].pecho;
+                        document.getElementById(`${t}-largo`).value = p.medidas[label].largo;
+                        document.getElementById(`${t}-ancho`).value = p.medidas[label].ancho;
+                    }
+                });
+            }
+        }
+
+        function cancelEdit() {
+            editId = null;
+            document.getElementById('admin-form-container').classList.remove('editing-mode');
+            document.getElementById('btn-submit-text').innerText = "Guardar Producto en la Nube";
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('admin-form-title').innerHTML = `<i class="fas fa-box-open"></i> Añadir Nuevo Producto`;
+            
+            document.getElementById('new-title').value = "";
+            document.getElementById('new-sku').value = "";
+            document.getElementById('new-price').value = "";
+            document.getElementById('new-desc').value = "";
+            document.getElementById('img-preview').classList.add('hidden');
+            document.getElementById('img-preview-container').classList.remove('hidden');
+            document.getElementById('toggle-measures').checked = true;
+            toggleMeasuresVisibility();
+            selectedBase64Img = "";
+            
+            renderMedidasForm();
+        }
+
+        // --- RENDERIZADO VISUAL ---
+        function renderGallery() {
+            const grid = document.getElementById('gallery-grid');
+            if(!grid) return;
+            
+            if(inventario.length === 0) {
+                 grid.innerHTML = '<div class="col-span-full text-center py-20"><i class="fas fa-box-open text-4xl text-white/10 mb-4 block"></i><p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Catálogo vacío por el momento</p></div>';
+            } else {
+                grid.innerHTML = inventario.map(prod => `
+                    <div class="gallery-item group cursor-pointer animate-in fade-in duration-500" data-category="${prod.categoria}">
+                        <div class="relative aspect-[3/4] overflow-hidden bg-darker border border-white/5 shadow-2xl">
+                            <img src="${prod.imagen}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
+                            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                            <div class="absolute bottom-4 left-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                                <button onclick="openModalById('${prod.id}')" class="w-full bg-white text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary transition-colors shadow-lg">Ver Detalles</button>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-between items-start">
+                            <div>
+                                <h3 class="text-white font-medium uppercase tracking-widest text-sm truncate pr-2">${prod.titulo}</h3>
+                                <p class="text-gray-500 text-[9px] uppercase font-bold mt-1">${prod.sku ? prod.sku + ' | ' : ''}${prod.categoria}</p>
+                            </div>
+                            <span class="text-primary font-bold whitespace-nowrap">${prod.precio}</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            renderFilters();
+        }
+
+        function renderFilters() {
+            const filters = document.getElementById('filter-container');
+            if(!filters) return;
+            
+            const catsToUse = config.categories || [];
+            
+            filters.innerHTML = `
+                <button onclick="filterGallery('all', event)" class="filter-btn text-primary border-b border-primary pb-1 transition-all font-bold">Todos</button>
+                ${catsToUse.map(cat => `
+                    <button onclick="filterGallery('${cat}', event)" class="filter-btn hover:text-white pb-1 transition-all uppercase font-bold text-gray-500">${cat}</button>
+                `).join('')}
+            `;
+        }
+
+        function filterGallery(cat, e) {
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.classList.remove('text-primary', 'border-primary', 'font-bold');
+                b.classList.add('text-gray-500');
+            });
+            
+            e.target.classList.remove('text-gray-500');
+            e.target.classList.add('text-primary', 'border-primary', 'font-bold');
+            
+            document.querySelectorAll('.gallery-item').forEach(item => {
+                if (cat === 'all' || item.dataset.category === cat) {
+                    item.style.display = 'block';
+                    setTimeout(() => item.style.opacity = "1", 50);
+                } else {
+                    item.style.opacity = "0";
+                    setTimeout(() => item.style.display = 'none', 300);
+                }
+            });
+        }
+
+        function renderAdminList() {
+            const list = document.getElementById('admin-list');
+            document.getElementById('inventory-count').innerText = `${inventario.length} Productos`;
+            if(!list) return;
+            
+            list.innerHTML = inventario.map(prod => `
+                <div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg group hover:border-primary/30 transition-all shadow-lg hover:shadow-primary/5">
+                    <div class="flex items-center gap-4 truncate">
+                        <div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden">
+                            <img src="${prod.imagen}" class="w-full h-full object-cover" loading="lazy">
+                        </div>
+                        <div class="truncate">
+                            <p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo}</p>
+                            <div class="flex gap-2 mt-1 items-center">
+                                <span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria}</span>
+                                <span class="text-gray-500 text-[9px] font-bold">${prod.precio}</span>
+                                ${!prod.hasMeasures ? '<span class="text-red-500/70 text-[8px] italic font-bold ml-1"><i class="fas fa-ban"></i> Tallas</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 flex-shrink-0 ml-2">
+                        <button onclick="startEdit('${prod.id}')" class="w-8 h-8 flex items-center justify-center text-primary bg-primary/5 hover:bg-primary/20 rounded transition-colors"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 flex items-center justify-center text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded transition-colors"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- MANEJO DE MODAL Y CONTACTO ---
+        function openModalById(id) {
+            const p = inventario.find(x => x.id === id);
+            if(!p) return;
+            window.lastViewedProduct = p;
+            
+            document.getElementById('modal-img').src = p.imagen;
+            document.getElementById('modal-title').innerText = p.titulo;
+            document.getElementById('modal-sku-display').innerText = p.sku ? `SKU: ${p.sku}` : '';
+            document.getElementById('modal-desc').innerText = p.descripcion;
+            document.getElementById('modal-price').innerText = p.precio;
+            document.getElementById('modal-cat').innerText = p.categoria;
+            
+            const measuresContainer = document.getElementById('modal-measures-container');
+            if(p.hasMeasures && p.tallas && p.tallas.length > 0) {
+                measuresContainer.classList.remove('hidden');
+                document.getElementById('modal-measures-body').innerHTML = p.tallas.map(t => {
+                    const m = p.medidas && p.medidas[t] ? p.medidas[t] : {pecho:'-', largo:'-', ancho:'-'};
+                    return `<tr class="hover:bg-white/5 transition-colors"><td class="py-3 px-2 text-primary font-bold">${t}</td><td class="py-3 text-center text-gray-400 font-bold">${m.pecho}</td><td class="py-3 text-center text-gray-400 font-bold">${m.largo}</td><td class="py-3 text-center text-gray-400 font-bold">${m.ancho}</td></tr>`;
+                }).join('');
+            } else {
+                measuresContainer.classList.add('hidden');
+            }
+            
+            document.getElementById('product-modal').classList.add('active');
+        }
+
+        function closeModal() { document.getElementById('product-modal').classList.remove('active'); }
+
+        function copyAndGoToContact() {
+            const p = window.lastViewedProduct;
+            closeModal();
+            document.getElementById('prenda-display').value = p.sku ? `${p.titulo} (${p.sku})` : p.titulo;
+            
+            const tallaContainer = document.getElementById('talla-input-container');
+            if(p.hasMeasures && p.tallas && p.tallas.length > 0) {
+                tallaContainer.style.display = 'block';
+                document.getElementById('talla').innerHTML = '<option value="" disabled selected>Elige una talla</option>' + p.tallas.map(t => `<option value="${t}">${t}</option>`).join('');
+            } else {
+                tallaContainer.style.display = 'none';
+                document.getElementById('talla').innerHTML = `<option value="Única" selected>Única</option>`;
+            }
+            document.getElementById('contacto').scrollIntoView({behavior: 'smooth'});
+            document.getElementById('nombre').focus();
+        }
+
+        function enviarWhatsApp() {
+            const n = document.getElementById('nombre').value.trim();
+            const t = document.getElementById('talla').value;
+            const p = document.getElementById('prenda-display').value;
+            const m = document.getElementById('mensaje').value.trim();
+            const product = window.lastViewedProduct;
+            
+            if(!n) return alert("Por favor, ingresa tu Nombre Completo.");
+            if(!t) return alert("Por favor, selecciona una Talla.");
+            if(p === "Ninguna seleccionada") return alert("Por favor, selecciona un producto del catálogo primero.");
+            
+            const btnText = document.getElementById('btn-wa-text');
+            const originalText = btnText.innerText;
+            btnText.innerText = "Procesando...";
+            
+            let msg = `🔥 *NUEVO PEDIDO NEW GATE* 🔥\n\n`;
+            msg += `👕 *Prenda:* ${p}\n`;
+            if(product && product.hasMeasures) msg += `📏 *Talla:* ${t}\n`;
+            msg += `👤 *Cliente:* ${n}\n`;
+            if(m) msg += `💬 *Mensaje:* ${m}\n`;
+            msg += `\n_Enviado desde el catálogo web_`;
+            
+            setTimeout(() => {
+                window.open(`https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+                btnText.innerText = originalText;
+                document.getElementById('nombre').value = "";
+                document.getElementById('mensaje').value = "";
+            }, 800);
+        }
+
+        // --- SISTEMA DE CONFIGURACIÓN GLOBAL (FIREBASE) ---
+        function saveConfigToFirebase(successMsg = null) {
+            db.collection("config").doc("global").set({
+                slogan: config.slogan,
+                aboutTitle: config.aboutTitle,
+                aboutDesc: config.aboutDesc,
+                whatsapp: config.whatsapp,
+                instagram: config.instagram,
+                facebook: config.facebook,
+                categories: config.categories
+                // Ya NO guardamos la contraseña aquí
+            }, { merge: true }) 
+            .then(() => {
+                if(successMsg) alert("✅ " + successMsg);
+            })
+            .catch(error => {
+                console.error("❌ Error guardando en Firebase:", error);
+                alert("Error al guardar en la nube.");
+            });
+        }
+
+        function renderMedidasForm() {
+            const container = document.getElementById('medidas-inputs-container');
+            if(!container) return;
+            container.innerHTML = ["S", "M", "L", "XL"].map(t => {
+                const m = DEFAULT_MEASURES[t];
+                return `
+                    <div class="flex items-center gap-2">
+                        <div class="w-12">
+                            <input type="checkbox" id="t-${t.toLowerCase()}" value="${t}" checked class="hidden">
+                            <label for="t-${t.toLowerCase()}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 transition-colors font-bold rounded">${t}</label>
+                        </div>
+                        <div class="flex-1 grid grid-cols-3 gap-2">
+                            <input type="text" id="${t.toLowerCase()}-pecho" placeholder="P" class="measure-input rounded" value="${m.pecho}">
+                            <input type="text" id="${t.toLowerCase()}-largo" placeholder="L" class="measure-input rounded" value="${m.largo}">
+                            <input type="text" id="${t.toLowerCase()}-ancho" placeholder="A" class="measure-input rounded" value="${m.ancho}">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCategoryInputs() {
+            const sel = document.getElementById('new-cat');
+            if(sel) sel.innerHTML = config.categories.map(cat => `<option value="${cat}">${cat.toUpperCase()}</option>`).join('');
+        }
+
+        function renderCategoriesManager() {
+            const list = document.getElementById('categories-manager-list');
+            if(list) {
+                list.innerHTML = config.categories.map(cat => `
+                    <div class="flex items-center gap-2 bg-darker border border-white/10 px-3 py-2 rounded group hover:border-primary/30 transition-colors">
+                        <span class="text-[10px] uppercase font-bold text-gray-300">${cat}</span>
+                        <button onclick="removeCategory('${cat}')" class="text-white/20 hover:text-red-500 transition-colors"><i class="fas fa-times-circle text-xs"></i></button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addNewCategory() {
+            const input = document.getElementById('new-category-name');
+            const name = input.value.trim().toLowerCase();
+            if(!name) return;
+            if(config.categories.includes(name)) return alert("Esta categoría ya existe.");
+            
+            config.categories.push(name);
+            input.value = "";
+            saveConfigToFirebase("Categoría guardada exitosamente en la nube.");
+        }
+
+        function removeCategory(cat) {
+            if(config.categories.length <= 1) return alert("Debe existir al menos una categoría.");
+            if(confirm(`¿Seguro que deseas eliminar la categoría "${cat}"? Afectará a los productos que ya la usen.`)) {
+                config.categories = config.categories.filter(c => c !== cat);
+                saveConfigToFirebase("Categoría eliminada.");
+            }
+        }
+
+        function renderHeroConfig() {
+            document.getElementById('config-hero-title').value = config.heroTitle;
+            document.getElementById('config-hero-subtitle').value = config.heroSubtitle;
+            document.getElementById('hero-preview').src = config.heroImage;
+            document.getElementById('hero-preview').classList.remove('hidden');
+            document.getElementById('hero-preview-container').classList.add('hidden');
+        }
+
+        function saveHeroConfig(event) {
+            const title = document.getElementById('config-hero-title').value.trim();
+            const subtitle = document.getElementById('config-hero-subtitle').value.trim();
+
+            let imageToSave = config.heroImage;
+
+            if (selectedHeroImg) {
+                imageToSave = selectedHeroImg;
+            }
+
+            db.collection("config").doc("hero").set({
+                heroTitle: title,
+                heroSubtitle: subtitle,
+                heroImage: imageToSave
+            })
+            .then(() => {
+                selectedHeroImg = "";
+
+                const btn = event?.target;
+                if (!btn) return;
+
+                const originalText = btn.innerText;
+                btn.innerText = "¡Actualizado!";
+                btn.classList.add('bg-white', 'text-dark');
+
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.remove('bg-white', 'text-dark');
+                }, 2000);
+            })
+            .catch(error => {
+    console.log("Aviso: Configuración incompleta en la nube, usando valores por defecto.");
+});
+        }
+
+        function escucharHero() {
+            db.collection("config").doc("hero")
+            .onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    config.heroTitle = data.heroTitle || config.heroTitle;
+                    config.heroSubtitle = data.heroSubtitle || config.heroSubtitle;
+                    config.heroImage = data.heroImage || config.heroImage;
+
+                    applyConfig();
+                    renderHeroConfig();
+                }
+            }, (error) => {
+                console.error("❌ Error escuchando hero:", error);
+            });
+        }
+
+        function renderConfig() {
+            document.getElementById('config-slogan').value = config.slogan;
+            document.getElementById('config-about-title').value = config.aboutTitle;
+            document.getElementById('config-about-desc').value = config.aboutDesc;
+            document.getElementById('config-whatsapp').value = config.whatsapp;
+            document.getElementById('config-instagram').value = config.instagram;
+            document.getElementById('config-facebook').value = config.facebook;
+        }
+
+        function saveGlobalConfig() {
+            config.slogan = document.getElementById('config-slogan').value.trim();
+            config.aboutTitle = document.getElementById('config-about-title').value.trim();
+            config.aboutDesc = document.getElementById('config-about-desc').value.trim();
+            config.whatsapp = document.getElementById('config-whatsapp').value.replace(/\D/g,''); 
+            config.instagram = document.getElementById('config-instagram').value.trim();
+            config.facebook = document.getElementById('config-facebook').value.trim();
+            
+            saveConfigToFirebase("Configuración Global Guardada Exitosamente.");
+        }
+
+        function applyConfig() {
+            document.getElementById('display-hero-title').innerText = config.heroTitle;
+            document.getElementById('display-hero-subtitle').innerText = config.heroSubtitle;
+            document.getElementById('hero-display').style.backgroundImage = `url('${config.heroImage}')`;
+            
+            document.getElementById('display-shop-slogan').innerText = config.slogan;
+            document.getElementById('display-about-title').innerText = config.aboutTitle;
+            document.getElementById('display-about-desc').innerText = config.aboutDesc;
+            
+            const waLink = document.getElementById('link-whatsapp');
+            if(waLink) waLink.href = `https://wa.me/${config.whatsapp}`;
+            
+            const igLink = document.getElementById('link-instagram');
+            if(igLink) {
+                igLink.href = config.instagram !== "#" ? config.instagram : "#";
+                igLink.style.display = config.instagram === "#" || !config.instagram ? "none" : "inline-block";
+            }
+            
+            const fbLink = document.getElementById('link-facebook');
+            if(fbLink) {
+                fbLink.href = config.facebook !== "#" ? config.facebook : "#";
+                fbLink.style.display = config.facebook === "#" || !config.facebook ? "none" : "inline-block";
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
