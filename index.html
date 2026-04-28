@@ -1,11 +1,9 @@
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
-    <!-- FIREBASE (conexión base y autenticación) -->
+    <!-- FIREBASE (conexión base) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
-    <!-- NUEVO: Agregamos el módulo de Autenticación de Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
     <script>
     const firebaseConfig = {
@@ -21,8 +19,7 @@
     // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    const auth = firebase.auth(); // Inicializamos la seguridad
-    console.log("🔥 Firebase conectado: Modo Producción Seguro");
+    console.log("🔥 Firebase conectado: Modo Producción");
     </script>
     
     <meta charset="UTF-8">
@@ -201,14 +198,11 @@
     <div id="login-modal" class="modal-overlay" onclick="closeLoginModal(event)">
         <div class="modal-content max-w-sm p-8 text-center" onclick="event.stopPropagation()">
             <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
-            <p class="text-gray-500 text-[10px] uppercase tracking-widest mb-6">Ingresa tus credenciales de administrador</p>
+            <p class="text-gray-500 text-[10px] uppercase tracking-widest mb-6">Ingresa la clave de administrador</p>
             <div class="space-y-4">
-                <!-- NUEVO: Agregado campo de correo para mayor seguridad -->
-                <input type="email" id="admin-email-input" placeholder="Correo de Admin" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center transition-colors">
                 <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center transition-colors">
-                
-                <button onclick="validateAdmin()" id="btn-login-submit" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar al Panel</button>
-                <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Credenciales Incorrectas</p>
+                <button onclick="validateAdmin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar al Panel</button>
+                <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Contraseña Incorrecta</p>
             </div>
         </div>
     </div>
@@ -336,7 +330,7 @@
                     <button onclick="showAdminTab('hero', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Sección Hero</button>
                     <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Configuración Global</button>
                 </div>
-                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión Segura</button>
+                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Salir del Panel</button>
             </div>
 
             <!-- TAB INVENTARIO -->
@@ -500,17 +494,11 @@
 
                     <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
                         <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes</h3>
-                        
-                        <!-- NUEVO: Explicación de seguridad para el usuario -->
-                        <div class="bg-primary/10 border border-primary/30 p-4 rounded text-center">
-                            <i class="fas fa-shield-alt text-primary text-2xl mb-2"></i>
-                            <p class="text-[10px] text-gray-300 uppercase tracking-widest font-bold leading-relaxed">
-                                La contraseña ahora está encriptada y se gestiona directamente desde tu cuenta oficial de Firebase en la pestaña "Authentication".
-                            </p>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-key text-primary"></i> Nueva Clave de Admin</label>
+                            <input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors" placeholder="••••••••">
                         </div>
-
-                        <hr class="border-white/5 mt-6 mb-6">
-                        
+                        <hr class="border-white/5">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp (Ej: 50499998888)</label>
                             <input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
@@ -555,7 +543,6 @@
         document.getElementById('current-year').innerText = new Date().getFullYear();
 
         // --- ESTADO GLOBAL Y CONFIGURACIÓN ---
-        // Se ha removido la contraseña plana de aquí por seguridad
         const DEFAULT_CONFIG = {
             slogan: "Nuestras piezas exclusivas",
             aboutTitle: "Legacy Over Size",
@@ -566,7 +553,8 @@
             categories: ["urban", "anime", "autos"],
             heroTitle: "ESTILO SIN LÍMITES",
             heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE",
-            heroImage: ""
+            heroImage: "",
+            adminPassword: "admin123" 
         };
 
         const DEFAULT_MEASURES = {
@@ -577,6 +565,7 @@
         };
 
         let inventario = [];
+        // Iniciamos con DEFAULT_CONFIG. Luego Firebase lo sobrescribirá.
         let config = { ...DEFAULT_CONFIG };
 
         let selectedBase64Img = "";
@@ -593,12 +582,15 @@
             renderCategoriesManager();
             applyConfig();
             
+            // Conexiones a Firebase (La única fuente de la verdad ahora)
             escucharFirebase(); 
             escucharHero();
-            escucharConfigGlobal(); 
+            escucharConfigGlobal(); // NUEVO: Sincroniza las categorías globalmente
         }
 
         // --- FIREBASE CLOUD LISTENERS ---
+        
+        // 1. Escuchar Configuración y Categorías Globales (NUEVO)
         function escucharConfigGlobal() {
             db.collection("config").doc("global").onSnapshot((doc) => {
                 if (doc.exists) {
@@ -609,15 +601,20 @@
                     config.whatsapp = data.whatsapp || config.whatsapp;
                     config.instagram = data.instagram || config.instagram;
                     config.facebook = data.facebook || config.facebook;
+                    // Sincronizar categorías (importante para que aparezcan en tienda)
                     if (data.categories && Array.isArray(data.categories)) {
                         config.categories = data.categories;
                     }
+                    config.adminPassword = data.adminPassword || config.adminPassword;
+
+                    // Actualizar vista con los datos de Firebase
                     applyConfig();
                     renderConfig();
                     renderCategoryInputs();
                     renderCategoriesManager();
-                    renderFilters(); 
+                    renderFilters(); // Actualiza los botones del catálogo principal
                 } else {
+                    // Si el documento global no existe en la BD (ej. app nueva), se crea usando valores por defecto
                     saveConfigToFirebase();
                 }
             }, (error) => {
@@ -625,6 +622,7 @@
             });
         }
 
+        // 2. Escuchar Productos
         function escucharFirebase() {
             db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 inventario = snapshot.docs.map(doc => ({
@@ -639,89 +637,36 @@
             });
         }
 
-        // --- NUEVO: SEGURIDAD Y LOGIN DE FIREBASE AUTH ---
-        
-        // Escuchador de sesión de Firebase: Mantiene la sesión abierta aunque recargues
-        auth.onAuthStateChanged((user) => {
-            if (user) {
-                isAdminAuthenticated = true;
-            } else {
-                isAdminAuthenticated = false;
-                // Si estaba en el panel y se cerró sesión, lo saca al inicio
-                const activeSection = Array.from(document.querySelectorAll('.section-fade')).find(s => s.classList.contains('active'))?.id;
-                if(activeSection === 'admin') {
-                    showSection('inicio');
-                }
-            }
-        });
-
+        // --- SEGURIDAD Y LOGIN ---
         function tryAccessAdmin() {
             if (isAdminAuthenticated) {
                 showSection('admin');
             } else {
                 document.getElementById('login-modal').classList.add('active');
-                document.getElementById('admin-email-input').value = "";
                 document.getElementById('admin-pass-input').value = "";
-                document.getElementById('admin-email-input').focus();
+                document.getElementById('admin-pass-input').focus();
             }
         }
-        
         function closeLoginModal() { 
             document.getElementById('login-modal').classList.remove('active'); 
             document.getElementById('login-error').classList.add('hidden');
         }
-
-        // Validación oficial con Firebase Auth
         function validateAdmin() {
-            const emailInput = document.getElementById('admin-email-input');
-            const passInput = document.getElementById('admin-pass-input');
+            const input = document.getElementById('admin-pass-input');
             const errorText = document.getElementById('login-error');
-            const btn = document.getElementById('btn-login-submit');
             
-            const email = emailInput.value.trim();
-            const password = passInput.value.trim();
-
-            if(!email || !password) {
-                errorText.innerText = "Por favor llena ambos campos";
+            if (input.value === config.adminPassword) {
+                isAdminAuthenticated = true;
+                closeLoginModal();
+                showSection('admin');
+            } else {
                 errorText.classList.remove('hidden');
-                return;
+                input.value = ""; 
+                input.classList.add('border-red-500');
+                setTimeout(() => input.classList.remove('border-red-500'), 1500);
             }
-
-            // Efecto visual de carga
-            btn.innerText = "Verificando Seguridad...";
-            btn.classList.add('opacity-50', 'cursor-not-allowed');
-
-            auth.signInWithEmailAndPassword(email, password)
-                .then((userCredential) => {
-                    // ¡Login Exitoso!
-                    closeLoginModal();
-                    showSection('admin');
-                    
-                    // Restaurar botón
-                    btn.innerText = "Entrar al Panel";
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                })
-                .catch((error) => {
-                    // Login Fallido
-                    console.error("Error Auth:", error);
-                    errorText.innerText = "Credenciales Incorrectas";
-                    errorText.classList.remove('hidden');
-                    
-                    passInput.value = ""; 
-                    passInput.classList.add('border-red-500');
-                    setTimeout(() => passInput.classList.remove('border-red-500'), 1500);
-
-                    // Restaurar botón
-                    btn.innerText = "Entrar al Panel";
-                    btn.classList.remove('opacity-50', 'cursor-not-allowed');
-                });
         }
-
-        function logoutAdmin() { 
-            auth.signOut().then(() => {
-                showSection('inicio'); 
-            });
-        }
+        function logoutAdmin() { isAdminAuthenticated = false; showSection('inicio'); }
 
         // --- NAVEGACIÓN UI ---
         function showAdminTab(tab, event) {
@@ -868,7 +813,7 @@
                 cancelEdit(); 
             }).catch((error) => {
                 console.error("❌ Error Firebase:", error);
-                alert("Hubo un error. Puede que tus permisos de seguridad de Firebase te lo bloqueen.");
+                alert("Hubo un error al comunicar con la nube.");
                 toggleButtonLoading(false);
             });
         }
@@ -981,6 +926,7 @@
             const filters = document.getElementById('filter-container');
             if(!filters) return;
             
+            // Toma categorías conectadas al State/Firebase
             const catsToUse = config.categories || [];
             
             filters.innerHTML = `
@@ -1116,6 +1062,8 @@
         }
 
         // --- SISTEMA DE CONFIGURACIÓN GLOBAL (FIREBASE) ---
+        
+        // Guardado Universal de Configuración a Firebase
         function saveConfigToFirebase(successMsg = null) {
             db.collection("config").doc("global").set({
                 slogan: config.slogan,
@@ -1124,9 +1072,9 @@
                 whatsapp: config.whatsapp,
                 instagram: config.instagram,
                 facebook: config.facebook,
-                categories: config.categories
-                // Ya NO guardamos la contraseña aquí
-            }, { merge: true }) 
+                categories: config.categories,
+                adminPassword: config.adminPassword
+            }, { merge: true }) // El merge permite que no se sobreescriban datos que falten accidentalmente
             .then(() => {
                 if(successMsg) alert("✅ " + successMsg);
             })
@@ -1182,6 +1130,7 @@
             
             config.categories.push(name);
             input.value = "";
+            // Sube el cambio directamente a Firebase
             saveConfigToFirebase("Categoría guardada exitosamente en la nube.");
         }
 
@@ -1231,9 +1180,10 @@
                     btn.classList.remove('bg-white', 'text-dark');
                 }, 2000);
             })
-            .catch(error => {
-    console.log("Aviso: Configuración incompleta en la nube, usando valores por defecto.");
-});
+            .catch((error) => {
+                console.error("❌ Error guardando hero:", error);
+                alert("Error al guardar en la nube.");
+            });
         }
 
         function escucharHero() {
@@ -1270,18 +1220,25 @@
             config.instagram = document.getElementById('config-instagram').value.trim();
             config.facebook = document.getElementById('config-facebook').value.trim();
             
+            const newPass = document.getElementById('config-password').value.trim();
+            if(newPass) config.adminPassword = newPass;
+
             saveConfigToFirebase("Configuración Global Guardada Exitosamente.");
+            document.getElementById('config-password').value = ""; 
         }
 
         function applyConfig() {
+            // Hero
             document.getElementById('display-hero-title').innerText = config.heroTitle;
             document.getElementById('display-hero-subtitle').innerText = config.heroSubtitle;
             document.getElementById('hero-display').style.backgroundImage = `url('${config.heroImage}')`;
             
+            // Textos
             document.getElementById('display-shop-slogan').innerText = config.slogan;
             document.getElementById('display-about-title').innerText = config.aboutTitle;
             document.getElementById('display-about-desc').innerText = config.aboutDesc;
             
+            // Enlaces Redes
             const waLink = document.getElementById('link-whatsapp');
             if(waLink) waLink.href = `https://wa.me/${config.whatsapp}`;
             
@@ -1298,6 +1255,7 @@
             }
         }
 
+        // --- ARRANQUE DE LA APP ---
         window.onload = init;
     </script>
 </body>
