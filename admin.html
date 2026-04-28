@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <!-- FIREBASE (conexión base) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+    <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBt0-unRabqCNAh467cGTkAJSytpLKVLEI",
+      authDomain: "la-era-de-newgate.firebaseapp.com",
+      projectId: "la-era-de-newgate",
+      storageBucket: "la-era-de-newgate.firebasestorage.app",
+      messagingSenderId: "1018442777833",
+      appId: "1:1018442777833:web:b39acae2d96b8d5c6a5c78",
+      measurementId: "G-9Y1BH12NG4"
+    };
+
+    // Inicializar Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    console.log("🔥 Firebase conectado: Panel Administrador");
+    </script>
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | NEW GATE</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#d4af37', 
+                        dark: '#0a0a0a',
+                        darker: '#050505',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        serif: ['Playfair Display', 'serif'],
+                        graffiti: ['Permanent Marker', 'cursive'], 
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Permanent+Marker&display=swap');
+        
+        .section-fade {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.4s ease-in-out;
+        }
+        
+        .section-fade.active {
+            display: block;
+            opacity: 1;
+        }
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(5, 5, 5, 0.98);
+            z-index: 200;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: #0f0f0f;
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+        }
+
+        input[type="checkbox"]:checked + label {
+            background-color: #d4af37;
+            color: #0a0a0a;
+            border-color: #d4af37;
+        }
+
+        .editing-mode {
+            border: 2px solid #d4af37 !important;
+            background: rgba(212, 175, 55, 0.05) !important;
+        }
+
+        .measure-input {
+            width: 100%;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 6px;
+            text-align: center;
+            font-size: 11px;
+            color: white;
+            outline: none;
+        }
+        .measure-input:focus { border-color: #d4af37; }
+        
+        .tab-btn.active {
+            border-bottom: 2px solid #d4af37;
+            color: #d4af37;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 20px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333;
+            transition: .4s;
+            border-radius: 20px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 14px; width: 14px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #d4af37; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Loader Animation */
+        .loader {
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-radius: 50%;
+            border-top: 3px solid #d4af37;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite;
+            animation: spin 1s linear infinite;
+            display: none;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark min-h-screen flex flex-col">
+
+    <!-- HEADER -->
+    <header class="w-full z-[100] bg-darker border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="font-graffiti text-3xl text-white tracking-wider">
+                ADMIN<span class="text-primary">.</span>
+            </div>
+            <nav class="flex items-center">
+                <a href="index.html" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-colors border border-white/10 px-4 py-2 rounded"><i class="fas fa-store"></i> Ir a Tienda</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MODAL LOGIN ADMIN OBLIGATORIO -->
+    <!-- Se eliminó la función de cerrar haciendo click fuera para proteger la vista -->
+    <div id="login-modal" class="modal-overlay active">
+        <div class="modal-content p-8 text-center shadow-2xl">
+            <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
+            <p class="text-gray-500 text-[10px] uppercase tracking-widest mb-6">Ingresa la clave de administrador</p>
+            <div class="space-y-4">
+                <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center transition-colors">
+                <button onclick="validateAdmin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar al Panel</button>
+                <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Contraseña Incorrecta</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- PANEL DE ADMINISTRADOR -->
+    <div id="admin" class="section-fade py-12 bg-darker flex-1">
+        <div class="max-w-6xl mx-auto px-6">
+            
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-12 gap-4">
+                <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide">
+                    <button onclick="showAdminTab('inventario', event)" class="tab-btn active py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Inventario</button>
+                    <button onclick="showAdminTab('hero', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Sección Hero</button>
+                    <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Configuración Global</button>
+                </div>
+                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-lock"></i> Bloquear Panel</button>
+            </div>
+
+            <!-- TAB INVENTARIO -->
+            <div id="tab-inventario" class="admin-tab">
+                
+                <!-- CONTENEDOR 1: FORMULARIO DE PRODUCTOS -->
+                <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
+                    <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
+                        <i class="fas fa-box-open"></i> Añadir Nuevo Producto
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Nombre de Producto</label>
+                                    <input type="text" id="new-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Código SKU</label>
+                                    <input type="text" id="new-sku" placeholder="Ej: NG-001" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white font-mono uppercase transition-colors">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio (Ej: L650.00)</label>
+                                    <input type="text" id="new-price" placeholder="L650.00" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Categoría</label>
+                                    <select id="new-cat" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-gray-300 transition-colors cursor-pointer"></select>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between bg-darker p-4 border border-white/5 rounded">
+                                <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Activar Guía de Tallas</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-measures" checked onchange="toggleMeasuresVisibility()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="measures-config-panel" class="bg-darker p-5 border border-white/10 rounded transition-all">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div>
+                                    <div class="flex-1 grid grid-cols-3 gap-2">
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Pecho</p>
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Largo</p>
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Ancho</p>
+                                    </div>
+                                </div>
+                                <div id="medidas-inputs-container" class="space-y-3"></div>
+                            </div>
+
+                            <div>
+                                <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Descripción corta</label>
+                                <textarea id="new-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none h-20 text-white transition-colors"></textarea>
+                            </div>
+                        </div>
+                        
+                        <!-- COMPRESOR DE IMÁGENES INTEGRADO -->
+                        <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[300px]" onclick="document.getElementById('new-img').click()">
+                            <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" onchange="compressAndPreview(this, 'img-preview', 'img-preview-container', 'product')">
+                            <div id="img-preview-container" class="text-center">
+                                <i class="fas fa-image text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Subir Foto (JPG/PNG)</p>
+                                <p class="text-[8px] text-gray-600 mt-2 italic">Se optimizará automáticamente para la web</p>
+                            </div>
+                            <img id="img-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" src="">
+                            <!-- Capa de carga para compresión -->
+                            <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg">
+                                <div class="loader !block"></div>
+                                <p class="text-[10px] text-primary mt-2 uppercase tracking-widest font-bold">Optimizando...</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-8">
+                        <button id="btn-submit-admin" onclick="addProduct()" class="flex-1 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-white transition-all flex justify-center items-center gap-2 shadow-lg">
+                            <span id="btn-submit-text">Guardar Producto en la Nube</span>
+                            <div id="btn-submit-loader" class="loader !border-t-dark !border-dark/30"></div>
+                        </button>
+                        <button id="btn-cancel-edit" onclick="cancelEdit()" class="hidden bg-red-600 text-white px-8 py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-red-500 transition-all">Cancelar</button>
+                    </div>
+                </div>
+
+                <!-- CONTENEDOR 2: GESTIÓN DE CATEGORÍAS INDEPENDIENTE -->
+                <div class="bg-dark p-8 border border-white/5 rounded-lg mb-16 shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-4 italic flex items-center gap-2">
+                        <i class="fas fa-tags"></i> Gestión de Categorías
+                    </h3>
+                    <p class="text-gray-500 text-[10px] uppercase mb-6 tracking-widest">Añade o elimina categorías de forma independiente. Se sincronizarán automáticamente en la tienda.</p>
+                    
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <input type="text" id="new-category-name" placeholder="Escribe una nueva categoría (Ej. Jeans)" class="flex-1 bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                        <button onclick="addNewCategory()" class="bg-darker border border-primary/40 text-primary px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-dark transition-all flex items-center justify-center gap-2">
+                            <i class="fas fa-cloud-upload-alt"></i> Guardar Categoría
+                        </button>
+                    </div>
+                    <div id="categories-manager-list" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- LISTA ADMIN FIREBASE -->
+                <div class="mb-4 flex justify-between items-center border-b border-white/5 pb-2">
+                    <h4 class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Inventario en la Nube</h4>
+                    <span id="inventory-count" class="text-primary text-[10px] font-bold">0 Productos</span>
+                </div>
+                <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- TAB HERO CONFIG -->
+            <div id="tab-hero" class="admin-tab hidden">
+                <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic">Personalizar Sección Hero</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título Hero</label>
+                                <input type="text" id="config-hero-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none transition-colors">
+                            </div>
+                            <div>
+                                <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Subtítulo Hero</label>
+                                <input type="text" id="config-hero-subtitle" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none transition-colors">
+                            </div>
+                        </div>
+                        <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[250px]" onclick="document.getElementById('new-hero-img').click()">
+                            <input type="file" id="new-hero-img" class="hidden" accept="image/*" onchange="compressAndPreview(this, 'hero-preview', 'hero-preview-container', 'hero')">
+                            <div id="hero-preview-container" class="text-center">
+                                <i class="fas fa-camera text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
+                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Cambiar Imagen de Fondo</p>
+                            </div>
+                            <img id="hero-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" src="">
+                            <div id="hero-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg">
+                                <div class="loader !block"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <button onclick="saveHeroConfig(event)" class="w-full mt-10 bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-xl">Actualizar Hero</button>
+                </div>
+            </div>
+
+            <!-- TAB CONFIGURACIÓN GLOBAL -->
+            <div id="tab-config" class="admin-tab hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Textos de la Marca</h3>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Eslogan en Tienda</label>
+                            <input type="text" id="config-slogan" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título "Nosotros"</label>
+                            <input type="text" id="config-about-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Descripción "Nosotros"</label>
+                            <textarea id="config-about-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-32 transition-colors"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes</h3>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-key text-primary"></i> Nueva Clave de Admin</label>
+                            <input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors" placeholder="••••••••">
+                        </div>
+                        <hr class="border-white/5">
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp (Ej: 50499998888)</label>
+                            <input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label>
+                            <input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-facebook text-blue-500"></i> Facebook URL</label>
+                            <input type="text" id="config-facebook" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
+                        </div>
+                    </div>
+                </div>
+                <div class="mt-12">
+                    <button onclick="saveGlobalConfig()" class="w-full bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-2xl shadow-primary/20">Guardar Cambios Globales</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const DEFAULT_CONFIG = {
+            slogan: "Nuestras piezas exclusivas",
+            aboutTitle: "Legacy Over Size",
+            aboutDesc: "New Gate no es una marca, es un destino...",
+            whatsapp: "50400000000",
+            instagram: "#",
+            facebook: "#",
+            categories: ["urban", "anime", "autos"],
+            heroTitle: "ESTILO SIN LÍMITES",
+            heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE",
+            heroImage: "",
+            adminPassword: "admin123" 
+        };
+
+        const DEFAULT_MEASURES = {
+            "S": { pecho: "00", largo: "00", ancho: "00" },
+            "M": { pecho: "00", largo: "00", ancho: "00" },
+            "L": { pecho: "00", largo: "00", ancho: "00" },
+            "XL": { pecho: "00", largo: "00", ancho: "00" }
+        };
+
+        let inventario = [];
+        let config = { ...DEFAULT_CONFIG };
+
+        let selectedBase64Img = "";
+        let selectedHeroImg = "";
+        let editId = null;
+
+        function init() {
+            renderMedidasForm();
+            escucharConfigGlobal(); 
+            escucharFirebase(); 
+            escucharHero();
+        }
+
+        // --- SEGURIDAD Y LOGIN ---
+        function validateAdmin() {
+            const input = document.getElementById('admin-pass-input');
+            const errorText = document.getElementById('login-error');
+            
+            if (input.value === config.adminPassword) {
+                document.getElementById('login-modal').classList.remove('active');
+                document.getElementById('admin').style.display = 'block';
+                setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
+            } else {
+                errorText.classList.remove('hidden');
+                input.value = ""; 
+                input.classList.add('border-red-500');
+                setTimeout(() => input.classList.remove('border-red-500'), 1500);
+            }
+        }
+        
+        function logoutAdmin() { 
+            document.getElementById('admin').classList.remove('active');
+            setTimeout(() => {
+                document.getElementById('admin').style.display = 'none';
+                document.getElementById('login-modal').classList.add('active');
+                document.getElementById('admin-pass-input').value = "";
+            }, 400);
+        }
+
+        // --- FIREBASE CLOUD LISTENERS (LECTURA / ESCRITURA) ---
+        function escucharConfigGlobal() {
+            db.collection("config").doc("global").onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    config.slogan = data.slogan || config.slogan;
+                    config.aboutTitle = data.aboutTitle || config.aboutTitle;
+                    config.aboutDesc = data.aboutDesc || config.aboutDesc;
+                    config.whatsapp = data.whatsapp || config.whatsapp;
+                    config.instagram = data.instagram || config.instagram;
+                    config.facebook = data.facebook || config.facebook;
+                    if (data.categories && Array.isArray(data.categories)) {
+                        config.categories = data.categories;
+                    }
+                    config.adminPassword = data.adminPassword || config.adminPassword;
+
+                    renderConfig();
+                    renderCategoryInputs();
+                    renderCategoriesManager();
+                } else {
+                    // Solo el Admin crea la configuración inicial si falta.
+                    saveConfigToFirebase();
+                }
+            }, (error) => {
+                console.error("❌ Error conectando Config Global:", error);
+            });
+        }
+
+        function escucharFirebase() {
+            db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+                inventario = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                renderAdminList();
+            }, (error) => {
+                console.error("❌ Error Firebase:", error);
+            });
+        }
+
+        function escucharHero() {
+            db.collection("config").doc("hero")
+            .onSnapshot((doc) => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    config.heroTitle = data.heroTitle || config.heroTitle;
+                    config.heroSubtitle = data.heroSubtitle || config.heroSubtitle;
+                    config.heroImage = data.heroImage || config.heroImage;
+                    renderHeroConfig();
+                }
+            }, (error) => {
+                console.error("❌ Error escuchando hero:", error);
+            });
+        }
+
+        // --- NAVEGACIÓN UI ---
+        function showAdminTab(tab, event) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            if(event) event.target.classList.add('active');
+        }
+
+        // --- OPTIMIZADOR DE IMÁGENES ---
+        function compressAndPreview(input, previewId, containerId, targetType) {
+            if (!input.files || !input.files[0]) return;
+            
+            const file = input.files[0];
+            const loadingLayer = targetType === 'hero' ? document.getElementById('hero-loading') : document.getElementById('img-loading');
+            loadingLayer.classList.remove('hidden');
+
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const MAX_WIDTH = 800; 
+                    const MAX_HEIGHT = 1000;
+                    let width = img.width;
+                    let height = img.height;
+
+                    if (width > height) {
+                        if (width > MAX_WIDTH) {
+                            height *= MAX_WIDTH / width;
+                            width = MAX_WIDTH;
+                        }
+                    } else {
+                        if (height > MAX_HEIGHT) {
+                            width *= MAX_HEIGHT / height;
+                            height = MAX_HEIGHT;
+                        }
+                    }
+
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+                    if(targetType === 'hero') {
+                        selectedHeroImg = compressedDataUrl;
+                    } else {
+                        selectedBase64Img = compressedDataUrl;
+                    }
+
+                    document.getElementById(previewId).src = compressedDataUrl;
+                    document.getElementById(previewId).classList.remove('hidden');
+                    document.getElementById(containerId).classList.add('hidden');
+                    loadingLayer.classList.add('hidden');
+                }
+            };
+        }
+
+        // --- GESTIÓN DE PRODUCTOS ---
+        function toggleMeasuresVisibility() {
+            const isChecked = document.getElementById('toggle-measures').checked;
+            document.getElementById('measures-config-panel').style.display = isChecked ? 'block' : 'none';
+        }
+
+        function toggleButtonLoading(isLoading) {
+            const btn = document.getElementById('btn-submit-admin');
+            const text = document.getElementById('btn-submit-text');
+            const loader = document.getElementById('btn-submit-loader');
+            
+            if(isLoading) {
+                btn.disabled = true;
+                btn.classList.add('opacity-50', 'cursor-not-allowed');
+                text.innerText = "Subiendo...";
+                loader.style.display = "block";
+            } else {
+                btn.disabled = false;
+                btn.classList.remove('opacity-50', 'cursor-not-allowed');
+                text.innerText = editId ? "Actualizar Producto" : "Guardar Producto en la Nube";
+                loader.style.display = "none";
+            }
+        }
+
+        function addProduct() {
+            const title = document.getElementById('new-title').value.trim();
+            const sku = document.getElementById('new-sku').value.trim().toUpperCase();
+            const price = document.getElementById('new-price').value.trim();
+            
+            if(!title || !price || !selectedBase64Img) return alert("❌ Completa Título, Precio y selecciona una Foto.");
+
+            toggleButtonLoading(true);
+
+            const hasMeasures = document.getElementById('toggle-measures').checked;
+            const tallas = [];
+            const medidas = {};
+            
+            if(hasMeasures) {
+                ["s", "m", "l", "xl"].forEach(t => {
+                    if(document.getElementById(`t-${t}`).checked) {
+                        const tName = t.toUpperCase();
+                        tallas.push(tName);
+                        medidas[tName] = {
+                            pecho: document.getElementById(`${t}-pecho`).value,
+                            largo: document.getElementById(`${t}-largo`).value,
+                            ancho: document.getElementById(`${t}-ancho`).value
+                        };
+                    }
+                });
+            }
+
+            const productData = {
+                sku: sku,
+                categoria: document.getElementById('new-cat').value,
+                titulo: title,
+                descripcion: document.getElementById('new-desc').value,
+                precio: price,
+                hasMeasures: hasMeasures,
+                tallas: tallas,
+                medidas: medidas,
+                imagen: selectedBase64Img,
+                createdAt: editId ? undefined : firebase.firestore.FieldValue.serverTimestamp() 
+            };
+
+            const dbRef = editId ? db.collection("productos").doc(editId).update(productData) : db.collection("productos").add(productData);
+
+            dbRef.then(() => {
+                toggleButtonLoading(false);
+                cancelEdit(); 
+            }).catch((error) => {
+                console.error("❌ Error Firebase:", error);
+                alert("Hubo un error al comunicar con la nube.");
+                toggleButtonLoading(false);
+            });
+        }
+
+        function deleteProduct(id) {
+            if(confirm("¿Eliminar este producto de forma irreversible?")) {
+                db.collection("productos").doc(id).delete()
+                .then(() => alert("✅ Producto eliminado."))
+                .catch(e => alert("Error al eliminar."));
+            }
+        }
+
+        function startEdit(id) {
+            const p = inventario.find(x => x.id === id);
+            if(!p) return;
+            
+            editId = id;
+            showAdminTab('inventario');
+            window.scrollTo({top: 0, behavior: 'smooth'});
+            
+            document.getElementById('admin-form-container').classList.add('editing-mode');
+            document.getElementById('admin-form-title').innerHTML = `<i class="fas fa-edit"></i> Editando: ${p.titulo}`;
+            document.getElementById('btn-submit-text').innerText = "Actualizar Producto";
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            document.getElementById('new-title').value = p.titulo;
+            document.getElementById('new-sku').value = p.sku || "";
+            document.getElementById('new-price').value = p.precio;
+            document.getElementById('new-desc').value = p.descripcion;
+            document.getElementById('new-cat').value = p.categoria;
+            
+            document.getElementById('toggle-measures').checked = !!p.hasMeasures;
+            toggleMeasuresVisibility();
+
+            selectedBase64Img = p.imagen;
+            document.getElementById('img-preview').src = p.imagen;
+            document.getElementById('img-preview').classList.remove('hidden');
+            document.getElementById('img-preview-container').classList.add('hidden');
+            
+            if(p.hasMeasures && p.tallas) {
+                ["s", "m", "l", "xl"].forEach(t => {
+                    const label = t.toUpperCase();
+                    document.getElementById(`t-${t}`).checked = p.tallas.includes(label);
+                    if(p.medidas && p.medidas[label]) {
+                        document.getElementById(`${t}-pecho`).value = p.medidas[label].pecho;
+                        document.getElementById(`${t}-largo`).value = p.medidas[label].largo;
+                        document.getElementById(`${t}-ancho`).value = p.medidas[label].ancho;
+                    }
+                });
+            }
+        }
+
+        function cancelEdit() {
+            editId = null;
+            document.getElementById('admin-form-container').classList.remove('editing-mode');
+            document.getElementById('btn-submit-text').innerText = "Guardar Producto en la Nube";
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('admin-form-title').innerHTML = `<i class="fas fa-box-open"></i> Añadir Nuevo Producto`;
+            
+            document.getElementById('new-title').value = "";
+            document.getElementById('new-sku').value = "";
+            document.getElementById('new-price').value = "";
+            document.getElementById('new-desc').value = "";
+            document.getElementById('img-preview').classList.add('hidden');
+            document.getElementById('img-preview-container').classList.remove('hidden');
+            document.getElementById('toggle-measures').checked = true;
+            toggleMeasuresVisibility();
+            selectedBase64Img = "";
+            
+            renderMedidasForm();
+        }
+
+        function renderAdminList() {
+            const list = document.getElementById('admin-list');
+            document.getElementById('inventory-count').innerText = `${inventario.length} Productos`;
+            if(!list) return;
+            
+            list.innerHTML = inventario.map(prod => `
+                <div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg group hover:border-primary/30 transition-all shadow-lg hover:shadow-primary/5">
+                    <div class="flex items-center gap-4 truncate">
+                        <div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden">
+                            <img src="${prod.imagen}" class="w-full h-full object-cover" loading="lazy">
+                        </div>
+                        <div class="truncate">
+                            <p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo}</p>
+                            <div class="flex gap-2 mt-1 items-center">
+                                <span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria}</span>
+                                <span class="text-gray-500 text-[9px] font-bold">${prod.precio}</span>
+                                ${!prod.hasMeasures ? '<span class="text-red-500/70 text-[8px] italic font-bold ml-1"><i class="fas fa-ban"></i> Tallas</span>' : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 flex-shrink-0 ml-2">
+                        <button onclick="startEdit('${prod.id}')" class="w-8 h-8 flex items-center justify-center text-primary bg-primary/5 hover:bg-primary/20 rounded transition-colors"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 flex items-center justify-center text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded transition-colors"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // --- SISTEMA DE CONFIGURACIÓN GLOBAL (FIREBASE) ---
+        function saveConfigToFirebase(successMsg = null) {
+            db.collection("config").doc("global").set({
+                slogan: config.slogan,
+                aboutTitle: config.aboutTitle,
+                aboutDesc: config.aboutDesc,
+                whatsapp: config.whatsapp,
+                instagram: config.instagram,
+                facebook: config.facebook,
+                categories: config.categories,
+                adminPassword: config.adminPassword
+            }, { merge: true }) 
+            .then(() => {
+                if(successMsg) alert("✅ " + successMsg);
+            })
+            .catch(error => {
+                console.error("❌ Error guardando en Firebase:", error);
+                alert("Error al guardar en la nube.");
+            });
+        }
+
+        function renderMedidasForm() {
+            const container = document.getElementById('medidas-inputs-container');
+            if(!container) return;
+            container.innerHTML = ["S", "M", "L", "XL"].map(t => {
+                const m = DEFAULT_MEASURES[t];
+                return `
+                    <div class="flex items-center gap-2">
+                        <div class="w-12">
+                            <input type="checkbox" id="t-${t.toLowerCase()}" value="${t}" checked class="hidden">
+                            <label for="t-${t.toLowerCase()}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 transition-colors font-bold rounded">${t}</label>
+                        </div>
+                        <div class="flex-1 grid grid-cols-3 gap-2">
+                            <input type="text" id="${t.toLowerCase()}-pecho" placeholder="P" class="measure-input rounded" value="${m.pecho}">
+                            <input type="text" id="${t.toLowerCase()}-largo" placeholder="L" class="measure-input rounded" value="${m.largo}">
+                            <input type="text" id="${t.toLowerCase()}-ancho" placeholder="A" class="measure-input rounded" value="${m.ancho}">
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function renderCategoryInputs() {
+            const sel = document.getElementById('new-cat');
+            if(sel) sel.innerHTML = config.categories.map(cat => `<option value="${cat}">${cat.toUpperCase()}</option>`).join('');
+        }
+
+        function renderCategoriesManager() {
+            const list = document.getElementById('categories-manager-list');
+            if(list) {
+                list.innerHTML = config.categories.map(cat => `
+                    <div class="flex items-center gap-2 bg-darker border border-white/10 px-3 py-2 rounded group hover:border-primary/30 transition-colors">
+                        <span class="text-[10px] uppercase font-bold text-gray-300">${cat}</span>
+                        <button onclick="removeCategory('${cat}')" class="text-white/20 hover:text-red-500 transition-colors"><i class="fas fa-times-circle text-xs"></i></button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function addNewCategory() {
+            const input = document.getElementById('new-category-name');
+            const name = input.value.trim().toLowerCase();
+            if(!name) return;
+            if(config.categories.includes(name)) return alert("Esta categoría ya existe.");
+            
+            config.categories.push(name);
+            input.value = "";
+            saveConfigToFirebase("Categoría guardada.");
+        }
+
+        function removeCategory(cat) {
+            if(config.categories.length <= 1) return alert("Debe existir al menos una categoría.");
+            if(confirm(`¿Seguro que deseas eliminar la categoría "${cat}"?`)) {
+                config.categories = config.categories.filter(c => c !== cat);
+                saveConfigToFirebase("Categoría eliminada.");
+            }
+        }
+
+        function renderHeroConfig() {
+            document.getElementById('config-hero-title').value = config.heroTitle;
+            document.getElementById('config-hero-subtitle').value = config.heroSubtitle;
+            document.getElementById('hero-preview').src = config.heroImage;
+            document.getElementById('hero-preview').classList.remove('hidden');
+            document.getElementById('hero-preview-container').classList.add('hidden');
+        }
+
+        function saveHeroConfig(event) {
+            const title = document.getElementById('config-hero-title').value.trim();
+            const subtitle = document.getElementById('config-hero-subtitle').value.trim();
+
+            let imageToSave = config.heroImage;
+
+            if (selectedHeroImg) {
+                imageToSave = selectedHeroImg;
+            }
+
+            db.collection("config").doc("hero").set({
+                heroTitle: title,
+                heroSubtitle: subtitle,
+                heroImage: imageToSave
+            })
+            .then(() => {
+                selectedHeroImg = "";
+                const btn = event?.target;
+                if (!btn) return;
+                const originalText = btn.innerText;
+                btn.innerText = "¡Actualizado!";
+                btn.classList.add('bg-white', 'text-dark');
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.remove('bg-white', 'text-dark');
+                }, 2000);
+            })
+            .catch((error) => {
+                alert("Error al guardar en la nube.");
+            });
+        }
+
+        function renderConfig() {
+            document.getElementById('config-slogan').value = config.slogan;
+            document.getElementById('config-about-title').value = config.aboutTitle;
+            document.getElementById('config-about-desc').value = config.aboutDesc;
+            document.getElementById('config-whatsapp').value = config.whatsapp;
+            document.getElementById('config-instagram').value = config.instagram;
+            document.getElementById('config-facebook').value = config.facebook;
+        }
+
+        function saveGlobalConfig() {
+            config.slogan = document.getElementById('config-slogan').value.trim();
+            config.aboutTitle = document.getElementById('config-about-title').value.trim();
+            config.aboutDesc = document.getElementById('config-about-desc').value.trim();
+            config.whatsapp = document.getElementById('config-whatsapp').value.replace(/\D/g,''); 
+            config.instagram = document.getElementById('config-instagram').value.trim();
+            config.facebook = document.getElementById('config-facebook').value.trim();
+            
+            const newPass = document.getElementById('config-password').value.trim();
+            if(newPass) config.adminPassword = newPass;
+
+            saveConfigToFirebase("Configuración Global Guardada Exitosamente.");
+            document.getElementById('config-password').value = ""; 
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
