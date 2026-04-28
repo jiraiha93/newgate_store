@@ -1231,10 +1231,9 @@
                     btn.classList.remove('bg-white', 'text-dark');
                 }, 2000);
             })
-            .catch((error) => {
-                console.error("❌ Error guardando hero:", error);
-                alert("Error al guardar en la nube.");
-            });
+            .catch(error => {
+    console.log("Aviso: Configuración incompleta en la nube, usando valores por defecto.");
+});
         }
 
         function escucharHero() {
