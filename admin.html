@@ -286,12 +286,13 @@
                         
                         <!-- COMPRESOR DE MÚLTIPLES IMÁGENES INTEGRADO -->
                         <div class="flex flex-col gap-4 h-full">
-                            <div class="flex-1 flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[200px]" onclick="document.getElementById('new-img').click()">
+                            <!-- SECCIÓN AJUSTADA PARA OCUPAR MENOS ESPACIO -->
+                            <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[120px]" onclick="document.getElementById('new-img').click()">
                                 <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" multiple onchange="compressAndAddImages(this, 'product')">
                                 <div class="text-center">
-                                    <i class="fas fa-images text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
+                                    <i class="fas fa-images text-3xl text-gray-700 mb-2 transition-transform hover:scale-110"></i>
                                     <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Añadir Fotos (JPG/PNG)</p>
-                                    <p class="text-[8px] text-gray-600 mt-2 italic">Puedes seleccionar varias a la vez</p>
+                                    <p class="text-[8px] text-gray-600 mt-1 italic">Puedes seleccionar varias a la vez</p>
                                 </div>
                                 <!-- Capa de carga para compresión -->
                                 <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-10">
@@ -392,7 +393,14 @@
                     </div>
 
                     <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
-                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Redes Sociales</h3>
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes Sociales</h3>
+                        <!-- SEGURIDAD AÑADIDA: Conectada directamente a Firebase Auth -->
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña de Ingreso</label>
+                            <input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors" placeholder="Nueva clave (Mín. 6 caracteres)">
+                            <p class="text-[8px] text-gray-500 mt-1 italic">Déjalo en blanco si no deseas cambiarla. Es seguro.</p>
+                        </div>
+                        <hr class="border-white/5">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp (Ej: 50499998888)</label>
                             <input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
@@ -727,7 +735,7 @@
                 cancelEdit(); 
             }).catch((error) => {
                 console.error("❌ Error Firebase:", error);
-                alert("Hubo un error al comunicar con la nube.");
+                alert("Hubo un error al comunicar con la nube: " + error.message);
                 toggleButtonLoading(false);
             });
         }
@@ -736,7 +744,7 @@
             if(confirm("¿Eliminar este producto de forma irreversible?")) {
                 db.collection("productos").doc(id).delete()
                 .then(() => alert("✅ Producto eliminado."))
-                .catch(e => alert("Error al eliminar."));
+                .catch(error => alert("Error al eliminar: " + error.message));
             }
         }
 
@@ -830,7 +838,7 @@
             `}).join('');
         }
 
-        // --- SISTEMA DE CONFIGURACIÓN GLOBAL (FIREBASE) ---
+        // --- SISTEMA DE CONFIGURACIÓN GLOBAL Y CATEGORÍAS (FIREBASE) ---
         function saveConfigToFirebase(successMsg = null) {
             db.collection("config").doc("global").set({
                 slogan: config.slogan,
@@ -846,8 +854,40 @@
             })
             .catch(error => {
                 console.error("❌ Error guardando en Firebase:", error);
-                alert("Error al guardar en la nube.");
+                alert("Error al guardar en la nube: " + error.message);
             });
+        }
+
+        function addNewCategory() {
+            const input = document.getElementById('new-category-name');
+            const name = input.value.trim().toLowerCase();
+            if(!name) return;
+            if(config.categories.includes(name)) return alert("Esta categoría ya existe.");
+            
+            // AHORA: Actualizamos directamente la nube, si triunfa el listener lo refrescará localmente
+            const newCategories = [...config.categories, name];
+            
+            db.collection("config").doc("global").set({
+                categories: newCategories
+            }, { merge: true })
+            .then(() => {
+                input.value = "";
+                alert("Categoría guardada con éxito en la nube.");
+            })
+            .catch(error => {
+                alert("Error al guardar categoría (Posible fallo de permisos): " + error.message);
+            });
+        }
+
+        function removeCategory(cat) {
+            if(config.categories.length <= 1) return alert("Debe existir al menos una categoría.");
+            if(confirm(`¿Seguro que deseas eliminar la categoría "${cat}"?`)) {
+                const newCategories = config.categories.filter(c => c !== cat);
+                db.collection("config").doc("global").set({
+                    categories: newCategories
+                }, { merge: true })
+                .catch(error => alert("Error al eliminar categoría: " + error.message));
+            }
         }
 
         function renderMedidasForm() {
@@ -888,25 +928,6 @@
             }
         }
 
-        function addNewCategory() {
-            const input = document.getElementById('new-category-name');
-            const name = input.value.trim().toLowerCase();
-            if(!name) return;
-            if(config.categories.includes(name)) return alert("Esta categoría ya existe.");
-            
-            config.categories.push(name);
-            input.value = "";
-            saveConfigToFirebase("Categoría guardada.");
-        }
-
-        function removeCategory(cat) {
-            if(config.categories.length <= 1) return alert("Debe existir al menos una categoría.");
-            if(confirm(`¿Seguro que deseas eliminar la categoría "${cat}"?`)) {
-                config.categories = config.categories.filter(c => c !== cat);
-                saveConfigToFirebase("Categoría eliminada.");
-            }
-        }
-
         function renderHeroConfig() {
             document.getElementById('config-hero-title').value = config.heroTitle;
             document.getElementById('config-hero-subtitle').value = config.heroSubtitle;
@@ -943,7 +964,7 @@
                 }, 2000);
             })
             .catch((error) => {
-                alert("Error al guardar en la nube.");
+                alert("Error al guardar en la nube: " + error.message);
             });
         }
 
@@ -965,6 +986,23 @@
             config.facebook = document.getElementById('config-facebook').value.trim();
             
             saveConfigToFirebase("Configuración Global Guardada Exitosamente.");
+            
+            // MANEJO DE CAMBIO DE CONTRASEÑA EN FIREBASE
+            const newPass = document.getElementById('config-password').value.trim();
+            if(newPass) {
+                if(newPass.length < 6) return alert("Firebase requiere que la contraseña tenga mínimo 6 caracteres.");
+                
+                auth.currentUser.updatePassword(newPass).then(() => {
+                    alert("Contraseña de acceso actualizada correctamente en Firebase.");
+                    document.getElementById('config-password').value = "";
+                }).catch(e => {
+                    if(e.code === 'auth/requires-recent-login') {
+                        alert("Por seguridad, debes cerrar sesión y volver a entrar para cambiar tu contraseña.");
+                    } else {
+                        alert("Error al cambiar contraseña: " + e.message);
+                    }
+                });
+            }
         }
 
         window.onload = init;
