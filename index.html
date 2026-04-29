@@ -270,6 +270,11 @@
                         <div id="carrito-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2">
                             <!-- Los productos añadidos se renderizan aquí -->
                         </div>
+                        <!-- NUEVO: Total del Carrito -->
+                        <div class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
+                            <span class="text-white text-[10px] font-bold uppercase tracking-widest">Total Estimado:</span>
+                            <span id="cart-total" class="text-primary text-2xl font-serif font-bold">L0.00</span>
+                        </div>
                     </div>
 
                     <!-- Formulario de Datos -->
@@ -617,29 +622,44 @@
             document.getElementById('cart-count-mobile').innerText = carrito.length;
             
             const container = document.getElementById('carrito-list');
+            const totalContainer = document.getElementById('cart-total');
+            
             if (carrito.length === 0) {
                 container.innerHTML = `
                 <div class="text-center py-6 border border-dashed border-white/10">
                     <i class="fas fa-shopping-bag text-2xl text-white/10 mb-2"></i>
                     <p class="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Tu carrito está vacío</p>
                 </div>`;
+                totalContainer.innerText = "L0.00";
                 return;
             }
 
-            container.innerHTML = carrito.map((item, index) => `
+            let total = 0;
+
+            container.innerHTML = carrito.map((item, index) => {
+                // Extraer el número del precio (ej: "L650.00" -> 650.00)
+                const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
+                total += precioNum;
+
+                return `
                 <div class="flex items-center gap-4 bg-darker border border-white/5 p-3 rounded group relative">
                     <div class="w-12 h-12 bg-dark rounded border border-white/10 overflow-hidden shrink-0">
                         <img src="${item.img}" class="w-full h-full object-cover">
                     </div>
                     <div class="flex-1 min-w-0">
                         <p class="text-white text-[11px] font-bold uppercase truncate">${item.titulo}</p>
-                        <p class="text-gray-500 text-[9px] uppercase mt-0.5">Talla: <span class="text-primary font-bold">${item.talla}</span> ${item.sku ? `| SKU: ${item.sku}` : ''}</p>
+                        <div class="flex justify-between items-center mt-0.5">
+                            <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-primary font-bold">${item.talla}</span> ${item.sku ? `| SKU: ${item.sku}` : ''}</p>
+                            <p class="text-primary text-[10px] font-bold">${item.precio}</p>
+                        </div>
                     </div>
                     <button onclick="eliminarDelPedido(${index})" class="text-red-500 hover:text-red-400 bg-red-500/10 w-8 h-8 rounded shrink-0 transition-colors">
                         <i class="fas fa-trash-alt"></i>
                     </button>
                 </div>
-            `).join('');
+            `}).join('');
+
+            totalContainer.innerText = `L${total.toFixed(2)}`;
         }
 
         // --- WHATSAPP CON CARRITO MÚLTIPLE ---
@@ -659,9 +679,15 @@
             msg += `👤 *Cliente:* ${n}\n\n`;
             msg += `🛍️ *PRODUCTOS SELECCIONADOS:*\n`;
             
+            let total = 0;
+
             carrito.forEach((item, index) => {
-                msg += `${index + 1}. ${item.titulo} ${item.sku ? `(SKU: ${item.sku})` : ''} \n   📏 Talla: *${item.talla}*\n`;
+                const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
+                total += precioNum;
+                msg += `${index + 1}. ${item.titulo} ${item.sku ? `(SKU: ${item.sku})` : ''} \n   📏 Talla: *${item.talla}* | 💰 ${item.precio}\n`;
             });
+
+            msg += `\n💵 *TOTAL ESTIMADO: L${total.toFixed(2)}*\n`;
 
             if(m) msg += `\n💬 *Mensaje Adicional:*\n_${m}_\n`;
             msg += `\n_Enviado desde el catálogo web_`;
