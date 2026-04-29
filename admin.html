@@ -335,9 +335,15 @@
                 </div>
 
                 <!-- LISTA ADMIN FIREBASE -->
-                <div class="mb-4 flex justify-between items-center border-b border-white/5 pb-2">
-                    <h4 class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Inventario en la Nube</h4>
-                    <span id="inventory-count" class="text-primary text-[10px] font-bold">0 Productos</span>
+                <div class="mb-6 border-b border-white/5 pb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Inventario en la Nube</h4>
+                        <span id="inventory-count" class="text-primary text-[10px] font-bold">0 Productos</span>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                        <input type="text" id="search-inventory" placeholder="Buscar por nombre de producto o SKU..." class="w-full bg-darker border border-white/10 pl-10 pr-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors rounded" oninput="renderAdminList()">
+                    </div>
                 </div>
                 <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
@@ -808,10 +814,24 @@
 
         function renderAdminList() {
             const list = document.getElementById('admin-list');
-            document.getElementById('inventory-count').innerText = `${inventario.length} Productos`;
+            const searchInput = document.getElementById('search-inventory');
+            const searchTerm = searchInput ? searchInput.value.toLowerCase().trim() : "";
+
+            const filteredInventory = inventario.filter(prod => {
+                const titleMatch = prod.titulo && prod.titulo.toLowerCase().includes(searchTerm);
+                const skuMatch = prod.sku && prod.sku.toLowerCase().includes(searchTerm);
+                return titleMatch || skuMatch;
+            });
+
+            document.getElementById('inventory-count').innerText = `${filteredInventory.length} Productos`;
             if(!list) return;
             
-            list.innerHTML = inventario.map(prod => {
+            if(filteredInventory.length === 0) {
+                list.innerHTML = `<p class="col-span-full text-gray-500 text-xs italic text-center py-4">No se encontraron productos.</p>`;
+                return;
+            }
+            
+            list.innerHTML = filteredInventory.map(prod => {
                 const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
                 const totalImgs = prod.imagenes ? prod.imagenes.length : 1;
                 return `
@@ -822,7 +842,10 @@
                             ${totalImgs > 1 ? `<div class="absolute bottom-0 right-0 bg-dark/80 text-[8px] text-primary px-1 font-bold">+${totalImgs-1}</div>` : ''}
                         </div>
                         <div class="truncate">
-                            <p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo}</p>
+                            <p class="text-white text-xs font-bold uppercase tracking-wider truncate">
+                                ${prod.titulo} 
+                                ${prod.sku ? `<span class="text-gray-500 font-normal text-[10px] ml-1">#${prod.sku}</span>` : ''}
+                            </p>
                             <div class="flex gap-2 mt-1 items-center">
                                 <span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria}</span>
                                 <span class="text-gray-500 text-[9px] font-bold">${prod.precio}</span>
