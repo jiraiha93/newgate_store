@@ -120,6 +120,21 @@
             display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* Carrusel indicators */
+        .dot {
+            height: 6px;
+            width: 6px;
+            background-color: rgba(255,255,255,0.3);
+            border-radius: 50%;
+            display: inline-block;
+            transition: background-color 0.3s ease;
+        }
+        .dot.active {
+            background-color: #d4af37;
+            width: 12px;
+            border-radius: 4px;
+        }
     </style>
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark">
@@ -134,8 +149,6 @@
             <nav class="hidden md:flex space-x-10 items-center">
                 <span onclick="showSection('inicio')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Tienda</span>
                 <span onclick="showSection('nosotros')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Nosotros</span>
-                <!-- Enlace redirige al archivo admin separado -->
-                <a href="admin.html" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-600 hover:text-primary transition-colors"><i class="fas fa-lock"></i> Panel Control</a>
             </nav>
         </div>
     </header>
@@ -143,13 +156,26 @@
     <!-- MODAL PRODUCTO -->
     <div id="product-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content animate-in fade-in zoom-in duration-300" onclick="event.stopPropagation()">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-primary text-2xl z-10 transition-colors">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-primary text-2xl z-30 transition-colors">
                 <i class="fas fa-times"></i>
             </button>
             <div class="grid grid-cols-1 lg:grid-cols-2">
-                <div class="h-[400px] lg:h-auto bg-darker flex items-center justify-center">
-                    <img id="modal-img" src="" alt="Producto" class="max-w-full max-h-full object-contain">
+                <!-- CARRUSEL DE IMÁGENES -->
+                <div class="h-[400px] lg:h-auto bg-darker flex flex-col items-center justify-center relative group">
+                    <button id="btn-prev-img" onclick="changeImage(-1)" class="absolute left-4 z-20 text-white/50 hover:text-primary text-3xl opacity-0 group-hover:opacity-100 transition-opacity hidden">
+                        <i class="fas fa-chevron-left"></i>
+                    </button>
+                    
+                    <img id="modal-img" src="" alt="Producto" class="max-w-full max-h-full object-contain absolute inset-0 m-auto transition-opacity duration-300">
+                    
+                    <button id="btn-next-img" onclick="changeImage(1)" class="absolute right-4 z-20 text-white/50 hover:text-primary text-3xl opacity-0 group-hover:opacity-100 transition-opacity hidden">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    
+                    <!-- Puntos del Carrusel -->
+                    <div id="carousel-dots" class="absolute bottom-4 flex justify-center w-full space-x-2 z-20"></div>
                 </div>
+
                 <div class="p-8 lg:p-10 flex flex-col justify-center">
                     <p id="modal-cat" class="text-primary text-[10px] uppercase tracking-[0.4em] mb-2 font-bold"></p>
                     <h2 id="modal-title" class="font-serif text-4xl text-white italic mb-1"></h2>
@@ -177,8 +203,8 @@
 
                     <div class="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4 border-t border-white/5">
                         <span id="modal-price" class="text-3xl font-serif text-white"></span>
-                        <button onclick="copyAndGoToContact()" class="w-full sm:w-auto bg-primary text-dark px-8 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">
-                            Pedir esta prenda
+                        <button onclick="copyAndGoToContact()" class="w-full sm:w-auto bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all text-center">
+                            Añadir
                         </button>
                     </div>
                 </div>
@@ -205,7 +231,6 @@
                     <h2 class="font-serif text-4xl text-white italic">Catálogo</h2>
                     <p class="text-gray-500 uppercase tracking-widest text-xs mt-2" id="display-shop-slogan"></p>
                 </div>
-                <!-- Filtros se llenarán con las categorías reales -->
                 <div class="flex flex-wrap gap-6 text-xs uppercase tracking-widest text-gray-500" id="filter-container"></div>
             </div>
             
@@ -291,19 +316,20 @@
 
         let inventario = [];
         let config = { ...DEFAULT_CONFIG };
+        
+        // Variables para el carrusel
+        let currentModalImages = [];
+        let currentImageIndex = 0;
 
         // --- ARRANQUE ---
         function init() {
             applyConfig();
-            
-            // Conexiones a Firebase (Modo Lectura)
             escucharFirebase(); 
             escucharHero();
             escucharConfigGlobal(); 
         }
 
         // --- FIREBASE CLOUD LISTENERS (SOLO LECTURA) ---
-        
         function escucharConfigGlobal() {
             db.collection("config").doc("global").onSnapshot((doc) => {
                 if (doc.exists) {
@@ -320,7 +346,6 @@
                     applyConfig();
                     renderFilters(); 
                 } else {
-                    // SE CORRIGIÓ EL ERROR: El cliente NO debe intentar guardar ni crear configuración.
                     console.log("ℹ️ Configuración global aún no creada por el admin. Usando por defecto.");
                     applyConfig();
                     renderFilters();
@@ -380,11 +405,18 @@
             if(inventario.length === 0) {
                  grid.innerHTML = '<div class="col-span-full text-center py-20"><i class="fas fa-box-open text-4xl text-white/10 mb-4 block"></i><p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Catálogo vacío por el momento</p></div>';
             } else {
-                grid.innerHTML = inventario.map(prod => `
+                grid.innerHTML = inventario.map(prod => {
+                    // Tomar la portada correctamente (compatibilidad hacia atrás)
+                    const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
+                    
+                    return `
                     <div class="gallery-item group cursor-pointer animate-in fade-in duration-500" data-category="${prod.categoria}">
                         <div class="relative aspect-[3/4] overflow-hidden bg-darker border border-white/5 shadow-2xl">
-                            <img src="${prod.imagen}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
+                            <img src="${coverImg}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
                             <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                            
+                            ${prod.imagenes && prod.imagenes.length > 1 ? `<div class="absolute top-2 right-2 bg-dark/70 text-white text-[9px] px-2 py-1 rounded font-bold"><i class="fas fa-clone"></i> ${prod.imagenes.length}</div>` : ''}
+
                             <div class="absolute bottom-4 left-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-500 ease-out">
                                 <button onclick="openModalById('${prod.id}')" class="w-full bg-white text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary transition-colors shadow-lg">Ver Detalles</button>
                             </div>
@@ -397,7 +429,7 @@
                             <span class="text-primary font-bold whitespace-nowrap">${prod.precio}</span>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
             }
             renderFilters();
         }
@@ -435,13 +467,17 @@
             });
         }
 
-        // --- MANEJO DE MODAL Y CONTACTO ---
+        // --- MANEJO DE MODAL Y CARRUSEL ---
         function openModalById(id) {
             const p = inventario.find(x => x.id === id);
             if(!p) return;
             window.lastViewedProduct = p;
             
-            document.getElementById('modal-img').src = p.imagen;
+            // Configurar imágenes del carrusel (compatibilidad)
+            currentModalImages = p.imagenes && p.imagenes.length > 0 ? p.imagenes : [p.imagen];
+            currentImageIndex = 0;
+            updateCarouselView();
+
             document.getElementById('modal-title').innerText = p.titulo;
             document.getElementById('modal-sku-display').innerText = p.sku ? `SKU: ${p.sku}` : '';
             document.getElementById('modal-desc').innerText = p.descripcion;
@@ -460,6 +496,41 @@
             }
             
             document.getElementById('product-modal').classList.add('active');
+        }
+
+        function changeImage(direction) {
+            currentImageIndex += direction;
+            if (currentImageIndex >= currentModalImages.length) currentImageIndex = 0;
+            if (currentImageIndex < 0) currentImageIndex = currentModalImages.length - 1;
+            updateCarouselView();
+        }
+
+        function updateCarouselView() {
+            const imgElement = document.getElementById('modal-img');
+            imgElement.style.opacity = 0; // Transición suave
+            
+            setTimeout(() => {
+                imgElement.src = currentModalImages[currentImageIndex];
+                imgElement.style.opacity = 1;
+            }, 150);
+
+            const prevBtn = document.getElementById('btn-prev-img');
+            const nextBtn = document.getElementById('btn-next-img');
+            const dotsContainer = document.getElementById('carousel-dots');
+
+            if (currentModalImages.length > 1) {
+                prevBtn.classList.remove('hidden');
+                nextBtn.classList.remove('hidden');
+                
+                // Generar puntos
+                dotsContainer.innerHTML = currentModalImages.map((_, idx) => `
+                    <span class="dot ${idx === currentImageIndex ? 'active' : ''}"></span>
+                `).join('');
+            } else {
+                prevBtn.classList.add('hidden');
+                nextBtn.classList.add('hidden');
+                dotsContainer.innerHTML = ''; // Ocultar puntos si es 1 foto
+            }
         }
 
         function closeModal() { document.getElementById('product-modal').classList.remove('active'); }

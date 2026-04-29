@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
-    <!-- FIREBASE (conexión base) -->
+    <!-- FIREBASE (conexión base + auth) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 
     <script>
     const firebaseConfig = {
@@ -19,7 +20,8 @@
     // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    console.log("🔥 Firebase conectado: Panel Administrador");
+    const auth = firebase.auth();
+    console.log("🔥 Firebase conectado: Panel Administrador (Auth + Firestore)");
     </script>
     
     <meta charset="UTF-8">
@@ -150,6 +152,36 @@
             display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Estilos Miniaturas */
+        .img-thumb-container {
+            position: relative;
+            width: 80px;
+            height: 80px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .img-thumb-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .img-thumb-remove {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: rgba(220, 38, 38, 0.9);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            cursor: pointer;
+        }
     </style>
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark min-h-screen flex flex-col">
@@ -166,16 +198,16 @@
         </div>
     </header>
 
-    <!-- MODAL LOGIN ADMIN OBLIGATORIO -->
-    <!-- Se eliminó la función de cerrar haciendo click fuera para proteger la vista -->
+    <!-- MODAL LOGIN ADMIN OBLIGATORIO CON FIREBASE AUTH -->
     <div id="login-modal" class="modal-overlay active">
         <div class="modal-content p-8 text-center shadow-2xl">
             <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
-            <p class="text-gray-500 text-[10px] uppercase tracking-widest mb-6">Ingresa la clave de administrador</p>
+            <p class="text-gray-500 text-[10px] uppercase tracking-widest mb-6">Ingresa credenciales de administrador</p>
             <div class="space-y-4">
+                <input type="email" id="admin-email-input" placeholder="Correo electrónico" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center transition-colors">
                 <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center transition-colors">
                 <button onclick="validateAdmin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar al Panel</button>
-                <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Contraseña Incorrecta</p>
+                <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Credenciales Incorrectas</p>
             </div>
         </div>
     </div>
@@ -190,7 +222,7 @@
                     <button onclick="showAdminTab('hero', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Sección Hero</button>
                     <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Configuración Global</button>
                 </div>
-                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-lock"></i> Bloquear Panel</button>
+                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
 
             <!-- TAB INVENTARIO -->
@@ -252,19 +284,26 @@
                             </div>
                         </div>
                         
-                        <!-- COMPRESOR DE IMÁGENES INTEGRADO -->
-                        <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[300px]" onclick="document.getElementById('new-img').click()">
-                            <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" onchange="compressAndPreview(this, 'img-preview', 'img-preview-container', 'product')">
-                            <div id="img-preview-container" class="text-center">
-                                <i class="fas fa-image text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
-                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Subir Foto (JPG/PNG)</p>
-                                <p class="text-[8px] text-gray-600 mt-2 italic">Se optimizará automáticamente para la web</p>
+                        <!-- COMPRESOR DE MÚLTIPLES IMÁGENES INTEGRADO -->
+                        <div class="flex flex-col gap-4 h-full">
+                            <div class="flex-1 flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[200px]" onclick="document.getElementById('new-img').click()">
+                                <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" multiple onchange="compressAndAddImages(this, 'product')">
+                                <div class="text-center">
+                                    <i class="fas fa-images text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
+                                    <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Añadir Fotos (JPG/PNG)</p>
+                                    <p class="text-[8px] text-gray-600 mt-2 italic">Puedes seleccionar varias a la vez</p>
+                                </div>
+                                <!-- Capa de carga para compresión -->
+                                <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-10">
+                                    <div class="loader !block"></div>
+                                    <p class="text-[10px] text-primary mt-2 uppercase tracking-widest font-bold">Optimizando...</p>
+                                </div>
                             </div>
-                            <img id="img-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" src="">
-                            <!-- Capa de carga para compresión -->
-                            <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg">
-                                <div class="loader !block"></div>
-                                <p class="text-[10px] text-primary mt-2 uppercase tracking-widest font-bold">Optimizando...</p>
+                            
+                            <!-- Contenedor de miniaturas -->
+                            <div id="thumbnails-container" class="flex flex-wrap gap-3 bg-darker p-4 rounded-lg border border-white/5 min-h-[110px]">
+                                <p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6" id="no-img-text">Aún no hay imágenes seleccionadas</p>
+                                <!-- Las miniaturas se inyectan aquí -->
                             </div>
                         </div>
                     </div>
@@ -318,7 +357,7 @@
                             </div>
                         </div>
                         <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[250px]" onclick="document.getElementById('new-hero-img').click()">
-                            <input type="file" id="new-hero-img" class="hidden" accept="image/*" onchange="compressAndPreview(this, 'hero-preview', 'hero-preview-container', 'hero')">
+                            <input type="file" id="new-hero-img" class="hidden" accept="image/*" onchange="compressHeroImage(this)">
                             <div id="hero-preview-container" class="text-center">
                                 <i class="fas fa-camera text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
                                 <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Cambiar Imagen de Fondo</p>
@@ -353,12 +392,7 @@
                     </div>
 
                     <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
-                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes</h3>
-                        <div>
-                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-key text-primary"></i> Nueva Clave de Admin</label>
-                            <input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors" placeholder="••••••••">
-                        </div>
-                        <hr class="border-white/5">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Redes Sociales</h3>
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp (Ej: 50499998888)</label>
                             <input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none transition-colors">
@@ -391,8 +425,7 @@
             categories: ["urban", "anime", "autos"],
             heroTitle: "ESTILO SIN LÍMITES",
             heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE",
-            heroImage: "",
-            adminPassword: "admin123" 
+            heroImage: ""
         };
 
         const DEFAULT_MEASURES = {
@@ -405,41 +438,53 @@
         let inventario = [];
         let config = { ...DEFAULT_CONFIG };
 
-        let selectedBase64Img = "";
+        let selectedBase64Imgs = []; // Arreglo para múltiples imágenes
         let selectedHeroImg = "";
         let editId = null;
 
         function init() {
-            renderMedidasForm();
-            escucharConfigGlobal(); 
-            escucharFirebase(); 
-            escucharHero();
+            // FIREBASE AUTH LISTENER
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    document.getElementById('login-modal').classList.remove('active');
+                    document.getElementById('admin').style.display = 'block';
+                    setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
+                    
+                    // Iniciar datos sólo si está logueado
+                    renderMedidasForm();
+                    escucharConfigGlobal(); 
+                    escucharFirebase(); 
+                    escucharHero();
+                } else {
+                    document.getElementById('admin').classList.remove('active');
+                    document.getElementById('admin').style.display = 'none';
+                    document.getElementById('login-modal').classList.add('active');
+                }
+            });
         }
 
-        // --- SEGURIDAD Y LOGIN ---
+        // --- SEGURIDAD FIREBASE AUTH ---
         function validateAdmin() {
-            const input = document.getElementById('admin-pass-input');
+            const email = document.getElementById('admin-email-input').value.trim();
+            const pass = document.getElementById('admin-pass-input').value;
             const errorText = document.getElementById('login-error');
             
-            if (input.value === config.adminPassword) {
-                document.getElementById('login-modal').classList.remove('active');
-                document.getElementById('admin').style.display = 'block';
-                setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
-            } else {
-                errorText.classList.remove('hidden');
-                input.value = ""; 
-                input.classList.add('border-red-500');
-                setTimeout(() => input.classList.remove('border-red-500'), 1500);
-            }
+            if(!email || !pass) return;
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then((userCredential) => {
+                    errorText.classList.add('hidden');
+                    document.getElementById('admin-pass-input').value = "";
+                })
+                .catch((error) => {
+                    errorText.classList.remove('hidden');
+                    document.getElementById('admin-pass-input').classList.add('border-red-500');
+                    setTimeout(() => document.getElementById('admin-pass-input').classList.remove('border-red-500'), 1500);
+                });
         }
         
         function logoutAdmin() { 
-            document.getElementById('admin').classList.remove('active');
-            setTimeout(() => {
-                document.getElementById('admin').style.display = 'none';
-                document.getElementById('login-modal').classList.add('active');
-                document.getElementById('admin-pass-input').value = "";
-            }, 400);
+            auth.signOut();
         }
 
         // --- FIREBASE CLOUD LISTENERS (LECTURA / ESCRITURA) ---
@@ -456,13 +501,11 @@
                     if (data.categories && Array.isArray(data.categories)) {
                         config.categories = data.categories;
                     }
-                    config.adminPassword = data.adminPassword || config.adminPassword;
 
                     renderConfig();
                     renderCategoryInputs();
                     renderCategoriesManager();
                 } else {
-                    // Solo el Admin crea la configuración inicial si falta.
                     saveConfigToFirebase();
                 }
             }, (error) => {
@@ -505,12 +548,86 @@
             if(event) event.target.classList.add('active');
         }
 
-        // --- OPTIMIZADOR DE IMÁGENES ---
-        function compressAndPreview(input, previewId, containerId, targetType) {
-            if (!input.files || !input.files[0]) return;
+        // --- OPTIMIZADOR DE IMÁGENES MÚLTIPLES ---
+        function compressAndAddImages(input, targetType) {
+            if (!input.files || input.files.length === 0) return;
             
+            const loadingLayer = document.getElementById('img-loading');
+            loadingLayer.classList.remove('hidden');
+            
+            let filesProcessed = 0;
+            const totalFiles = input.files.length;
+
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800; 
+                        const MAX_HEIGHT = 1000;
+                        let width = img.width;
+                        let height = img.height;
+
+                        if (width > height) {
+                            if (width > MAX_WIDTH) {
+                                height *= MAX_WIDTH / width;
+                                width = MAX_WIDTH;
+                            }
+                        } else {
+                            if (height > MAX_HEIGHT) {
+                                width *= MAX_HEIGHT / height;
+                                height = MAX_HEIGHT;
+                            }
+                        }
+
+                        canvas.width = width;
+                        canvas.height = height;
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, width, height);
+
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        selectedBase64Imgs.push(compressedDataUrl);
+
+                        filesProcessed++;
+                        if (filesProcessed === totalFiles) {
+                            renderThumbnails();
+                            loadingLayer.classList.add('hidden');
+                        }
+                    }
+                };
+            });
+            input.value = ""; // Reset input
+        }
+
+        function removeImage(index) {
+            selectedBase64Imgs.splice(index, 1);
+            renderThumbnails();
+        }
+
+        function renderThumbnails() {
+            const container = document.getElementById('thumbnails-container');
+            const noImgText = document.getElementById('no-img-text');
+            
+            if (selectedBase64Imgs.length === 0) {
+                container.innerHTML = `<p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6" id="no-img-text">Aún no hay imágenes seleccionadas</p>`;
+                return;
+            }
+
+            container.innerHTML = selectedBase64Imgs.map((imgSrc, index) => `
+                <div class="img-thumb-container">
+                    <img src="${imgSrc}" alt="thumb">
+                    <div class="img-thumb-remove" onclick="event.stopPropagation(); removeImage(${index})"><i class="fas fa-times"></i></div>
+                </div>
+            `).join('');
+        }
+
+        function compressHeroImage(input) {
+            if (!input.files || !input.files[0]) return;
             const file = input.files[0];
-            const loadingLayer = targetType === 'hero' ? document.getElementById('hero-loading') : document.getElementById('img-loading');
+            const loadingLayer = document.getElementById('hero-loading');
             loadingLayer.classList.remove('hidden');
 
             const reader = new FileReader();
@@ -520,42 +637,21 @@
                 img.src = event.target.result;
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 800; 
-                    const MAX_HEIGHT = 1000;
-                    let width = img.width;
-                    let height = img.height;
-
-                    if (width > height) {
-                        if (width > MAX_WIDTH) {
-                            height *= MAX_WIDTH / width;
-                            width = MAX_WIDTH;
-                        }
-                    } else {
-                        if (height > MAX_HEIGHT) {
-                            width *= MAX_HEIGHT / height;
-                            height = MAX_HEIGHT;
-                        }
-                    }
+                    let width = img.width > 1200 ? 1200 : img.width;
+                    let height = img.height * (width / img.width);
 
                     canvas.width = width;
                     canvas.height = height;
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
-                    if(targetType === 'hero') {
-                        selectedHeroImg = compressedDataUrl;
-                    } else {
-                        selectedBase64Img = compressedDataUrl;
-                    }
-
-                    document.getElementById(previewId).src = compressedDataUrl;
-                    document.getElementById(previewId).classList.remove('hidden');
-                    document.getElementById(containerId).classList.add('hidden');
+                    selectedHeroImg = canvas.toDataURL('image/jpeg', 0.7);
+                    document.getElementById('hero-preview').src = selectedHeroImg;
+                    document.getElementById('hero-preview').classList.remove('hidden');
+                    document.getElementById('hero-preview-container').classList.add('hidden');
                     loadingLayer.classList.add('hidden');
                 }
-            };
+            }
         }
 
         // --- GESTIÓN DE PRODUCTOS ---
@@ -587,7 +683,7 @@
             const sku = document.getElementById('new-sku').value.trim().toUpperCase();
             const price = document.getElementById('new-price').value.trim();
             
-            if(!title || !price || !selectedBase64Img) return alert("❌ Completa Título, Precio y selecciona una Foto.");
+            if(!title || !price || selectedBase64Imgs.length === 0) return alert("❌ Completa Título, Precio y selecciona al menos una Foto.");
 
             toggleButtonLoading(true);
 
@@ -618,7 +714,9 @@
                 hasMeasures: hasMeasures,
                 tallas: tallas,
                 medidas: medidas,
-                imagen: selectedBase64Img,
+                // Retrocompatibilidad: guardamos imagen principal como 'imagen' y arreglo como 'imagenes'
+                imagen: selectedBase64Imgs[0], 
+                imagenes: selectedBase64Imgs,
                 createdAt: editId ? undefined : firebase.firestore.FieldValue.serverTimestamp() 
             };
 
@@ -664,10 +762,9 @@
             document.getElementById('toggle-measures').checked = !!p.hasMeasures;
             toggleMeasuresVisibility();
 
-            selectedBase64Img = p.imagen;
-            document.getElementById('img-preview').src = p.imagen;
-            document.getElementById('img-preview').classList.remove('hidden');
-            document.getElementById('img-preview-container').classList.add('hidden');
+            // Cargar imágenes existentes (retrocompatibilidad con obj de 1 imagen)
+            selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : [p.imagen];
+            renderThumbnails();
             
             if(p.hasMeasures && p.tallas) {
                 ["s", "m", "l", "xl"].forEach(t => {
@@ -693,12 +790,11 @@
             document.getElementById('new-sku').value = "";
             document.getElementById('new-price').value = "";
             document.getElementById('new-desc').value = "";
-            document.getElementById('img-preview').classList.add('hidden');
-            document.getElementById('img-preview-container').classList.remove('hidden');
             document.getElementById('toggle-measures').checked = true;
             toggleMeasuresVisibility();
-            selectedBase64Img = "";
             
+            selectedBase64Imgs = [];
+            renderThumbnails();
             renderMedidasForm();
         }
 
@@ -707,11 +803,15 @@
             document.getElementById('inventory-count').innerText = `${inventario.length} Productos`;
             if(!list) return;
             
-            list.innerHTML = inventario.map(prod => `
+            list.innerHTML = inventario.map(prod => {
+                const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
+                const totalImgs = prod.imagenes ? prod.imagenes.length : 1;
+                return `
                 <div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg group hover:border-primary/30 transition-all shadow-lg hover:shadow-primary/5">
                     <div class="flex items-center gap-4 truncate">
-                        <div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden">
-                            <img src="${prod.imagen}" class="w-full h-full object-cover" loading="lazy">
+                        <div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden relative">
+                            <img src="${coverImg}" class="w-full h-full object-cover" loading="lazy">
+                            ${totalImgs > 1 ? `<div class="absolute bottom-0 right-0 bg-dark/80 text-[8px] text-primary px-1 font-bold">+${totalImgs-1}</div>` : ''}
                         </div>
                         <div class="truncate">
                             <p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo}</p>
@@ -727,7 +827,7 @@
                         <button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 flex items-center justify-center text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded transition-colors"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>
-            `).join('');
+            `}).join('');
         }
 
         // --- SISTEMA DE CONFIGURACIÓN GLOBAL (FIREBASE) ---
@@ -739,8 +839,7 @@
                 whatsapp: config.whatsapp,
                 instagram: config.instagram,
                 facebook: config.facebook,
-                categories: config.categories,
-                adminPassword: config.adminPassword
+                categories: config.categories
             }, { merge: true }) 
             .then(() => {
                 if(successMsg) alert("✅ " + successMsg);
@@ -865,11 +964,7 @@
             config.instagram = document.getElementById('config-instagram').value.trim();
             config.facebook = document.getElementById('config-facebook').value.trim();
             
-            const newPass = document.getElementById('config-password').value.trim();
-            if(newPass) config.adminPassword = newPass;
-
             saveConfigToFirebase("Configuración Global Guardada Exitosamente.");
-            document.getElementById('config-password').value = ""; 
         }
 
         window.onload = init;
