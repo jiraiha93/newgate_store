@@ -234,8 +234,8 @@
                 <div class="flex flex-wrap gap-6 text-xs uppercase tracking-widest text-gray-500" id="filter-container"></div>
             </div>
             
-            <!-- CONTENEDOR GALERÍA -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8" id="gallery-grid">
+            <!-- CONTENEDOR GALERÍA (Se agregó transición para evitar el flash) -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 transition-opacity duration-300" id="gallery-grid">
                 <div class="col-span-full text-center py-20 flex flex-col items-center justify-center">
                      <div class="loader !border-t-primary !border-white/10 !w-8 !h-8 mb-4 !block"></div>
                      <p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Cargando colección exclusiva...</p>
@@ -447,6 +447,7 @@
             `;
         }
 
+        // Lógica actualizada de los filtros para evitar parpadeos visuales
         function filterGallery(cat, e) {
             document.querySelectorAll('.filter-btn').forEach(b => {
                 b.classList.remove('text-primary', 'border-primary', 'font-bold');
@@ -456,15 +457,24 @@
             e.target.classList.remove('text-gray-500');
             e.target.classList.add('text-primary', 'border-primary', 'font-bold');
             
-            document.querySelectorAll('.gallery-item').forEach(item => {
-                if (cat === 'all' || item.dataset.category === cat) {
-                    item.style.display = 'block';
-                    setTimeout(() => item.style.opacity = "1", 50);
-                } else {
-                    item.style.opacity = "0";
-                    setTimeout(() => item.style.display = 'none', 300);
-                }
-            });
+            const grid = document.getElementById('gallery-grid');
+            
+            // 1. Ocultar suavemente todo el contenedor
+            grid.style.opacity = '0';
+            
+            // 2. Esperar al fin de la transición antes de reordenar los items (300ms)
+            setTimeout(() => {
+                document.querySelectorAll('.gallery-item').forEach(item => {
+                    if (cat === 'all' || item.dataset.category === cat) {
+                        item.style.display = 'block';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+                
+                // 3. Volver a mostrar el contenedor suavemente
+                grid.style.opacity = '1';
+            }, 300);
         }
 
         // --- MANEJO DE MODAL Y CARRUSEL ---
