@@ -5,7 +5,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
-    <!-- NUEVO: Firebase Storage para manejar archivos -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
     <script>
@@ -22,7 +21,7 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const storage = firebase.storage(); // Inicialización de Storage
+    const storage = firebase.storage(); 
     console.log("🔥 Firebase conectado: Panel Administrador + Storage");
     </script>
     
@@ -32,8 +31,6 @@
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- NUEVO: SweetAlert2 para Notificaciones elegantes -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
@@ -83,7 +80,6 @@
             width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer;
         }
         
-        /* SweetAlert sobreposición */
         .swal2-container { z-index: 9999 !important; }
     </style>
 </head>
@@ -188,7 +184,7 @@
                                 <div class="text-center">
                                     <i class="fas fa-images text-3xl text-gray-700 mb-2 transition-transform hover:scale-110"></i>
                                     <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Añadir Fotos (JPG/PNG)</p>
-                                    <p class="text-[8px] text-gray-600 mt-1 italic">Puedes seleccionar varias a la vez</p>
+                                    <p class="text-[8px] text-gray-600 mt-1 italic">Recomendado: Formato Vertical 3:4 (Ej. 900x1200px)</p>
                                 </div>
                                 <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-10">
                                     <div class="loader !block"></div>
@@ -256,17 +252,18 @@
                         </div>
                         <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[250px]" onclick="document.getElementById('new-hero-img').click()">
                             <input type="file" id="new-hero-img" class="hidden" accept="image/*" onchange="compressHeroImage(this)">
-                            <div id="hero-preview-container" class="text-center">
-                                <i class="fas fa-camera text-4xl text-gray-700 mb-4 transition-transform hover:scale-110"></i>
-                                <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Cambiar Imagen de Fondo</p>
+                            <div id="hero-preview-container" class="text-center z-10 relative bg-darker/60 p-4 rounded-lg backdrop-blur-sm mt-8">
+                                <i class="fas fa-camera text-4xl text-gray-300 mb-2 transition-transform hover:scale-110"></i>
+                                <p class="text-[10px] text-gray-300 uppercase tracking-widest font-bold">Cambiar Fondo</p>
+                                <p class="text-[8px] text-gray-400 mt-1 italic">Recomendado: Horizontal 16:9 (Ej. 1920x1080px)</p>
                             </div>
-                            <img id="hero-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg" src="">
-                            <div id="hero-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg">
+                            <img id="hero-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg opacity-60" src="">
+                            <div id="hero-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-20">
                                 <div class="loader !block"></div>
                             </div>
                         </div>
                     </div>
-                    <button onclick="saveHeroConfig(event)" class="w-full mt-10 bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-xl">Actualizar Hero</button>
+                    <button id="btn-save-hero" onclick="saveHeroConfig()" class="w-full mt-10 bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-xl">Actualizar Hero</button>
                 </div>
             </div>
 
@@ -320,13 +317,13 @@
 
     <!-- SCRIPTS ADMIN -->
     <script>
-        // --- NUEVO: Configuración Global de SweetAlert2 (Toasts y Modals) ---
+        // --- OPTIMIZADO: Toasts más elegantes en la parte superior ---
         const Toast = Swal.mixin({
-            toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000,
-            background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10' }
+            toast: true, position: 'top', showConfirmButton: false, timer: 3000,
+            background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', 
+            customClass: { popup: 'border border-white/10 !py-2 !px-4 !w-auto shadow-2xl', title: '!text-[11px] !font-bold tracking-widest uppercase' }
         });
 
-        // Alertas de confirmación elegantes
         const DarkAlert = Swal.mixin({
             background: '#0f0f0f', color: '#fff',
             confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626',
@@ -543,7 +540,8 @@
                     selectedHeroImg = canvas.toDataURL('image/jpeg', 0.8);
                     document.getElementById('hero-preview').src = selectedHeroImg;
                     document.getElementById('hero-preview').classList.remove('hidden');
-                    document.getElementById('hero-preview-container').classList.add('hidden');
+                    document.getElementById('hero-preview-container').classList.remove('bg-darker/60');
+                    document.getElementById('hero-preview-container').classList.add('bg-darker/80');
                     loadingLayer.classList.add('hidden');
                 }
             }
@@ -572,9 +570,7 @@
             }
         }
 
-        // --- NUEVO: Función auxiliar para subir a Storage ---
         async function uploadImageToStorage(base64String, path) {
-            // Si ya es un enlace de Storage (HTTPS), no necesitamos resubirlo
             if (!base64String.startsWith('data:image')) return base64String;
             
             try {
@@ -585,11 +581,10 @@
                 return await ref.getDownloadURL();
             } catch (error) {
                 console.error("Error subiendo imagen a Storage:", error);
-                throw new Error("Fallo al subir una de las imágenes");
+                throw new Error("Fallo al subir una de las imágenes. Revisa Reglas Storage.");
             }
         }
 
-        // --- NUEVO: addProduct ahora maneja Firebase Storage Async/Await ---
         async function addProduct() {
             const title = document.getElementById('new-title').value.trim();
             const sku = document.getElementById('new-sku').value.trim().toUpperCase();
@@ -602,18 +597,16 @@
             toggleButtonLoading(true);
 
             try {
-                // Preparar referencia y ID del documento (necesitamos el ID para la carpeta de Storage)
                 let docId = editId;
                 let docRef;
 
                 if (docId) {
                     docRef = db.collection("productos").doc(docId);
                 } else {
-                    docRef = db.collection("productos").doc(); // Crea un nuevo ID
+                    docRef = db.collection("productos").doc(); 
                     docId = docRef.id;
                 }
 
-                // Subir imágenes a Storage y obtener URLs de descarga
                 const imageUrls = await Promise.all(selectedBase64Imgs.map((b64, idx) => 
                     uploadImageToStorage(b64, `productos/${docId}/img_${idx}_${Date.now()}.jpg`)
                 ));
@@ -628,25 +621,26 @@
                             const tName = t.toUpperCase();
                             tallas.push(tName);
                             medidas[tName] = {
-                                pecho: document.getElementById(`${t}-pecho`).value,
-                                largo: document.getElementById(`${t}-largo`).value,
-                                ancho: document.getElementById(`${t}-ancho`).value
+                                pecho: document.getElementById(`${t}-pecho`).value || "",
+                                largo: document.getElementById(`${t}-largo`).value || "",
+                                ancho: document.getElementById(`${t}-ancho`).value || ""
                             };
                         }
                     });
                 }
 
+                // SOLUCIÓN BUG: Asegurar que nada llegue como 'undefined' a Firebase
                 const productData = {
-                    sku: sku,
+                    sku: sku || "",
                     categoria: document.getElementById('new-cat').value || 'general',
-                    titulo: title,
-                    descripcion: document.getElementById('new-desc').value.trim(),
-                    precio: price,
+                    titulo: title || "",
+                    descripcion: document.getElementById('new-desc').value.trim() || "",
+                    precio: price || "",
                     hasMeasures: hasMeasures,
                     tallas: tallas,
                     medidas: medidas,
-                    imagen: imageUrls[0] || "", // La primera imagen es la principal (URL de Storage)
-                    imagenes: imageUrls         // Array de URLs de Storage
+                    imagen: imageUrls[0] || "", 
+                    imagenes: imageUrls || []         
                 };
 
                 if (!editId) {
@@ -666,7 +660,6 @@
             }
         }
 
-        // --- NUEVO: deleteProduct mejorado con SweetAlert2 ---
         function deleteProduct(id) {
             DarkAlert.fire({
                 title: '¿Eliminar producto?',
@@ -697,9 +690,9 @@
             document.getElementById('btn-submit-text').innerText = "Actualizar Producto";
             document.getElementById('btn-cancel-edit').classList.remove('hidden');
 
-            document.getElementById('new-title').value = p.titulo;
+            document.getElementById('new-title').value = p.titulo || "";
             document.getElementById('new-sku').value = p.sku || "";
-            document.getElementById('new-price').value = p.precio;
+            document.getElementById('new-price').value = p.precio || "";
             document.getElementById('new-desc').value = p.descripcion || "";
             
             if (p.categoria) document.getElementById('new-cat').value = p.categoria;
@@ -707,7 +700,6 @@
             document.getElementById('toggle-measures').checked = !!p.hasMeasures;
             toggleMeasuresVisibility();
 
-            // Las imágenes pueden ser B64 antiguos o las nuevas URLs de Storage. Ambas funcionarán.
             selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []);
             renderThumbnails();
             
@@ -716,9 +708,9 @@
                     const label = t.toUpperCase();
                     document.getElementById(`t-${t}`).checked = p.tallas.includes(label);
                     if(p.medidas && p.medidas[label]) {
-                        document.getElementById(`${t}-pecho`).value = p.medidas[label].pecho;
-                        document.getElementById(`${t}-largo`).value = p.medidas[label].largo;
-                        document.getElementById(`${t}-ancho`).value = p.medidas[label].ancho;
+                        document.getElementById(`${t}-pecho`).value = p.medidas[label].pecho || "";
+                        document.getElementById(`${t}-largo`).value = p.medidas[label].largo || "";
+                        document.getElementById(`${t}-ancho`).value = p.medidas[label].ancho || "";
                     }
                 });
             }
@@ -878,43 +870,40 @@
             if (config.heroImage) {
                 document.getElementById('hero-preview').src = config.heroImage;
                 document.getElementById('hero-preview').classList.remove('hidden');
-                document.getElementById('hero-preview-container').classList.add('hidden');
+                document.getElementById('hero-preview-container').classList.add('bg-darker/80');
             }
         }
 
-        // --- NUEVO: saveHeroConfig ahora maneja Firebase Storage Async/Await ---
-        async function saveHeroConfig(event) {
+        // SOLUCIÓN BUG: Se refactorizó la recolección del botón y prevención de valores nulos
+        async function saveHeroConfig() {
             const title = document.getElementById('config-hero-title').value.trim();
             const subtitle = document.getElementById('config-hero-subtitle').value.trim();
-            const btn = event?.target;
-            const originalText = btn ? btn.innerText : 'Actualizar Hero';
+            const btn = document.getElementById('btn-save-hero');
+            const originalText = btn.innerText;
             
-            if (btn) { btn.innerText = "Subiendo..."; btn.disabled = true; }
+            btn.innerText = "Subiendo..."; btn.disabled = true;
 
             try {
-                // Sube la imagen a Storage si es un Base64 nuevo
-                let imageToSave = config.heroImage;
+                let imageToSave = config.heroImage || "";
                 if (selectedHeroImg && selectedHeroImg.startsWith('data:image')) {
                     imageToSave = await uploadImageToStorage(selectedHeroImg, `config/hero_bg_${Date.now()}.jpg`);
                 }
 
                 await db.collection("config").doc("hero").set({
-                    heroTitle: title, heroSubtitle: subtitle, heroImage: imageToSave
-                });
+                    heroTitle: title || "", heroSubtitle: subtitle || "", heroImage: imageToSave || ""
+                }, { merge: true }); // Merge true evita borrar configuraciones ajenas
 
                 selectedHeroImg = "";
                 
-                if (btn) {
-                    btn.innerText = "¡Actualizado!";
-                    btn.classList.add('bg-white', 'text-dark');
-                    setTimeout(() => {
-                        btn.innerText = originalText;
-                        btn.classList.remove('bg-white', 'text-dark');
-                        btn.disabled = false;
-                    }, 2000);
-                }
+                btn.innerText = "¡Actualizado!";
+                btn.classList.add('bg-white', 'text-dark');
+                setTimeout(() => {
+                    btn.innerText = originalText;
+                    btn.classList.remove('bg-white', 'text-dark');
+                    btn.disabled = false;
+                }, 2000);
             } catch (error) {
-                if (btn) { btn.innerText = originalText; btn.disabled = false; }
+                btn.innerText = originalText; btn.disabled = false;
                 DarkAlert.fire({ icon: 'error', title: 'Fallo de subida', text: error.message });
             }
         }
@@ -929,12 +918,12 @@
         }
 
         function saveGlobalConfig() {
-            config.slogan = document.getElementById('config-slogan').value.trim();
-            config.aboutTitle = document.getElementById('config-about-title').value.trim();
-            config.aboutDesc = document.getElementById('config-about-desc').value.trim();
-            config.whatsapp = document.getElementById('config-whatsapp').value.replace(/\D/g,''); 
-            config.instagram = document.getElementById('config-instagram').value.trim();
-            config.facebook = document.getElementById('config-facebook').value.trim();
+            config.slogan = document.getElementById('config-slogan').value.trim() || "";
+            config.aboutTitle = document.getElementById('config-about-title').value.trim() || "";
+            config.aboutDesc = document.getElementById('config-about-desc').value.trim() || "";
+            config.whatsapp = document.getElementById('config-whatsapp').value.replace(/\D/g,'') || ""; 
+            config.instagram = document.getElementById('config-instagram').value.trim() || "";
+            config.facebook = document.getElementById('config-facebook').value.trim() || "";
             
             saveConfigToFirebase();
             

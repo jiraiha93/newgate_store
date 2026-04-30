@@ -16,7 +16,6 @@
       measurementId: "G-9Y1BH12NG4"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     console.log("🔥 Firebase conectado: Vista Cliente");
@@ -29,28 +28,16 @@
     <meta property="og:title" content="NEW GATE | Streetwear Exclusivo">
     <meta property="og:description" content="Explora nuestro catálogo de ropa Oversize de lujo.">
     
-    <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- NUEVO: SweetAlert2 para Notificaciones elegantes -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     
-    <!-- Configuración Tailwind -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#d4af37', 
-                        dark: '#0a0a0a',
-                        darker: '#050505',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif'],
-                        graffiti: ['Permanent Marker', 'cursive'], 
-                    }
+                    colors: { primary: '#d4af37', dark: '#0a0a0a', darker: '#050505' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'], graffiti: ['Permanent Marker', 'cursive'] }
                 }
             }
         }
@@ -87,7 +74,6 @@
         .dot { height: 6px; width: 6px; background-color: rgba(255,255,255,0.3); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; }
         .dot.active { background-color: #d4af37; width: 12px; border-radius: 4px; }
         
-        /* Ajuste z-index para que SweetAlert quede por encima del header */
         .swal2-container { z-index: 9999 !important; }
     </style>
 </head>
@@ -113,7 +99,6 @@
         </div>
     </header>
 
-    <!-- MODAL VISTA DE PRODUCTO -->
     <div id="product-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content animate-in fade-in zoom-in duration-300" onclick="event.stopPropagation()">
             <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-primary text-2xl z-30 transition-colors bg-darker/50 w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
@@ -137,7 +122,6 @@
                 <div class="p-8 lg:p-10 flex flex-col justify-center">
                     <div class="flex justify-between items-start mb-2">
                         <p id="modal-cat" class="text-primary text-[10px] uppercase tracking-[0.4em] font-bold"></p>
-                        <!-- Botón de compartir nativo/copiar enlace -->
                         <button onclick="shareProduct()" class="text-gray-500 hover:text-primary transition-colors text-sm border border-white/5 rounded-full w-8 h-8 flex items-center justify-center" title="Copiar enlace"><i class="fas fa-share-alt"></i></button>
                     </div>
                     
@@ -272,17 +256,16 @@
     <script>
         document.getElementById('current-year').innerText = new Date().getFullYear();
 
-        // --- NUEVO: Configuración Global de Notificaciones UI ---
+        // --- OPTIMIZADO: Toasts en la parte superior ---
         const Toast = Swal.mixin({
             toast: true,
-            position: 'bottom-end',
+            position: 'top', 
             showConfirmButton: false,
             timer: 3000,
-            timerProgressBar: true,
             background: '#0f0f0f',
             color: '#fff',
             iconColor: '#d4af37',
-            customClass: { popup: 'border border-white/10 rounded-lg shadow-2xl' }
+            customClass: { popup: 'border border-white/10 rounded-lg shadow-2xl !py-2 !px-4 !w-auto', title: '!text-[11px] !font-bold tracking-widest uppercase' }
         });
 
         const DEFAULT_CONFIG = {
@@ -303,7 +286,7 @@
         let carrito = [];
         let currentModalImages = [];
         let currentImageIndex = 0;
-        let hasCheckedUrlParams = false; // Control de carga compartida
+        let hasCheckedUrlParams = false; 
 
         function init() {
             applyConfig();
@@ -331,18 +314,16 @@
                 inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderGallery();
                 
-                // NUEVO: Lógica de Compartir URL (Enrutamiento Real)
                 if (!hasCheckedUrlParams && inventario.length > 0) {
                     const params = new URLSearchParams(window.location.search);
                     const prodId = params.get('producto');
                     if (prodId) {
                         const productExists = inventario.find(p => p.id === prodId);
                         if (productExists) {
-                            // Pequeño delay para asegurar que la UI esté dibujada
                             setTimeout(() => openModalById(prodId), 400); 
                         } else {
                             Toast.fire({ icon: 'error', title: 'El producto ya no está disponible' });
-                            window.history.pushState({}, '', window.location.pathname); // Limpiar URL
+                            window.history.pushState({}, '', window.location.pathname); 
                         }
                     }
                     hasCheckedUrlParams = true;
@@ -443,13 +424,11 @@
             }, 300);
         }
 
-        // --- LOGICA MODAL Y COMPARTIR ---
         function openModalById(id) {
             const p = inventario.find(x => x.id === id);
             if(!p) return;
             window.lastViewedProduct = p;
             
-            // NUEVO: Actualizar la URL de la página dinámicamente sin recargar
             window.history.pushState({ productId: id }, '', `?producto=${id}`);
 
             currentModalImages = p.imagenes && p.imagenes.length > 0 ? p.imagenes : [p.imagen];
@@ -474,7 +453,7 @@
                 
                 tallaSelectContainer.classList.remove('hidden');
                 document.getElementById('modal-talla').innerHTML = '<option value="" disabled selected>Elige una talla</option>' + p.tallas.map(t => `<option value="${t}">${t}</option>`).join('');
-                document.getElementById('modal-talla').classList.remove('border-red-500'); // Limpiar alertas viejas
+                document.getElementById('modal-talla').classList.remove('border-red-500');
             } else {
                 measuresContainer.classList.add('hidden');
                 tallaSelectContainer.classList.add('hidden');
@@ -483,7 +462,6 @@
             document.getElementById('product-modal').classList.add('active');
         }
 
-        // Función para el botón de compartir
         function shareProduct() {
             const url = window.location.href;
             if (navigator.share) {
@@ -500,12 +478,10 @@
         }
 
         function closeModal(e) { 
-            // NUEVO: Limpiar URL al cerrar para volver al catálogo natural
             window.history.pushState({}, '', window.location.pathname);
             document.getElementById('product-modal').classList.remove('active'); 
         }
 
-        // Para soportar el botón de "Atrás" en el navegador correctamente
         window.addEventListener('popstate', (event) => {
             const params = new URLSearchParams(window.location.search);
             const prodId = params.get('producto');
@@ -556,7 +532,6 @@
                 if (!select.value) {
                     select.classList.add('border-red-500');
                     setTimeout(() => select.classList.remove('border-red-500'), 1500);
-                    // Uso de Toast en vez de alert
                     Toast.fire({ icon: 'warning', title: 'Debes seleccionar una talla' });
                     return;
                 }
