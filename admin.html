@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
-    <!-- FIREBASE (conexión base + auth) -->
+    <!-- FIREBASE (conexión base + auth + storage) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <!-- NUEVO: Firebase Storage para manejar archivos -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
     <script>
     const firebaseConfig = {
@@ -17,35 +19,29 @@
       measurementId: "G-9Y1BH12NG4"
     };
 
-    // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    console.log("🔥 Firebase conectado: Panel Administrador (Auth + Firestore)");
+    const storage = firebase.storage(); // Inicialización de Storage
+    console.log("🔥 Firebase conectado: Panel Administrador + Storage");
     </script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Panel | NEW GATE</title>
     
-    <!-- Librerías Externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- NUEVO: SweetAlert2 para Notificaciones elegantes -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        primary: '#d4af37', 
-                        dark: '#0a0a0a',
-                        darker: '#050505',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        serif: ['Playfair Display', 'serif'],
-                        graffiti: ['Permanent Marker', 'cursive'], 
-                    }
+                    colors: { primary: '#d4af37', dark: '#0a0a0a', darker: '#050505' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], serif: ['Playfair Display', 'serif'], graffiti: ['Permanent Marker', 'cursive'] }
                 }
             }
         }
@@ -57,30 +53,16 @@
         .section-fade.active { display: block; opacity: 1; }
 
         .modal-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(5, 5, 5, 0.98); z-index: 200;
-            align-items: center; justify-content: center; padding: 20px;
+            display: none; position: fixed; inset: 0; background: rgba(5, 5, 5, 0.98); z-index: 200; align-items: center; justify-content: center; padding: 20px;
         }
         .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: #0f0f0f; border: 1px solid rgba(212, 175, 55, 0.2);
-            max-width: 400px; width: 100%; position: relative;
-        }
+        .modal-content { background: #0f0f0f; border: 1px solid rgba(212, 175, 55, 0.2); max-width: 400px; width: 100%; position: relative; }
 
         input[type="checkbox"]:checked + label { background-color: #d4af37; color: #0a0a0a; border-color: #d4af37; }
-        
         .editing-mode { border: 2px solid #d4af37 !important; background: rgba(212, 175, 55, 0.05) !important; }
-
-        .measure-input {
-            width: 100%; background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.1); padding: 6px;
-            text-align: center; font-size: 11px; color: white; outline: none;
-        }
+        .measure-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 6px; text-align: center; font-size: 11px; color: white; outline: none; }
         .measure-input:focus { border-color: #d4af37; }
-        
         .tab-btn.active { border-bottom: 2px solid #d4af37; color: #d4af37; }
-
-        /* Estilos de Switch Toggle */
         .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
@@ -88,32 +70,25 @@
         input:checked + .slider { background-color: #d4af37; }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* Animación de Loader */
         .loader {
-            border: 3px solid rgba(212, 175, 55, 0.3); border-radius: 50%;
-            border-top: 3px solid #d4af37; width: 20px; height: 20px;
-            -webkit-animation: spin 1s linear infinite; animation: spin 1s linear infinite;
-            display: none;
+            border: 3px solid rgba(212, 175, 55, 0.3); border-radius: 50%; border-top: 3px solid #d4af37; width: 20px; height: 20px;
+            -webkit-animation: spin 1s linear infinite; animation: spin 1s linear infinite; display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-        /* Estilos de Miniaturas de Imágenes */
-        .img-thumb-container {
-            position: relative; width: 80px; height: 80px;
-            border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);
-        }
+        .img-thumb-container { position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
         .img-thumb-container img { width: 100%; height: 100%; object-fit: cover; }
         .img-thumb-remove {
-            position: absolute; top: 2px; right: 2px;
-            background: rgba(220, 38, 38, 0.9); color: white; border-radius: 50%;
-            width: 20px; height: 20px; display: flex; align-items: center;
-            justify-content: center; font-size: 10px; cursor: pointer;
+            position: absolute; top: 2px; right: 2px; background: rgba(220, 38, 38, 0.9); color: white; border-radius: 50%;
+            width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer;
         }
+        
+        /* SweetAlert sobreposición */
+        .swal2-container { z-index: 9999 !important; }
     </style>
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark min-h-screen flex flex-col">
 
-    <!-- HEADER ADMIN -->
     <header class="w-full z-[100] bg-darker border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="font-graffiti text-3xl text-white tracking-wider">
@@ -125,7 +100,6 @@
         </div>
     </header>
 
-    <!-- MODAL LOGIN ADMIN OBLIGATORIO -->
     <div id="login-modal" class="modal-overlay active">
         <div class="modal-content p-8 text-center shadow-2xl">
             <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
@@ -139,7 +113,6 @@
         </div>
     </div>
 
-    <!-- PANEL DE ADMINISTRADOR -->
     <div id="admin" class="section-fade py-12 bg-darker flex-1">
         <div class="max-w-6xl mx-auto px-6">
             
@@ -154,8 +127,6 @@
 
             <!-- TAB INVENTARIO -->
             <div id="tab-inventario" class="admin-tab">
-                
-                <!-- FORMULARIO DE PRODUCTOS -->
                 <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
                     <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
                         <i class="fas fa-box-open"></i> Añadir Nuevo Producto
@@ -211,7 +182,6 @@
                             </div>
                         </div>
                         
-                        <!-- COMPRESOR DE MÚLTIPLES IMÁGENES -->
                         <div class="flex flex-col gap-4 h-full">
                             <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[120px]" onclick="document.getElementById('new-img').click()">
                                 <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" multiple onchange="compressAndAddImages(this, 'product')">
@@ -220,14 +190,12 @@
                                     <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Añadir Fotos (JPG/PNG)</p>
                                     <p class="text-[8px] text-gray-600 mt-1 italic">Puedes seleccionar varias a la vez</p>
                                 </div>
-                                <!-- Loader de Optimización -->
                                 <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-10">
                                     <div class="loader !block"></div>
                                     <p class="text-[10px] text-primary mt-2 uppercase tracking-widest font-bold">Optimizando...</p>
                                 </div>
                             </div>
                             
-                            <!-- Miniaturas -->
                             <div id="thumbnails-container" class="flex flex-wrap gap-3 bg-darker p-4 rounded-lg border border-white/5 min-h-[110px]">
                                 <p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6" id="no-img-text">Aún no hay imágenes seleccionadas</p>
                             </div>
@@ -243,7 +211,6 @@
                     </div>
                 </div>
 
-                <!-- GESTIÓN DE CATEGORÍAS -->
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-16 shadow-2xl">
                     <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-4 italic flex items-center gap-2">
                         <i class="fas fa-tags"></i> Gestión de Categorías
@@ -259,7 +226,6 @@
                     <div id="categories-manager-list" class="flex flex-wrap gap-2"></div>
                 </div>
 
-                <!-- LISTA ADMIN INVENTARIO -->
                 <div class="mb-6 border-b border-white/5 pb-4">
                     <div class="flex justify-between items-center mb-4">
                         <h4 class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Inventario en la Nube</h4>
@@ -354,24 +320,28 @@
 
     <!-- SCRIPTS ADMIN -->
     <script>
+        // --- NUEVO: Configuración Global de SweetAlert2 (Toasts y Modals) ---
+        const Toast = Swal.mixin({
+            toast: true, position: 'bottom-end', showConfirmButton: false, timer: 3000,
+            background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10' }
+        });
+
+        // Alertas de confirmación elegantes
+        const DarkAlert = Swal.mixin({
+            background: '#0f0f0f', color: '#fff',
+            confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626',
+            customClass: { popup: 'border border-white/10', confirmButton: 'text-dark font-bold uppercase text-xs px-6 py-2', cancelButton: 'font-bold uppercase text-xs px-6 py-2' }
+        });
+
         const DEFAULT_CONFIG = {
-            slogan: "Nuestras piezas exclusivas",
-            aboutTitle: "Legacy Over Size",
-            aboutDesc: "New Gate no es una marca, es un destino...",
-            whatsapp: "50400000000",
-            instagram: "#",
-            facebook: "#",
-            categories: ["urban", "anime", "autos"],
-            heroTitle: "ESTILO SIN LÍMITES",
-            heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE",
-            heroImage: ""
+            slogan: "Nuestras piezas exclusivas", aboutTitle: "Legacy Over Size", aboutDesc: "New Gate no es una marca, es un destino...",
+            whatsapp: "50400000000", instagram: "#", facebook: "#", categories: ["urban", "anime", "autos"],
+            heroTitle: "ESTILO SIN LÍMITES", heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE", heroImage: ""
         };
 
         const DEFAULT_MEASURES = {
-            "S": { pecho: "00", largo: "00", ancho: "00" },
-            "M": { pecho: "00", largo: "00", ancho: "00" },
-            "L": { pecho: "00", largo: "00", ancho: "00" },
-            "XL": { pecho: "00", largo: "00", ancho: "00" }
+            "S": { pecho: "00", largo: "00", ancho: "00" }, "M": { pecho: "00", largo: "00", ancho: "00" },
+            "L": { pecho: "00", largo: "00", ancho: "00" }, "XL": { pecho: "00", largo: "00", ancho: "00" }
         };
 
         let inventario = [];
@@ -381,9 +351,7 @@
         let selectedHeroImg = "";
         let editId = null;
 
-        // --- TEMPORIZADOR DE INACTIVIDAD ---
-        let idleTime = 0;
-        let idleInterval;
+        let idleTime = 0; let idleInterval;
 
         function startIdleTimer() {
             idleInterval = setInterval(timerIncrement, 60000); 
@@ -394,7 +362,7 @@
 
         function timerIncrement() {
             idleTime++;
-            if (idleTime >= 15) { logoutAdmin(true); } // Desconecta tras 15 minutos
+            if (idleTime >= 15) { logoutAdmin(true); } 
         }
 
         function resetTimer() { idleTime = 0; }
@@ -405,7 +373,6 @@
             window.ontouchstart = null; window.onclick = null; window.onkeydown = null;
         }
 
-        // --- ARRANQUE ---
         function init() {
             auth.onAuthStateChanged((user) => {
                 if (user) {
@@ -427,7 +394,6 @@
             });
         }
 
-        // --- SEGURIDAD Y AUTH ---
         function validateAdmin() {
             const email = document.getElementById('admin-email-input').value.trim();
             const pass = document.getElementById('admin-pass-input').value;
@@ -439,6 +405,7 @@
                 .then(() => {
                     errorText.classList.add('hidden');
                     document.getElementById('admin-pass-input').value = "";
+                    Toast.fire({ icon: 'success', title: 'Bienvenido al panel' });
                 })
                 .catch(() => {
                     errorText.classList.remove('hidden');
@@ -449,24 +416,20 @@
         
         function logoutAdmin(isAuto = false) { 
             auth.signOut().then(() => {
-                if(isAuto) alert("🔒 Sesión cerrada automáticamente por inactividad.");
+                if(isAuto) Toast.fire({ icon: 'info', title: 'Sesión cerrada por inactividad' });
             });
         }
 
-        // --- FIREBASE CLOUD LISTENERS ---
         function escucharConfigGlobal() {
             db.collection("config").doc("global").onSnapshot((doc) => {
                 if (doc.exists) {
-                    const data = doc.data();
-                    config = { ...config, ...data }; // Merge seguro
+                    config = { ...config, ...doc.data() }; 
                     renderConfig();
                     renderCategoryInputs();
                     renderCategoriesManager();
                 } else {
                     saveConfigToFirebase();
                 }
-            }, (error) => {
-                console.error("❌ Error conectando Config Global:", error);
             });
         }
 
@@ -474,8 +437,6 @@
             db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderAdminList();
-            }, (error) => {
-                console.error("❌ Error Firebase:", error);
             });
         }
 
@@ -485,12 +446,9 @@
                     config = { ...config, ...doc.data() };
                     renderHeroConfig();
                 }
-            }, (error) => {
-                console.error("❌ Error escuchando hero:", error);
             });
         }
 
-        // --- NAVEGACIÓN UI ---
         function showAdminTab(tab, event) {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -498,7 +456,6 @@
             if(event) event.target.classList.add('active');
         }
 
-        // --- COMPRESIÓN DE IMÁGENES ---
         function compressAndAddImages(input, targetType) {
             if (!input.files || input.files.length === 0) return;
             
@@ -531,7 +488,7 @@
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, width, height);
 
-                        selectedBase64Imgs.push(canvas.toDataURL('image/jpeg', 0.7));
+                        selectedBase64Imgs.push(canvas.toDataURL('image/jpeg', 0.8));
 
                         filesProcessed++;
                         if (filesProcessed === totalFiles) {
@@ -583,7 +540,7 @@
                     const ctx = canvas.getContext('2d');
                     ctx.drawImage(img, 0, 0, width, height);
 
-                    selectedHeroImg = canvas.toDataURL('image/jpeg', 0.7);
+                    selectedHeroImg = canvas.toDataURL('image/jpeg', 0.8);
                     document.getElementById('hero-preview').src = selectedHeroImg;
                     document.getElementById('hero-preview').classList.remove('hidden');
                     document.getElementById('hero-preview-container').classList.add('hidden');
@@ -592,7 +549,6 @@
             }
         }
 
-        // --- GESTIÓN DE PRODUCTOS ---
         function toggleMeasuresVisibility() {
             const isChecked = document.getElementById('toggle-measures').checked;
             document.getElementById('measures-config-panel').style.display = isChecked ? 'block' : 'none';
@@ -606,7 +562,7 @@
             if(isLoading) {
                 btn.disabled = true;
                 btn.classList.add('opacity-50', 'cursor-not-allowed');
-                text.innerText = "Subiendo...";
+                text.innerText = "Subiendo a la nube...";
                 loader.style.display = "block";
             } else {
                 btn.disabled = false;
@@ -616,20 +572,52 @@
             }
         }
 
-        // --- FUNCIÓN CORREGIDA (BUG FIX) ---
-        function addProduct() {
+        // --- NUEVO: Función auxiliar para subir a Storage ---
+        async function uploadImageToStorage(base64String, path) {
+            // Si ya es un enlace de Storage (HTTPS), no necesitamos resubirlo
+            if (!base64String.startsWith('data:image')) return base64String;
+            
+            try {
+                const response = await fetch(base64String);
+                const blob = await response.blob();
+                const ref = storage.ref().child(path);
+                await ref.put(blob);
+                return await ref.getDownloadURL();
+            } catch (error) {
+                console.error("Error subiendo imagen a Storage:", error);
+                throw new Error("Fallo al subir una de las imágenes");
+            }
+        }
+
+        // --- NUEVO: addProduct ahora maneja Firebase Storage Async/Await ---
+        async function addProduct() {
             const title = document.getElementById('new-title').value.trim();
             const sku = document.getElementById('new-sku').value.trim().toUpperCase();
             const price = document.getElementById('new-price').value.trim();
             
             if(!title || !price || selectedBase64Imgs.length === 0) {
-                return alert("❌ Completa Título, Precio y selecciona al menos una Foto.");
+                return Toast.fire({ icon: 'warning', title: 'Faltan campos obligatorios o fotos' });
             }
 
             toggleButtonLoading(true);
 
-            // Bloque Try...Catch para evitar que errores síncronos de Firestore congelen el UI
             try {
+                // Preparar referencia y ID del documento (necesitamos el ID para la carpeta de Storage)
+                let docId = editId;
+                let docRef;
+
+                if (docId) {
+                    docRef = db.collection("productos").doc(docId);
+                } else {
+                    docRef = db.collection("productos").doc(); // Crea un nuevo ID
+                    docId = docRef.id;
+                }
+
+                // Subir imágenes a Storage y obtener URLs de descarga
+                const imageUrls = await Promise.all(selectedBase64Imgs.map((b64, idx) => 
+                    uploadImageToStorage(b64, `productos/${docId}/img_${idx}_${Date.now()}.jpg`)
+                ));
+
                 const hasMeasures = document.getElementById('toggle-measures').checked;
                 const tallas = [];
                 const medidas = {};
@@ -648,8 +636,6 @@
                     });
                 }
 
-                // SOLUCIÓN AL BUG: No incluir `createdAt` como undefined si estamos editando.
-                // Firestore rechaza actualizaciones que contienen "undefined"
                 const productData = {
                     sku: sku,
                     categoria: document.getElementById('new-cat').value || 'general',
@@ -659,42 +645,43 @@
                     hasMeasures: hasMeasures,
                     tallas: tallas,
                     medidas: medidas,
-                    imagen: selectedBase64Imgs[0] || "", 
-                    imagenes: selectedBase64Imgs
+                    imagen: imageUrls[0] || "", // La primera imagen es la principal (URL de Storage)
+                    imagenes: imageUrls         // Array de URLs de Storage
                 };
 
-                // Si es un producto NUEVO, le agregamos el Timestamp.
-                // Si estamos editando, Firestore conservará la fecha original intacta en la DB.
                 if (!editId) {
                     productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                 }
 
-                const dbRef = editId 
-                    ? db.collection("productos").doc(editId).update(productData) 
-                    : db.collection("productos").add(productData);
+                await docRef.set(productData, { merge: true });
 
-                dbRef.then(() => {
-                    toggleButtonLoading(false);
-                    cancelEdit(); 
-                }).catch((error) => {
-                    console.error("❌ Error Firebase Promesa:", error);
-                    alert("Hubo un error al comunicar con la nube: " + error.message);
-                    toggleButtonLoading(false);
-                });
+                Toast.fire({ icon: 'success', title: editId ? 'Producto actualizado' : 'Producto guardado con éxito' });
+                toggleButtonLoading(false);
+                cancelEdit(); 
 
             } catch (error) {
-                // Atrapa errores síncronos de validación (por ejemplo, datos no compatibles)
                 console.error("❌ Error Síncrono:", error);
-                alert("Error interno procesando el producto: " + error.message);
+                DarkAlert.fire({ icon: 'error', title: 'Hubo un error', text: error.message });
                 toggleButtonLoading(false);
             }
         }
 
+        // --- NUEVO: deleteProduct mejorado con SweetAlert2 ---
         function deleteProduct(id) {
-            if(confirm("¿Eliminar este producto de forma irreversible?")) {
-                db.collection("productos").doc(id).delete()
-                .catch(error => alert("Error al eliminar: " + error.message));
-            }
+            DarkAlert.fire({
+                title: '¿Eliminar producto?',
+                text: "Se borrará permanentemente de la tienda",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: '<i class="fas fa-trash"></i> Sí, eliminar',
+                cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    db.collection("productos").doc(id).delete()
+                    .then(() => Toast.fire({ icon: 'success', title: 'Producto eliminado' }))
+                    .catch(error => Toast.fire({ icon: 'error', title: 'Error: ' + error.message }));
+                }
+            });
         }
 
         function startEdit(id) {
@@ -720,7 +707,7 @@
             document.getElementById('toggle-measures').checked = !!p.hasMeasures;
             toggleMeasuresVisibility();
 
-            // Cargar imágenes existentes (manejo robusto por si falta un dato)
+            // Las imágenes pueden ser B64 antiguos o las nuevas URLs de Storage. Ambas funcionarán.
             selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []);
             renderThumbnails();
             
@@ -805,50 +792,44 @@
             `}).join('');
         }
 
-        // --- SISTEMA DE CONFIGURACIÓN GLOBAL ---
-        function saveConfigToFirebase(successMsg = null) {
+        function saveConfigToFirebase() {
             db.collection("config").doc("global").set({
-                slogan: config.slogan,
-                aboutTitle: config.aboutTitle,
-                aboutDesc: config.aboutDesc,
-                whatsapp: config.whatsapp,
-                instagram: config.instagram,
-                facebook: config.facebook,
-                categories: config.categories
+                slogan: config.slogan, aboutTitle: config.aboutTitle, aboutDesc: config.aboutDesc,
+                whatsapp: config.whatsapp, instagram: config.instagram, facebook: config.facebook, categories: config.categories
             }, { merge: true }) 
-            .then(() => {
-                if(successMsg) alert("✅ " + successMsg);
-            })
-            .catch(error => {
-                alert("Error al guardar en la nube: " + error.message);
-            });
+            .then(() => Toast.fire({ icon: 'success', title: 'Configuración Global Guardada' }))
+            .catch(error => Toast.fire({ icon: 'error', title: 'Error: ' + error.message }));
         }
 
         function addNewCategory() {
             const input = document.getElementById('new-category-name');
             const name = input.value.trim().toLowerCase();
             if(!name) return;
-            if((config.categories || []).includes(name)) return alert("Esta categoría ya existe.");
+            if((config.categories || []).includes(name)) return Toast.fire({ icon: 'warning', title: 'La categoría ya existe' });
             
             const newCategories = [...(config.categories || []), name];
             
             db.collection("config").doc("global").set({ categories: newCategories }, { merge: true })
             .then(() => {
                 input.value = "";
-                alert("Categoría guardada con éxito en la nube.");
+                Toast.fire({ icon: 'success', title: 'Categoría agregada' });
             })
-            .catch(error => {
-                alert("Error al guardar categoría: " + error.message);
-            });
+            .catch(error => Toast.fire({ icon: 'error', title: 'Error al agregar' }));
         }
 
         function removeCategory(cat) {
-            if((config.categories || []).length <= 1) return alert("Debe existir al menos una categoría.");
-            if(confirm(`¿Seguro que deseas eliminar la categoría "${cat}"?`)) {
-                const newCategories = config.categories.filter(c => c !== cat);
-                db.collection("config").doc("global").set({ categories: newCategories }, { merge: true })
-                .catch(error => alert("Error al eliminar categoría: " + error.message));
-            }
+            if((config.categories || []).length <= 1) return Toast.fire({ icon: 'warning', title: 'Debe haber mínimo una categoría' });
+            
+            DarkAlert.fire({
+                title: '¿Borrar categoría?', text: `Se eliminará la categoría "${cat}"`, icon: 'warning',
+                showCancelButton: true, confirmButtonText: 'Borrar', cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const newCategories = config.categories.filter(c => c !== cat);
+                    db.collection("config").doc("global").set({ categories: newCategories }, { merge: true })
+                    .catch(error => Toast.fire({ icon: 'error', title: 'Error al borrar' }));
+                }
+            });
         }
 
         function renderMedidasForm() {
@@ -901,27 +882,41 @@
             }
         }
 
-        function saveHeroConfig(event) {
+        // --- NUEVO: saveHeroConfig ahora maneja Firebase Storage Async/Await ---
+        async function saveHeroConfig(event) {
             const title = document.getElementById('config-hero-title').value.trim();
             const subtitle = document.getElementById('config-hero-subtitle').value.trim();
-            let imageToSave = selectedHeroImg ? selectedHeroImg : config.heroImage;
+            const btn = event?.target;
+            const originalText = btn ? btn.innerText : 'Actualizar Hero';
+            
+            if (btn) { btn.innerText = "Subiendo..."; btn.disabled = true; }
 
-            db.collection("config").doc("hero").set({
-                heroTitle: title,
-                heroSubtitle: subtitle,
-                heroImage: imageToSave
-            }).then(() => {
+            try {
+                // Sube la imagen a Storage si es un Base64 nuevo
+                let imageToSave = config.heroImage;
+                if (selectedHeroImg && selectedHeroImg.startsWith('data:image')) {
+                    imageToSave = await uploadImageToStorage(selectedHeroImg, `config/hero_bg_${Date.now()}.jpg`);
+                }
+
+                await db.collection("config").doc("hero").set({
+                    heroTitle: title, heroSubtitle: subtitle, heroImage: imageToSave
+                });
+
                 selectedHeroImg = "";
-                const btn = event?.target;
-                if (!btn) return;
-                const originalText = btn.innerText;
-                btn.innerText = "¡Actualizado!";
-                btn.classList.add('bg-white', 'text-dark');
-                setTimeout(() => {
-                    btn.innerText = originalText;
-                    btn.classList.remove('bg-white', 'text-dark');
-                }, 2000);
-            }).catch(error => alert("Error al guardar en la nube: " + error.message));
+                
+                if (btn) {
+                    btn.innerText = "¡Actualizado!";
+                    btn.classList.add('bg-white', 'text-dark');
+                    setTimeout(() => {
+                        btn.innerText = originalText;
+                        btn.classList.remove('bg-white', 'text-dark');
+                        btn.disabled = false;
+                    }, 2000);
+                }
+            } catch (error) {
+                if (btn) { btn.innerText = originalText; btn.disabled = false; }
+                DarkAlert.fire({ icon: 'error', title: 'Fallo de subida', text: error.message });
+            }
         }
 
         function renderConfig() {
@@ -941,21 +936,20 @@
             config.instagram = document.getElementById('config-instagram').value.trim();
             config.facebook = document.getElementById('config-facebook').value.trim();
             
-            saveConfigToFirebase("Configuración Global Guardada Exitosamente.");
+            saveConfigToFirebase();
             
-            // MANEJO DE CAMBIO DE CONTRASEÑA EN FIREBASE
             const newPass = document.getElementById('config-password').value.trim();
             if(newPass) {
-                if(newPass.length < 6) return alert("Firebase requiere que la contraseña tenga mínimo 6 caracteres.");
+                if(newPass.length < 6) return Toast.fire({ icon: 'warning', title: 'Mínimo 6 caracteres para contraseña' });
                 
                 auth.currentUser.updatePassword(newPass).then(() => {
-                    alert("Contraseña de acceso actualizada correctamente en Firebase.");
+                    Toast.fire({ icon: 'success', title: 'Contraseña actualizada' });
                     document.getElementById('config-password').value = "";
                 }).catch(e => {
                     if(e.code === 'auth/requires-recent-login') {
-                        alert("Por seguridad, debes cerrar sesión y volver a entrar para cambiar tu contraseña.");
+                        DarkAlert.fire({ icon: 'warning', title: 'Acción bloqueada', text: 'Por seguridad, debes cerrar sesión y volver a entrar para cambiar tu contraseña.' });
                     } else {
-                        alert("Error al cambiar contraseña: " + e.message);
+                        Toast.fire({ icon: 'error', title: 'Error: ' + e.message });
                     }
                 });
             }

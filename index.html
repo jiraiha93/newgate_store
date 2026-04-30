@@ -19,7 +19,7 @@
     // Inicializar Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    console.log("🔥 Firebase conectado: Vista Cliente (Solo Lectura)");
+    console.log("🔥 Firebase conectado: Vista Cliente");
     </script>
     
     <meta charset="UTF-8">
@@ -33,7 +33,10 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Configuración Tailwind personalizada -->
+    <!-- NUEVO: SweetAlert2 para Notificaciones elegantes -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Configuración Tailwind -->
     <script>
         tailwind.config = {
             theme: {
@@ -53,101 +56,43 @@
         }
     </script>
 
-    <!-- Estilos Personalizados y Animaciones -->
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Permanent+Marker&display=swap');
         
-        /* Animaciones para transiciones suaves de secciones */
-        .section-fade {
-            display: none;
-            opacity: 0;
-            transition: opacity 0.4s ease-in-out;
-        }
-        
-        .section-fade.active {
-            display: block;
-            opacity: 1;
-        }
+        .section-fade { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
+        .section-fade.active { display: block; opacity: 1; }
 
-        /* Estilos del Modal */
         .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.95);
-            z-index: 200;
-            backdrop-filter: blur(12px);
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0, 0, 0, 0.95); z-index: 200;
+            backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;
         }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
+        .modal-overlay.active { display: flex; }
         .modal-content {
-            background: #0f0f0f;
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            max-width: 1200px;
-            width: 100%;
-            max-height: 90vh;
-            overflow-y: auto;
-            position: relative;
+            background: #0f0f0f; border: 1px solid rgba(212, 175, 55, 0.2);
+            max-width: 1200px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;
         }
 
-        /* Estilos del Hero Principal */
-        .hero-bg {
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
-        }
+        .hero-bg { background-size: cover; background-position: center; background-repeat: no-repeat; }
+        .hero-overlay { background: linear-gradient(to bottom, rgba(10, 10, 10, 0.1) 0%, rgba(10, 10, 10, 0.7) 60%, rgba(10, 10, 10, 1) 100%); }
+        .hero-text-shadow { text-shadow: 0px 4px 20px rgba(0,0,0,0.9); }
 
-        .hero-overlay {
-            background: linear-gradient(
-                to bottom, 
-                rgba(10, 10, 10, 0.1) 0%, 
-                rgba(10, 10, 10, 0.7) 60%, 
-                rgba(10, 10, 10, 1) 100%
-            );
-        }
-
-        .hero-text-shadow {
-            text-shadow: 0px 4px 20px rgba(0,0,0,0.9);
-        }
-
-        /* Indicador de Carga UI */
         .loader {
-            border: 3px solid rgba(212, 175, 55, 0.3);
-            border-radius: 50%;
-            border-top: 3px solid #d4af37;
-            width: 20px;
-            height: 20px;
-            -webkit-animation: spin 1s linear infinite;
-            animation: spin 1s linear infinite;
-            display: none;
+            border: 3px solid rgba(212, 175, 55, 0.3); border-radius: 50%;
+            border-top: 3px solid #d4af37; width: 20px; height: 20px;
+            -webkit-animation: spin 1s linear infinite; animation: spin 1s linear infinite; display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        /* Puntos del Carrusel */
-        .dot {
-            height: 6px;
-            width: 6px;
-            background-color: rgba(255,255,255,0.3);
-            border-radius: 50%;
-            display: inline-block;
-            transition: background-color 0.3s ease;
-        }
-        .dot.active {
-            background-color: #d4af37;
-            width: 12px;
-            border-radius: 4px;
-        }
+        .dot { height: 6px; width: 6px; background-color: rgba(255,255,255,0.3); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; }
+        .dot.active { background-color: #d4af37; width: 12px; border-radius: 4px; }
+        
+        /* Ajuste z-index para que SweetAlert quede por encima del header */
+        .swal2-container { z-index: 9999 !important; }
     </style>
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark">
 
-    <!-- HEADER / BARRA DE NAVEGACIÓN -->
     <header class="fixed w-full z-[100] bg-darker/90 backdrop-blur-md border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
             <div class="font-graffiti text-3xl text-white tracking-wider cursor-pointer hover:text-primary transition-colors" onclick="showSection('inicio')">
@@ -157,13 +102,11 @@
             <nav class="hidden md:flex space-x-8 items-center">
                 <span onclick="showSection('inicio')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Tienda</span>
                 <span onclick="showSection('nosotros')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Nosotros</span>
-                <!-- Enlace de Carrito -->
                 <span onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-primary hover:text-white font-bold transition-colors border border-primary/20 px-3 py-1.5 rounded">
                     <i class="fas fa-shopping-bag"></i> Mi Pedido (<span id="cart-count">0</span>)
                 </span>
             </nav>
             
-            <!-- Botón de carrito responsive (móvil) -->
             <button onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="md:hidden text-primary text-xl">
                 <i class="fas fa-shopping-bag"></i><span id="cart-count-mobile" class="text-[10px] align-top ml-1">0</span>
             </button>
@@ -173,11 +116,10 @@
     <!-- MODAL VISTA DE PRODUCTO -->
     <div id="product-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content animate-in fade-in zoom-in duration-300" onclick="event.stopPropagation()">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-primary text-2xl z-30 transition-colors bg-darker/50 w-10 h-10 rounded-full flex items-center justify-center">
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-primary text-2xl z-30 transition-colors bg-darker/50 w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
                 <i class="fas fa-times"></i>
             </button>
             <div class="grid grid-cols-1 lg:grid-cols-2">
-                <!-- CARRUSEL DE IMÁGENES -->
                 <div class="h-[500px] lg:h-[600px] bg-darker flex flex-col items-center justify-center relative group">
                     <button id="btn-prev-img" onclick="changeImage(-1)" class="absolute left-4 z-20 text-white/50 hover:text-primary text-3xl opacity-0 group-hover:opacity-100 transition-opacity hidden">
                         <i class="fas fa-chevron-left"></i>
@@ -192,14 +134,17 @@
                     <div id="carousel-dots" class="absolute bottom-4 flex justify-center w-full space-x-2 z-20"></div>
                 </div>
 
-                <!-- INFORMACIÓN DEL PRODUCTO -->
                 <div class="p-8 lg:p-10 flex flex-col justify-center">
-                    <p id="modal-cat" class="text-primary text-[10px] uppercase tracking-[0.4em] mb-2 font-bold"></p>
+                    <div class="flex justify-between items-start mb-2">
+                        <p id="modal-cat" class="text-primary text-[10px] uppercase tracking-[0.4em] font-bold"></p>
+                        <!-- Botón de compartir nativo/copiar enlace -->
+                        <button onclick="shareProduct()" class="text-gray-500 hover:text-primary transition-colors text-sm border border-white/5 rounded-full w-8 h-8 flex items-center justify-center" title="Copiar enlace"><i class="fas fa-share-alt"></i></button>
+                    </div>
+                    
                     <h2 id="modal-title" class="font-serif text-4xl text-white italic mb-1"></h2>
                     <p id="modal-sku-display" class="text-gray-600 text-[10px] uppercase tracking-widest mb-4 font-bold"></p>
                     <p id="modal-desc" class="text-gray-400 text-sm leading-relaxed mb-6"></p>
                     
-                    <!-- TABLA DE MEDIDAS DINÁMICA -->
                     <div id="modal-measures-container" class="mb-6 hidden">
                         <h4 class="text-white text-[10px] uppercase tracking-widest mb-4 border-b border-white/10 pb-2 flex items-center gap-2 font-bold">
                             <i class="fas fa-ruler text-primary"></i> Guía de Medidas (cm)
@@ -219,14 +164,12 @@
                         </div>
                     </div>
 
-                    <!-- SELECTOR DE TALLA -->
                     <div id="modal-talla-select-container" class="mb-8 hidden">
                         <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Selecciona tu talla para añadir</label>
                         <select id="modal-talla" class="w-full bg-darker border border-white/10 px-4 py-3 outline-none focus:border-primary text-white text-sm transition-colors cursor-pointer">
                         </select>
                     </div>
 
-                    <!-- ACCIONES COMPRA -->
                     <div class="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4 border-t border-white/5">
                         <span id="modal-price" class="text-3xl font-serif text-white"></span>
                         <button id="btn-add-cart" onclick="agregarAlPedido()" class="w-full sm:w-auto bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all text-center flex items-center justify-center gap-2">
@@ -238,9 +181,8 @@
         </div>
     </div>
 
-    <!-- SECCIÓN INICIO / TIENDA -->
+    <!-- SECCIÓN INICIO -->
     <div id="inicio" class="section-fade active pt-20">
-        <!-- HERO -->
         <section id="hero-display" class="h-[85vh] flex items-end justify-center text-center relative overflow-hidden hero-bg">
             <div class="absolute inset-0 hero-overlay z-0"></div>
             <div class="relative z-10 px-6 max-w-4xl pb-20">
@@ -252,20 +194,16 @@
             </div>
         </section>
 
-        <!-- CATÁLOGO -->
         <section id="productos" class="py-24 max-w-7xl mx-auto px-6">
             <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
                 <div>
                     <h2 class="font-serif text-4xl text-white italic">Catálogo</h2>
                     <p class="text-gray-500 uppercase tracking-widest text-xs mt-2" id="display-shop-slogan"></p>
                 </div>
-                <!-- Filtros generados dinámicamente -->
                 <div class="flex flex-wrap gap-6 text-xs uppercase tracking-widest text-gray-500" id="filter-container"></div>
             </div>
             
-            <!-- Grid de Productos -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8 transition-opacity duration-300" id="gallery-grid">
-                <!-- Loader inicial -->
                 <div class="col-span-full text-center py-20 flex flex-col items-center justify-center">
                      <div class="loader !border-t-primary !border-white/10 !w-8 !h-8 mb-4 !block"></div>
                      <p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Cargando colección exclusiva...</p>
@@ -273,7 +211,7 @@
             </div>
         </section>
 
-        <!-- FINALIZACIÓN DE PEDIDO / CARRITO -->
+        <!-- CARRITO Y CHECKOUT -->
         <section id="contacto" class="py-24 bg-darker border-t border-white/5">
             <div class="max-w-4xl mx-auto px-6">
                 <div class="text-center mb-16">
@@ -282,11 +220,9 @@
                 </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    <!-- Resumen del Carrito -->
                     <div class="lg:col-span-2 bg-dark p-6 border border-white/5 shadow-2xl h-fit">
                         <h3 class="text-primary uppercase tracking-widest text-xs font-bold mb-4 border-b border-white/10 pb-4"><i class="fas fa-shopping-bag"></i> Tu Selección</h3>
                         <div id="carrito-list" class="space-y-3 max-h-[300px] overflow-y-auto pr-2">
-                            <!-- Los productos añadidos se renderizan aquí -->
                         </div>
                         <div class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
                             <span class="text-white text-[10px] font-bold uppercase tracking-widest">Total Estimado:</span>
@@ -294,7 +230,6 @@
                         </div>
                     </div>
 
-                    <!-- Formulario de Datos Cliente -->
                     <div class="lg:col-span-3 space-y-6 bg-dark p-8 border border-white/5 shadow-2xl">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Nombre Completo</label>
@@ -316,7 +251,6 @@
         </section>
     </div>
 
-    <!-- SECCIÓN NOSOTROS -->
     <div id="nosotros" class="section-fade pt-32 bg-darker min-h-screen">
         <div class="max-w-4xl mx-auto px-6 text-center">
             <h1 class="font-graffiti text-5xl text-white mb-8 italic" id="display-about-title"></h1>
@@ -335,11 +269,22 @@
         <p class="text-gray-700 text-[10px] uppercase tracking-[0.3em] font-bold">© <span id="current-year"></span> NEW GATE STREETWEAR | HONDURAS</p>
     </footer>
 
-    <!-- LOGICA DEL CLIENTE (Scripts) -->
     <script>
         document.getElementById('current-year').innerText = new Date().getFullYear();
 
-        // --- ESTADO GLOBAL Y CONFIGURACIÓN ---
+        // --- NUEVO: Configuración Global de Notificaciones UI ---
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: '#0f0f0f',
+            color: '#fff',
+            iconColor: '#d4af37',
+            customClass: { popup: 'border border-white/10 rounded-lg shadow-2xl' }
+        });
+
         const DEFAULT_CONFIG = {
             slogan: "Nuestras piezas exclusivas",
             aboutTitle: "Legacy Over Size",
@@ -358,61 +303,65 @@
         let carrito = [];
         let currentModalImages = [];
         let currentImageIndex = 0;
+        let hasCheckedUrlParams = false; // Control de carga compartida
 
-        // --- ARRANQUE ---
         function init() {
             applyConfig();
             escucharFirebase(); 
             escucharHero();
             escucharConfigGlobal(); 
-            renderCarrito(); // Inicializa el carrito vacío en pantalla
+            renderCarrito();
         }
 
-        // --- FIREBASE CLOUD LISTENERS ---
         function escucharConfigGlobal() {
             db.collection("config").doc("global").onSnapshot((doc) => {
                 if (doc.exists) {
-                    const data = doc.data();
-                    // Merge configuration asegurando integridad
-                    config = { ...config, ...data };
+                    config = { ...config, ...doc.data() };
                     applyConfig();
                     renderFilters(); 
                 } else {
-                    console.log("ℹ️ Configuración global aún no creada por el admin. Usando por defecto.");
                     applyConfig();
                     renderFilters();
                 }
-            }, (error) => {
-                console.error("❌ Error conectando Config Global:", error);
             });
         }
 
         function escucharFirebase() {
             db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                inventario = snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
+                inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderGallery();
+                
+                // NUEVO: Lógica de Compartir URL (Enrutamiento Real)
+                if (!hasCheckedUrlParams && inventario.length > 0) {
+                    const params = new URLSearchParams(window.location.search);
+                    const prodId = params.get('producto');
+                    if (prodId) {
+                        const productExists = inventario.find(p => p.id === prodId);
+                        if (productExists) {
+                            // Pequeño delay para asegurar que la UI esté dibujada
+                            setTimeout(() => openModalById(prodId), 400); 
+                        } else {
+                            Toast.fire({ icon: 'error', title: 'El producto ya no está disponible' });
+                            window.history.pushState({}, '', window.location.pathname); // Limpiar URL
+                        }
+                    }
+                    hasCheckedUrlParams = true;
+                }
+
             }, (error) => {
                 console.error("❌ Error Firebase:", error);
-                document.getElementById('gallery-grid').innerHTML = '<p class="col-span-full text-center text-red-500 uppercase tracking-widest text-[10px]">Error al cargar catálogo.</p>';
             });
         }
 
         function escucharHero() {
             db.collection("config").doc("hero").onSnapshot((doc) => {
                 if (doc.exists) {
-                    const data = doc.data();
-                    config = { ...config, ...data };
+                    config = { ...config, ...doc.data() };
                     applyConfig();
                 }
-            }, (error) => {
-                console.error("❌ Error escuchando hero:", error);
             });
         }
 
-        // --- NAVEGACIÓN UI ---
         function showSection(id) {
             document.querySelectorAll('.section-fade').forEach(s => {
                 s.classList.remove('active');
@@ -426,7 +375,6 @@
             window.scrollTo({top: 0, behavior: 'smooth'});
         }
 
-        // --- RENDERIZADO VISUAL ---
         function renderGallery() {
             const grid = document.getElementById('gallery-grid');
             if(!grid) return;
@@ -435,7 +383,6 @@
                  grid.innerHTML = '<div class="col-span-full text-center py-20"><i class="fas fa-box-open text-4xl text-white/10 mb-4 block"></i><p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Catálogo vacío por el momento</p></div>';
             } else {
                 grid.innerHTML = inventario.map(prod => {
-                    // Soporte de compatibilidad hacia atrás
                     const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
                     
                     return `
@@ -486,26 +433,25 @@
             e.target.classList.add('text-primary', 'border-primary', 'font-bold');
             
             const grid = document.getElementById('gallery-grid');
-            grid.style.opacity = '0'; // Transición suave
+            grid.style.opacity = '0';
             
             setTimeout(() => {
                 document.querySelectorAll('.gallery-item').forEach(item => {
-                    if (cat === 'all' || item.dataset.category === cat) {
-                        item.style.display = 'block';
-                    } else {
-                        item.style.display = 'none';
-                    }
+                    item.style.display = (cat === 'all' || item.dataset.category === cat) ? 'block' : 'none';
                 });
                 grid.style.opacity = '1';
             }, 300);
         }
 
-        // --- MANEJO DE MODAL Y CARRUSEL ---
+        // --- LOGICA MODAL Y COMPARTIR ---
         function openModalById(id) {
             const p = inventario.find(x => x.id === id);
             if(!p) return;
             window.lastViewedProduct = p;
             
+            // NUEVO: Actualizar la URL de la página dinámicamente sin recargar
+            window.history.pushState({ productId: id }, '', `?producto=${id}`);
+
             currentModalImages = p.imagenes && p.imagenes.length > 0 ? p.imagenes : [p.imagen];
             currentImageIndex = 0;
             updateCarouselView();
@@ -519,7 +465,6 @@
             const measuresContainer = document.getElementById('modal-measures-container');
             const tallaSelectContainer = document.getElementById('modal-talla-select-container');
             
-            // Lógica para mostrar la tabla de tallas y selección
             if(p.hasMeasures && p.tallas && p.tallas.length > 0) {
                 measuresContainer.classList.remove('hidden');
                 document.getElementById('modal-measures-body').innerHTML = p.tallas.map(t => {
@@ -529,6 +474,7 @@
                 
                 tallaSelectContainer.classList.remove('hidden');
                 document.getElementById('modal-talla').innerHTML = '<option value="" disabled selected>Elige una talla</option>' + p.tallas.map(t => `<option value="${t}">${t}</option>`).join('');
+                document.getElementById('modal-talla').classList.remove('border-red-500'); // Limpiar alertas viejas
             } else {
                 measuresContainer.classList.add('hidden');
                 tallaSelectContainer.classList.add('hidden');
@@ -536,6 +482,39 @@
             
             document.getElementById('product-modal').classList.add('active');
         }
+
+        // Función para el botón de compartir
+        function shareProduct() {
+            const url = window.location.href;
+            if (navigator.share) {
+                navigator.share({
+                    title: `NEW GATE: ${window.lastViewedProduct.titulo}`,
+                    text: '¡Mira este drop exclusivo!',
+                    url: url
+                }).catch(console.error);
+            } else {
+                navigator.clipboard.writeText(url).then(() => {
+                    Toast.fire({ icon: 'success', title: 'Enlace copiado al portapapeles' });
+                });
+            }
+        }
+
+        function closeModal(e) { 
+            // NUEVO: Limpiar URL al cerrar para volver al catálogo natural
+            window.history.pushState({}, '', window.location.pathname);
+            document.getElementById('product-modal').classList.remove('active'); 
+        }
+
+        // Para soportar el botón de "Atrás" en el navegador correctamente
+        window.addEventListener('popstate', (event) => {
+            const params = new URLSearchParams(window.location.search);
+            const prodId = params.get('producto');
+            if(prodId) {
+                openModalById(prodId);
+            } else {
+                document.getElementById('product-modal').classList.remove('active');
+            }
+        });
 
         function changeImage(direction) {
             currentImageIndex += direction;
@@ -560,10 +539,7 @@
             if (currentModalImages.length > 1) {
                 prevBtn.classList.remove('hidden');
                 nextBtn.classList.remove('hidden');
-                
-                dotsContainer.innerHTML = currentModalImages.map((_, idx) => `
-                    <span class="dot ${idx === currentImageIndex ? 'active' : ''}"></span>
-                `).join('');
+                dotsContainer.innerHTML = currentModalImages.map((_, idx) => `<span class="dot ${idx === currentImageIndex ? 'active' : ''}"></span>`).join('');
             } else {
                 prevBtn.classList.add('hidden');
                 nextBtn.classList.add('hidden');
@@ -571,9 +547,6 @@
             }
         }
 
-        function closeModal() { document.getElementById('product-modal').classList.remove('active'); }
-
-        // --- LÓGICA DE CARRITO Y PEDIDOS ---
         function agregarAlPedido() {
             const p = window.lastViewedProduct;
             let tallaElegida = "Única";
@@ -583,7 +556,9 @@
                 if (!select.value) {
                     select.classList.add('border-red-500');
                     setTimeout(() => select.classList.remove('border-red-500'), 1500);
-                    return alert("Por favor, selecciona una talla antes de añadir el producto.");
+                    // Uso de Toast en vez de alert
+                    Toast.fire({ icon: 'warning', title: 'Debes seleccionar una talla' });
+                    return;
                 }
                 tallaElegida = select.value;
             }
@@ -597,13 +572,14 @@
                 img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen
             });
 
-            // Animación de feedback
             const btn = document.getElementById('btn-add-cart');
             const originalHTML = btn.innerHTML;
             btn.innerHTML = `<i class="fas fa-check"></i> ¡Añadido!`;
             btn.classList.add('bg-white');
             
             renderCarrito();
+            
+            Toast.fire({ icon: 'success', title: 'Añadido a tu pedido' });
 
             setTimeout(() => {
                 btn.innerHTML = originalHTML;
@@ -615,6 +591,7 @@
         function eliminarDelPedido(index) {
             carrito.splice(index, 1);
             renderCarrito();
+            Toast.fire({ icon: 'info', title: 'Artículo removido' });
         }
 
         function renderCarrito() {
@@ -637,7 +614,6 @@
             let total = 0;
 
             container.innerHTML = carrito.map((item, index) => {
-                // Cálculo simple basándose en el string del precio "L650.00" -> 650.00
                 const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
                 total += precioNum;
 
@@ -666,8 +642,14 @@
             const n = document.getElementById('nombre').value.trim();
             const m = document.getElementById('mensaje').value.trim();
             
-            if(!n) return alert("Por favor, ingresa tu Nombre Completo.");
-            if(carrito.length === 0) return alert("Tu selección está vacía. Añade productos desde el catálogo antes de enviar el pedido.");
+            if(!n) {
+                Toast.fire({ icon: 'warning', title: 'Por favor, ingresa tu Nombre' });
+                return document.getElementById('nombre').focus();
+            }
+            if(carrito.length === 0) {
+                Toast.fire({ icon: 'error', title: 'Tu carrito está vacío' });
+                return;
+            }
             
             const btnText = document.getElementById('btn-wa-text');
             const originalText = btnText.innerText;
@@ -688,15 +670,15 @@
             msg += `\n💵 *TOTAL ESTIMADO: L${total.toFixed(2)}*\n`;
 
             if(m) msg += `\n💬 *Mensaje Adicional:*\n_${m}_\n`;
-            msg += `\n_Enviado desde el catálogo web_`;
+            msg += `\n_Enviado desde la tienda web_`;
             
             setTimeout(() => {
                 window.open(`https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
                 btnText.innerText = originalText;
+                Toast.fire({ icon: 'success', title: 'Abriendo WhatsApp...' });
             }, 800);
         }
 
-        // --- APLICACIÓN DE ESTILOS Y CONFIG ---
         function applyConfig() {
             document.getElementById('display-hero-title').innerText = config.heroTitle;
             document.getElementById('display-hero-subtitle').innerText = config.heroSubtitle;
