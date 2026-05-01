@@ -21,18 +21,18 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
-    const storage = firebase.storage();
-    console.log("🔥 Firebase conectado: Panel Admin");
+    const storage = firebase.storage(); 
+    console.log("🔥 Firebase conectado: Panel Administrador + Storage");
     </script>
     
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NEW GATE | Admin Panel</title>
+    <title>Admin Panel | NEW GATE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
@@ -43,258 +43,573 @@
             }
         }
     </script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Permanent+Marker&display=swap');
-        .loader { border: 3px solid rgba(212, 175, 55, 0.3); border-radius: 50%; border-top: 3px solid #d4af37; width: 24px; height: 24px; animation: spin 1s linear infinite; display: none; }
+        
+        .section-fade { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
+        .section-fade.active { display: block; opacity: 1; }
+
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(5, 5, 5, 0.98); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.active { display: flex; }
+        .modal-content { background: #0f0f0f; border: 1px solid rgba(212, 175, 55, 0.2); max-width: 400px; width: 100%; position: relative; }
+
+        input[type="checkbox"]:checked + label { background-color: #d4af37; color: #0a0a0a; border-color: #d4af37; }
+        .editing-mode { border: 2px solid #d4af37 !important; background: rgba(212, 175, 55, 0.05) !important; }
+        .measure-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 6px; text-align: center; font-size: 11px; color: white; outline: none; }
+        .measure-input:focus { border-color: #d4af37; }
+        .tab-btn.active { border-bottom: 2px solid #d4af37; color: #d4af37; }
+        
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #d4af37; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Switch Azul para Preventa */
+        .switch-blue input:checked + .slider { background-color: #2563eb; }
+
+        .loader { border: 3px solid rgba(212, 175, 55, 0.3); border-radius: 50%; border-top: 3px solid #d4af37; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        .admin-tab { display: none; }
-        .admin-tab.active { display: block; animation: fadeIn 0.4s ease-out; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .img-thumb-container { position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .img-thumb-container img { width: 100%; height: 100%; object-fit: cover; }
+        .img-thumb-remove { position: absolute; top: 2px; right: 2px; background: rgba(220, 38, 38, 0.9); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
+        
+        .swal2-container { z-index: 9999 !important; }
     </style>
 </head>
-<body class="bg-dark text-gray-300 font-sans antialiased">
+<body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark min-h-screen flex flex-col">
 
-    <!-- LOGIN OVERLAY -->
-    <div id="login-overlay" class="fixed inset-0 bg-darker z-[1000] flex items-center justify-center p-6">
-        <div class="max-w-md w-full bg-dark p-10 border border-white/5 rounded-lg shadow-2xl">
-            <div class="font-graffiti text-4xl text-white text-center mb-8 italic">NEW GATE <span class="text-primary">ADMIN</span></div>
-            <div class="space-y-6">
-                <div>
-                    <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Email de Acceso</label>
-                    <input type="email" id="login-email" placeholder="admin@newgate.com" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-sm transition-colors rounded">
-                </div>
-                <div>
-                    <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Contraseña</label>
-                    <input type="password" id="login-password" placeholder="••••••••" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-sm transition-colors rounded">
-                </div>
-                <button onclick="loginAdmin()" class="w-full py-5 bg-primary text-dark font-bold uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-primary/10">Entrar al Panel</button>
+    <header class="w-full z-[100] bg-darker border-b border-white/5">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
+            <div class="font-graffiti text-3xl text-white tracking-wider">ADMIN<span class="text-primary">.</span></div>
+            <nav class="flex items-center">
+                <a href="index.html" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-colors border border-white/10 px-4 py-2 rounded"><i class="fas fa-store"></i> Ir a Tienda</a>
+            </nav>
+        </div>
+    </header>
+
+    <div id="login-modal" class="modal-overlay active">
+        <div class="modal-content p-8 text-center shadow-2xl">
+            <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
+            <div class="space-y-4">
+                <input type="email" id="admin-email-input" placeholder="Correo electrónico" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center">
+                <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center" onkeyup="if(event.key === 'Enter') validateAdmin()">
+                <button onclick="validateAdmin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar</button>
+                <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Credenciales Incorrectas</p>
             </div>
         </div>
     </div>
 
-    <!-- PANEL PRINCIPAL (Oculto hasta login) -->
-    <div id="admin-panel" class="hidden min-h-screen flex flex-col md:flex-row">
-        
-        <!-- SIDEBAR -->
-        <aside class="w-full md:w-64 bg-darker border-r border-white/5 p-6 flex flex-col gap-8">
-            <div class="font-graffiti text-2xl text-white italic tracking-wider">NEW GATE<span class="text-primary">.</span></div>
+    <div id="admin" class="section-fade py-12 bg-darker flex-1">
+        <div class="max-w-6xl mx-auto px-6">
             
-            <nav class="flex flex-col gap-2">
-                <button onclick="switchTab('pedidos')" class="tab-btn active w-full text-left px-4 py-3 rounded text-[10px] uppercase tracking-widest font-bold transition-all flex items-center justify-between group">
-                    <span><i class="fas fa-clipboard-list mr-2 text-primary"></i> Pedidos</span>
-                    <span id="badge-pedidos" class="bg-red-600 text-white px-2 py-0.5 rounded-full text-[9px] hidden">0</span>
-                </button>
-                <button onclick="switchTab('inventario')" class="tab-btn w-full text-left px-4 py-3 rounded text-[10px] uppercase tracking-widest font-bold transition-all flex items-center group">
-                    <i class="fas fa-box mr-2 text-primary"></i> Inventario
-                </button>
-                <button onclick="switchTab('configuracion')" class="tab-btn w-full text-left px-4 py-3 rounded text-[10px] uppercase tracking-widest font-bold transition-all flex items-center group">
-                    <i class="fas fa-cog mr-2 text-primary"></i> Tienda
-                </button>
-            </nav>
-
-            <div class="mt-auto pt-6 border-t border-white/5">
-                <button onclick="logoutAdmin()" class="w-full bg-red-900/20 text-red-400 border border-red-500/20 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all rounded">
-                    Cerrar Sesión
-                </button>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-12 gap-4">
+                <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide pb-2">
+                    <!-- NUEVA PESTAÑA: PEDIDOS -->
+                    <button onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-receipt"></i> Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
+                    <button onclick="showAdminTab('inventario', event)" class="tab-btn active py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-box"></i> Inventario</button>
+                    <button onclick="showAdminTab('hero', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Hero Web</button>
+                    <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors">Ajustes</button>
+                </div>
+                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
-        </aside>
 
-        <!-- CONTENIDO -->
-        <main class="flex-1 p-6 md:p-12 max-h-screen overflow-y-auto">
-            
-            <!-- TAB PEDIDOS -->
-            <div id="tab-pedidos" class="admin-tab active">
-                <div class="bg-dark p-6 border border-white/5 rounded-lg mb-10 shadow-2xl">
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
-                        <div>
-                            <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
-                                <i class="fas fa-shopping-cart"></i> Pedidos Entrantes
-                            </h3>
-                            <p class="text-[10px] text-gray-500 uppercase tracking-widest mt-1">Busca pedidos por número (NG-XXXX) o nombre.</p>
-                        </div>
-                        
-                        <!-- BARRA DE BÚSQUEDA -->
-                        <div class="relative w-full md:w-80">
-                            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                            <input type="text" id="search-pedidos" placeholder="Buscar: NG-1234, Juan..." class="w-full bg-darker border border-white/10 pl-10 pr-4 py-3 text-sm focus:border-primary outline-none text-white rounded transition-colors" oninput="renderPedidosList()">
-                        </div>
+            <!-- TAB PEDIDOS NUEVO -->
+            <div id="tab-pedidos" class="admin-tab hidden">
+                <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
+                            <i class="fas fa-clipboard-list"></i> Pedidos de Clientes
+                        </h3>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Al despachar, el pedido se borra del sistema.</p>
                     </div>
                     
                     <div id="admin-pedidos-list" class="space-y-4">
-                        <div class="text-center py-20"><div class="loader !block border-t-primary w-8 h-8 mx-auto"></div></div>
+                        <div class="text-center py-10"><div class="loader !block border-t-primary w-8 h-8 mx-auto"></div></div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB INVENTARIO (Simplificado para brevedad, mantén tu lógica de agregar productos aquí) -->
+            <!-- TAB INVENTARIO -->
             <div id="tab-inventario" class="admin-tab">
-                 <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-6 italic">Gestión de Stock</h3>
-                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="admin-products-list"></div>
+                <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
+                    <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
+                        <i class="fas fa-box-open"></i> Añadir Nuevo Producto
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            
+                            <!-- SECCIÓN NUEVA: STOCK Y PREVENTA -->
+                            <div class="flex flex-col sm:flex-row gap-4 bg-darker p-4 border border-white/5 rounded">
+                                <div class="flex-1">
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="No visible en tienda, controla el estado 'Agotado'">Stock / Cantidad</label>
+                                    <input type="number" id="new-stock" placeholder="Ej: 10" value="10" min="0" class="w-full bg-dark border border-white/10 px-4 py-2 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div class="flex items-center justify-between sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
+                                    <span class="text-[9px] uppercase tracking-widest text-blue-400 font-bold">Modo Preventa (Próximamente)</span>
+                                    <label class="switch switch-blue">
+                                        <input type="checkbox" id="toggle-presale">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Nombre de Producto</label>
+                                    <input type="text" id="new-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Código SKU</label>
+                                    <input type="text" id="new-sku" placeholder="Ej: NG-001" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white font-mono uppercase transition-colors">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio (Ej: L650.00)</label>
+                                    <input type="text" id="new-price" placeholder="L650.00" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Categoría</label>
+                                    <select id="new-cat" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-gray-300 transition-colors cursor-pointer"></select>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between bg-darker p-4 border border-white/5 rounded">
+                                <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Activar Guía de Tallas</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-measures" checked onchange="toggleMeasuresVisibility()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="measures-config-panel" class="bg-darker p-5 border border-white/10 rounded transition-all">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div>
+                                    <div class="flex-1 grid grid-cols-3 gap-2">
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Pecho</p>
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Largo</p>
+                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Ancho</p>
+                                    </div>
+                                </div>
+                                <div id="medidas-inputs-container" class="space-y-3"></div>
+                            </div>
+
+                            <div>
+                                <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Descripción corta</label>
+                                <textarea id="new-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none h-20 text-white transition-colors"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col gap-4 h-full">
+                            <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[120px]" onclick="document.getElementById('new-img').click()">
+                                <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" multiple onchange="compressAndAddImages(this)">
+                                <div class="text-center">
+                                    <i class="fas fa-images text-3xl text-gray-700 mb-2 transition-transform hover:scale-110"></i>
+                                    <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Añadir Fotos (JPG/PNG)</p>
+                                    <p class="text-[8px] text-gray-600 mt-1 italic">Recomendado: Formato Vertical 3:4</p>
+                                </div>
+                                <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-10"><div class="loader !block"></div></div>
+                            </div>
+                            
+                            <div id="thumbnails-container" class="flex flex-wrap gap-3 bg-darker p-4 rounded-lg border border-white/5 min-h-[110px]">
+                                <p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6" id="no-img-text">Aún no hay imágenes seleccionadas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-8">
+                        <button id="btn-submit-admin" onclick="addProduct()" class="flex-1 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-white transition-all flex justify-center items-center gap-2 shadow-lg">
+                            <span id="btn-submit-text">Guardar Producto en la Nube</span>
+                            <div id="btn-submit-loader" class="loader !border-t-dark !border-dark/30"></div>
+                        </button>
+                        <button id="btn-cancel-edit" onclick="cancelEdit()" class="hidden bg-red-600 text-white px-8 py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-red-500 transition-all">Cancelar</button>
+                    </div>
+                </div>
+
+                <!-- CATEGORÍAS (Oculto código largo repetitivo, intacto por debajo) -->
+                <div class="bg-dark p-8 border border-white/5 rounded-lg mb-16 shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-4 italic flex items-center gap-2"><i class="fas fa-tags"></i> Gestión de Categorías</h3>
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <input type="text" id="new-category-name" placeholder="Nueva categoría (Ej. Jeans)" class="flex-1 bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white">
+                        <button onclick="addNewCategory()" class="bg-darker border border-primary/40 text-primary px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-dark transition-all"><i class="fas fa-plus"></i> Guardar</button>
+                    </div>
+                    <div id="categories-manager-list" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="mb-6 border-b border-white/5 pb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Inventario en la Nube</h4>
+                        <span id="inventory-count" class="text-primary text-[10px] font-bold">0 Productos</span>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                        <input type="text" id="search-inventory" placeholder="Buscar por nombre o SKU..." class="w-full bg-darker border border-white/10 pl-10 pr-4 py-3 text-sm focus:border-primary outline-none text-white rounded" oninput="renderAdminList()">
+                    </div>
+                </div>
+                <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
-            <!-- TAB CONFIGURACION (Aquí va el resto de tu configuración de tienda) -->
-            <div id="tab-configuracion" class="admin-tab">
-                <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-6 italic">Ajustes Globales</h3>
-                <!-- Formulario de configuración... -->
+            <!-- TAB HERO CONFIG -->
+            <div id="tab-hero" class="admin-tab hidden">
+                <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic">Personalizar Sección Hero</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título Hero</label><input type="text" id="config-hero-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Subtítulo Hero</label><input type="text" id="config-hero-subtitle" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none"></div>
+                        </div>
+                        <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[250px]" onclick="document.getElementById('new-hero-img').click()">
+                            <input type="file" id="new-hero-img" class="hidden" accept="image/*" onchange="compressHeroImage(this)">
+                            <div id="hero-preview-container" class="text-center z-10 relative bg-darker/60 p-4 rounded-lg backdrop-blur-sm mt-8"><i class="fas fa-camera text-4xl text-gray-300 mb-2"></i><p class="text-[10px] text-gray-300 uppercase tracking-widest font-bold">Cambiar Fondo</p></div>
+                            <img id="hero-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg opacity-60" src="">
+                            <div id="hero-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-20"><div class="loader !block"></div></div>
+                        </div>
+                    </div>
+                    <button onclick="saveHeroConfig()" id="btn-save-hero" class="w-full mt-10 bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-xl">Actualizar Hero</button>
+                </div>
             </div>
 
-        </main>
+            <!-- TAB CONFIGURACIÓN GLOBAL -->
+            <div id="tab-config" class="admin-tab hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Textos de la Marca</h3>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Eslogan en Tienda</label><input type="text" id="config-slogan" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título "Nosotros"</label><input type="text" id="config-about-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Descripción "Nosotros"</label><textarea id="config-about-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-32"></textarea></div>
+                    </div>
+                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes Sociales</h3>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña</label><input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none" placeholder="Nueva clave (Mín. 6 caracteres)"><p class="text-[8px] text-gray-500 mt-1 italic">Déjalo en blanco si no deseas cambiarla.</p></div>
+                        <hr class="border-white/5">
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp (Ej: 50499998888)</label><input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label><input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                    </div>
+                </div>
+                <div class="mt-12"><button onclick="saveGlobalConfig()" class="w-full bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-2xl shadow-primary/20">Guardar Cambios Globales</button></div>
+            </div>
+        </div>
     </div>
 
+    <!-- SCRIPTS ADMIN -->
     <script>
-        const DarkAlert = Swal.mixin({
-            background: '#0a0a0a', color: '#fff', confirmButtonColor: '#d4af37', cancelButtonColor: '#1a1a1a',
-            customClass: { popup: 'border border-white/10 rounded-none shadow-2xl', title: 'font-serif italic', confirmButton: 'uppercase tracking-widest text-[10px] py-3 px-8 rounded-none', cancelButton: 'uppercase tracking-widest text-[10px] py-3 px-8 rounded-none' }
-        });
+        const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10 !py-2 !px-4 !w-auto shadow-2xl', title: '!text-[11px] !font-bold tracking-widest uppercase' } });
+        const DarkAlert = Swal.mixin({ background: '#0f0f0f', color: '#fff', confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626', customClass: { popup: 'border border-white/10', confirmButton: 'text-dark font-bold uppercase text-xs px-6 py-2', cancelButton: 'font-bold uppercase text-xs px-6 py-2' } });
 
-        const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, background: '#0f0f0f', color: '#fff' });
+        const DEFAULT_CONFIG = { slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], heroTitle: "", heroSubtitle: "", heroImage: "" };
+        const DEFAULT_MEASURES = { "S": { pecho: "00", largo: "00", ancho: "00" }, "M": { pecho: "00", largo: "00", ancho: "00" }, "L": { pecho: "00", largo: "00", ancho: "00" }, "XL": { pecho: "00", largo: "00", ancho: "00" } };
 
-        let inventario = [];
-        let pedidosList = [];
-        let config = {};
-
-        // --- AUTH ---
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('login-overlay').classList.add('hidden');
-                document.getElementById('admin-panel').classList.remove('hidden');
-                init();
-            } else {
-                document.getElementById('login-overlay').classList.remove('hidden');
-                document.getElementById('admin-panel').classList.add('hidden');
-            }
-        });
-
-        function loginAdmin() {
-            const e = document.getElementById('login-email').value;
-            const p = document.getElementById('login-password').value;
-            auth.signInWithEmailAndPassword(e, p).catch(err => Toast.fire({ icon: 'error', title: 'Acceso denegado' }));
-        }
-
-        function logoutAdmin() { auth.signOut(); }
+        let inventario = []; let pedidosList = []; let config = { ...DEFAULT_CONFIG };
+        let selectedBase64Imgs = []; let selectedHeroImg = ""; let editId = null;
 
         function init() {
-            escucharPedidos();
-            escucharInventario();
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    document.getElementById('login-modal').classList.remove('active'); document.getElementById('admin').style.display = 'block'; setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
+                    renderMedidasForm(); escucharConfigGlobal(); escucharFirebase(); escucharHero(); escucharPedidos();
+                } else {
+                    document.getElementById('admin').classList.remove('active'); document.getElementById('admin').style.display = 'none'; document.getElementById('login-modal').classList.add('active');
+                }
+            });
         }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.admin-tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('bg-primary/10', 'text-primary'));
-            document.getElementById(`tab-${tabId}`).classList.add('active');
-            event.currentTarget.classList.add('bg-primary/10', 'text-primary');
+        function validateAdmin() {
+            const email = document.getElementById('admin-email-input').value.trim(); const pass = document.getElementById('admin-pass-input').value;
+            if(!email || !pass) return;
+            auth.signInWithEmailAndPassword(email, pass).then(() => { document.getElementById('login-error').classList.add('hidden'); document.getElementById('admin-pass-input').value = ""; Toast.fire({ icon: 'success', title: 'Panel activado' }); })
+            .catch(() => { document.getElementById('login-error').classList.remove('hidden'); });
         }
+        function logoutAdmin() { auth.signOut(); }
 
-        // --- LÓGICA PEDIDOS ---
+        // --- SISTEMA DE PEDIDOS (NUEVO Y OPTIMIZADO) ---
         function escucharPedidos() {
             db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 pedidosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderPedidosList();
             }, (error) => {
-                console.error("Error pedidos:", error);
-                Toast.fire({ icon: 'error', title: 'Error al cargar pedidos. Revisa reglas de Firebase.' });
+                console.error("Error al obtener pedidos:", error);
+                Toast.fire({ icon: 'error', title: 'Error al cargar pedidos' });
             });
         }
 
         function renderPedidosList() {
             const list = document.getElementById('admin-pedidos-list');
             const badge = document.getElementById('badge-pedidos');
-            const term = document.getElementById('search-pedidos').value.toLowerCase().trim();
             
-            const filtered = pedidosList.filter(p => 
-                (p.idPedido || "").toLowerCase().includes(term) || 
-                (p.cliente || "").toLowerCase().includes(term)
-            );
+            // Lógica para filtrar pedidos
+            const searchInput = document.getElementById('search-pedidos');
+            const term = searchInput ? searchInput.value.toLowerCase().trim() : "";
+            
+            let filteredList = pedidosList;
+            if (term) {
+                filteredList = pedidosList.filter(p => 
+                    (p.idPedido || "").toLowerCase().includes(term) || 
+                    (p.cliente || "").toLowerCase().includes(term)
+                );
+            }
+            
+            if(pedidosList.length > 0) {
+                badge.classList.remove('hidden'); badge.innerText = pedidosList.length;
+            } else {
+                badge.classList.add('hidden');
+            }
 
-            badge.innerText = pedidosList.length;
-            badge.classList.toggle('hidden', pedidosList.length === 0);
-
-            if(filtered.length === 0) {
-                list.innerHTML = `<div class="text-center py-20 border border-dashed border-white/5 rounded"><p class="text-gray-600 uppercase text-[10px] font-bold">No hay pedidos pendientes</p></div>`;
+            if(filteredList.length === 0) {
+                list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No se encontraron pedidos</p></div>`;
                 return;
             }
 
-            list.innerHTML = filtered.map(pedido => {
-                const fecha = (pedido.createdAt && pedido.createdAt.toDate) ? pedido.createdAt.toDate().toLocaleString() : 'Recién llegado';
-                
+            list.innerHTML = filteredList.map(pedido => {
+                // Validación estricta de fecha para evitar rotura visual (Error Común de Firebase en móviles)
+                const dateStr = (pedido.createdAt && typeof pedido.createdAt.toDate === 'function') 
+                    ? new Date(pedido.createdAt.toDate()).toLocaleDateString() 
+                    : 'Nuevo / Pendiente';
+
                 return `
-                <div class="bg-darker border border-white/10 p-5 rounded-lg flex flex-col md:flex-row justify-between gap-6 relative overflow-hidden group">
-                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-primary"></div>
-                    <div class="flex-1">
-                        <div class="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
-                            <span class="text-primary font-bold uppercase tracking-widest text-[11px]">ID: ${pedido.idPedido || 'S/N'}</span>
-                            <span class="text-gray-600 text-[9px] font-bold uppercase tracking-tighter">${fecha}</span>
+                <div class="bg-darker border border-white/5 p-6 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-xl relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500/50"></div>
+                    <div class="flex-1 w-full">
+                        <div class="flex justify-between items-center border-b border-white/5 pb-2 mb-3">
+                            <h4 class="text-primary text-sm font-bold uppercase tracking-widest">PEDIDO: ${pedido.idPedido || 'S/N'}</h4>
+                            <span class="text-[10px] text-gray-500 font-bold">${dateStr}</span>
                         </div>
-                        <h4 class="text-white font-bold uppercase text-sm mb-2"><i class="fas fa-user-circle text-gray-500 mr-2"></i>${pedido.cliente}</h4>
-                        ${pedido.mensaje ? `<p class="text-gray-400 text-[10px] italic bg-white/5 p-2 rounded mb-4 border-l-2 border-primary">"${pedido.mensaje}"</p>` : ''}
+                        <p class="text-white text-xs mb-1 uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
+                        ${pedido.mensaje ? `<p class="text-gray-400 text-[10px] italic mb-3 bg-white/5 p-2 rounded border-l-2 border-primary">" ${pedido.mensaje} "</p>` : ''}
                         
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            ${pedido.items.map(i => `
-                                <div class="flex items-center gap-3 bg-dark p-2 border border-white/5 rounded">
-                                    <img src="${i.img}" class="w-10 h-10 object-cover rounded bg-darker">
-                                    <div class="min-w-0">
-                                        <p class="text-white text-[9px] font-bold uppercase truncate">${i.titulo}</p>
-                                        <p class="text-gray-500 text-[8px] uppercase">Talla: <span class="text-primary">${i.talla}</span> | Cant: <span class="text-white">x${i.cantidad}</span></p>
+                        <div class="bg-black/30 p-3 rounded space-y-2 mt-3">
+                            ${(pedido.items || []).map(i => `
+                                <div class="flex items-center gap-3 bg-darker border border-white/5 p-2 rounded">
+                                    <div class="w-10 h-10 bg-dark rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-white text-[10px] font-bold uppercase truncate">${i.titulo}</p>
+                                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p>
                                     </div>
                                 </div>
                             `).join('')}
                         </div>
                     </div>
-                    <div class="flex flex-col items-end justify-center gap-3 min-w-[140px]">
-                        <p class="text-2xl font-serif text-white font-bold">L${pedido.total.toFixed(2)}</p>
-                        <button onclick="despacharPedido('${pedido.id}')" class="w-full bg-green-900/20 text-green-400 border border-green-500/30 py-3 rounded text-[10px] font-bold uppercase tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2">
-                            <i class="fas fa-truck-loading"></i> Despachar
+                    <div class="flex flex-col items-end gap-3 w-full md:w-auto mt-4 md:mt-0">
+                        <p class="text-2xl text-white font-serif font-bold">L${(pedido.total || 0).toFixed(2)}</p>
+                        <button onclick="despacharPedido('${pedido.id}')" class="w-full md:w-auto bg-green-900/30 text-green-400 border border-green-500/30 px-6 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2 rounded shadow-xl">
+                            <i class="fas fa-check-double"></i> Despachar y Borrar
                         </button>
                     </div>
                 </div>
-                `;
-            }).join('');
+            `}).join('');
         }
 
         function despacharPedido(docId) {
-            const p = pedidosList.find(x => x.id === docId);
-            if(!p) return;
+            const pedido = pedidosList.find(p => p.id === docId);
+            if(!pedido) return;
 
             DarkAlert.fire({
-                title: 'Confirmar Despacho',
-                text: `Se rebajará el stock de ${p.items.length} productos y el pedido se archivará.`,
+                title: '¿Despachar Pedido?', 
+                text: "Esto rebajará automáticamente el stock del inventario y borrará el pedido de la lista.", 
                 icon: 'question',
-                showCancelButton: true,
-                confirmButtonText: 'Confirmar y Rebajar Stock'
-            }).then(result => {
-                if(result.isConfirmed) {
+                showCancelButton: true, confirmButtonText: '<i class="fas fa-check"></i> Sí, Despachar', cancelButtonText: 'Cancelar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // USO DE FIREBASE BATCH: Seguridad total, si el inventario falla, no borra el pedido.
                     const batch = db.batch();
                     
-                    // Lógica de rebaje de inventario
-                    p.items.forEach(item => {
-                        const prodRef = db.collection("productos").doc(item.id);
-                        const enInv = inventario.find(inv => inv.id === item.id);
-                        if(enInv) {
-                            const nuevoStock = Math.max(0, (enInv.stock || 0) - item.cantidad);
-                            batch.update(prodRef, { stock: nuevoStock });
+                    // 1. Rebajar inventario por cada producto en el pedido
+                    (pedido.items || []).forEach(item => {
+                        const prodInStock = inventario.find(p => p.id === item.id);
+                        if(prodInStock) {
+                            const prodRef = db.collection("productos").doc(item.id);
+                            let newStock = (prodInStock.stock || 0) - item.cantidad;
+                            if(newStock < 0) newStock = 0; // Evitar stock negativo por seguridad
+                            batch.update(prodRef, { stock: newStock });
                         }
                     });
 
-                    // Borrar el pedido despachado
-                    batch.delete(db.collection("pedidos").doc(docId));
+                    // 2. Eliminar el pedido de la lista
+                    const orderRef = db.collection("pedidos").doc(docId);
+                    batch.delete(orderRef);
 
+                    // 3. Ejecutar ambas acciones simultáneamente
                     batch.commit().then(() => {
-                        Toast.fire({ icon: 'success', title: 'Pedido despachado y stock actualizado' });
-                    }).catch(e => {
-                        DarkAlert.fire({ icon: 'error', title: 'Error en proceso', text: e.message });
+                        Toast.fire({ icon: 'success', title: 'Despachado y Stock Actualizado' });
+                    }).catch(error => {
+                        DarkAlert.fire({ icon: 'error', title: 'Error al despachar', text: error.message });
                     });
                 }
             });
         }
 
-        function escucharInventario() {
-            db.collection("productos").onSnapshot(snap => {
-                inventario = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                // Aquí llamarías a tu función de renderizado de productos del admin
-            });
+        // --- SISTEMA INVENTARIO ---
+        function escucharFirebase() { db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); }); }
+        function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
+        function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderHeroConfig(); } }); }
+
+        function showAdminTab(tab, event) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden'); if(event) event.currentTarget.classList.add('active');
         }
 
+        // ... (Compresión de imágenes se mantiene igual)
+        function compressAndAddImages(input) {
+            if (!input.files || input.files.length === 0) return;
+            document.getElementById('img-loading').classList.remove('hidden');
+            let filesProcessed = 0; const totalFiles = input.files.length;
+
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image(); img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
+                        if (w > h) { if (w > 800) { h *= 800 / w; w = 800; } } else { if (h > 1000) { w *= 1000 / h; h = 1000; } }
+                        canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        selectedBase64Imgs.push(canvas.toDataURL('image/jpeg', 0.8)); filesProcessed++;
+                        if (filesProcessed === totalFiles) { renderThumbnails(); document.getElementById('img-loading').classList.add('hidden'); }
+                    }
+                };
+            });
+            input.value = ""; 
+        }
+
+        function removeImage(index) { selectedBase64Imgs.splice(index, 1); renderThumbnails(); }
+        function renderThumbnails() {
+            const c = document.getElementById('thumbnails-container');
+            if (selectedBase64Imgs.length === 0) return c.innerHTML = `<p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6">Aún no hay imágenes seleccionadas</p>`;
+            c.innerHTML = selectedBase64Imgs.map((imgSrc, index) => `<div class="img-thumb-container"><img src="${imgSrc}"><div class="img-thumb-remove" onclick="removeImage(${index})"><i class="fas fa-times"></i></div></div>`).join('');
+        }
+        
+        function toggleMeasuresVisibility() { document.getElementById('measures-config-panel').style.display = document.getElementById('toggle-measures').checked ? 'block' : 'none'; }
+
+        async function uploadImageToStorage(b64, path) {
+            if (!b64.startsWith('data:image')) return b64;
+            const res = await fetch(b64); const blob = await res.blob();
+            const ref = storage.ref().child(path); await ref.put(blob); return await ref.getDownloadURL();
+        }
+
+        async function addProduct() {
+            const title = document.getElementById('new-title').value.trim();
+            const price = document.getElementById('new-price').value.trim();
+            if(!title || !price || selectedBase64Imgs.length === 0) return Toast.fire({ icon: 'warning', title: 'Faltan campos/fotos' });
+
+            document.getElementById('btn-submit-admin').disabled = true; document.getElementById('btn-submit-loader').style.display = "block";
+
+            try {
+                let docId = editId; let docRef = docId ? db.collection("productos").doc(docId) : db.collection("productos").doc(); docId = docRef.id;
+                const imageUrls = await Promise.all(selectedBase64Imgs.map((b64, idx) => uploadImageToStorage(b64, `productos/${docId}/img_${idx}_${Date.now()}.jpg`)));
+                
+                const hasMeasures = document.getElementById('toggle-measures').checked;
+                const tallas = []; const medidas = {};
+                if(hasMeasures) { ["s", "m", "l", "xl"].forEach(t => { if(document.getElementById(`t-${t}`).checked) { const T = t.toUpperCase(); tallas.push(T); medidas[T] = { pecho: document.getElementById(`${t}-pecho`).value, largo: document.getElementById(`${t}-largo`).value, ancho: document.getElementById(`${t}-ancho`).value }; } }); }
+
+                const productData = {
+                    sku: document.getElementById('new-sku').value.trim().toUpperCase() || "",
+                    categoria: document.getElementById('new-cat').value || 'general',
+                    titulo: title,
+                    descripcion: document.getElementById('new-desc').value.trim() || "",
+                    precio: price,
+                    stock: parseInt(document.getElementById('new-stock').value) || 0, // NUEVO CAMPO
+                    isPresale: document.getElementById('toggle-presale').checked, // NUEVO CAMPO
+                    hasMeasures, tallas, medidas,
+                    imagen: imageUrls[0] || "", imagenes: imageUrls || []         
+                };
+                if (!editId) productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+
+                await docRef.set(productData, { merge: true });
+                Toast.fire({ icon: 'success', title: 'Guardado exitoso' });
+                cancelEdit(); 
+            } catch (error) { DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message }); }
+            finally { document.getElementById('btn-submit-admin').disabled = false; document.getElementById('btn-submit-loader').style.display = "none"; }
+        }
+
+        function deleteProduct(id) {
+            DarkAlert.fire({ title: '¿Eliminar producto?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' })
+            .then((r) => { if (r.isConfirmed) db.collection("productos").doc(id).delete().then(() => Toast.fire({ icon: 'success', title: 'Eliminado' })); });
+        }
+
+        function startEdit(id) {
+            const p = inventario.find(x => x.id === id); if(!p) return;
+            editId = id; showAdminTab('inventario'); window.scrollTo({top: 0, behavior: 'smooth'});
+            document.getElementById('admin-form-container').classList.add('editing-mode');
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            document.getElementById('new-title').value = p.titulo || ""; document.getElementById('new-sku').value = p.sku || "";
+            document.getElementById('new-price').value = p.precio || ""; document.getElementById('new-desc').value = p.descripcion || "";
+            if (p.categoria) document.getElementById('new-cat').value = p.categoria;
+            
+            // Asignar nuevos campos de stock y preventa
+            document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 10;
+            document.getElementById('toggle-presale').checked = !!p.isPresale;
+            
+            document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
+            selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []); renderThumbnails();
+            
+            if(p.hasMeasures && p.tallas) { ["s", "m", "l", "xl"].forEach(t => { const T = t.toUpperCase(); document.getElementById(`t-${t}`).checked = p.tallas.includes(T); if(p.medidas && p.medidas[T]) { document.getElementById(`${t}-pecho`).value = p.medidas[T].pecho || ""; document.getElementById(`${t}-largo`).value = p.medidas[T].largo || ""; document.getElementById(`${t}-ancho`).value = p.medidas[T].ancho || ""; } }); }
+        }
+
+        function cancelEdit() {
+            editId = null; document.getElementById('admin-form-container').classList.remove('editing-mode');
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            
+            document.getElementById('new-title').value = ""; document.getElementById('new-sku').value = "";
+            document.getElementById('new-price').value = ""; document.getElementById('new-desc').value = "";
+            document.getElementById('new-stock').value = "10"; document.getElementById('toggle-presale').checked = false; // Reset stock
+            document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
+            
+            selectedBase64Imgs = []; renderThumbnails(); renderMedidasForm();
+        }
+
+        function renderAdminList() {
+            const list = document.getElementById('admin-list'); const term = (document.getElementById('search-inventory').value || "").toLowerCase();
+            const filt = inventario.filter(p => (p.titulo || "").toLowerCase().includes(term) || (p.sku || "").toLowerCase().includes(term));
+            document.getElementById('inventory-count').innerText = `${filt.length} Productos`;
+            if(filt.length === 0) return list.innerHTML = `<p class="col-span-full text-gray-500 text-xs italic text-center py-4">No se encontraron productos.</p>`;
+            
+            list.innerHTML = filt.map(prod => {
+                const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
+                const total = prod.imagenes ? prod.imagenes.length : 1;
+                
+                // Estados Visuales para Admin
+                let statusInfo = `<span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria || 'Gen'}</span>`;
+                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Próximamente</span>`;
+                else if(prod.stock <= 0) statusInfo += `<span class="bg-red-600/20 text-red-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-ban"></i> Agotado</span>`;
+                else statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-check"></i> Stock: ${prod.stock}</span>`;
+
+                return `
+                <div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg hover:border-primary/30 transition-all shadow-lg">
+                    <div class="flex items-center gap-4 truncate">
+                        <div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden relative"><img src="${cover}" class="w-full h-full object-cover"></div>
+                        <div class="truncate">
+                            <p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo} <span class="text-gray-500 font-normal text-[10px]">#${prod.sku||''}</span></p>
+                            <div class="flex gap-1 mt-1 items-center flex-wrap">${statusInfo}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 flex-shrink-0 ml-2">
+                        <button onclick="startEdit('${prod.id}')" class="w-8 h-8 text-primary bg-primary/5 hover:bg-primary/20 rounded"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`
+            }).join('');
+        }
+
+        // ... (Categorías, Config Hero y Config Global permanecen idénticos, omitidos para mantener brevedad)
+        function renderMedidasForm() {
+            document.getElementById('medidas-inputs-container').innerHTML = ["S", "M", "L", "XL"].map(t => `<div class="flex items-center gap-2"><div class="w-12"><input type="checkbox" id="t-${t.toLowerCase()}" value="${t}" checked class="hidden"><label for="t-${t.toLowerCase()}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded">${t}</label></div><div class="flex-1 grid grid-cols-3 gap-2"><input type="text" id="${t.toLowerCase()}-pecho" placeholder="P" class="measure-input rounded" value="${DEFAULT_MEASURES[t].pecho}"><input type="text" id="${t.toLowerCase()}-largo" placeholder="L" class="measure-input rounded" value="${DEFAULT_MEASURES[t].largo}"><input type="text" id="${t.toLowerCase()}-ancho" placeholder="A" class="measure-input rounded" value="${DEFAULT_MEASURES[t].ancho}"></div></div>`).join('');
+        }
+        function renderCategoryInputs() { const sel = document.getElementById('new-cat'); if(sel && config.categories) sel.innerHTML = config.categories.map(c => `<option value="${c}">${c.toUpperCase()}</option>`).join(''); }
+        function renderCategoriesManager() { const list = document.getElementById('categories-manager-list'); if(list && config.categories) list.innerHTML = config.categories.map(c => `<div class="flex items-center gap-2 bg-darker border border-white/10 px-3 py-2 rounded"><span class="text-[10px] uppercase font-bold text-gray-300">${c}</span><button onclick="removeCategory('${c}')" class="text-white/20 hover:text-red-500"><i class="fas fa-times-circle"></i></button></div>`).join(''); }
+        function addNewCategory() { const input = document.getElementById('new-category-name'); const name = input.value.trim().toLowerCase(); if(!name || (config.categories||[]).includes(name)) return; db.collection("config").doc("global").set({ categories: [...(config.categories||[]), name] }, { merge: true }).then(() => input.value = ""); }
+        function removeCategory(cat) { if((config.categories||[]).length <= 1) return Toast.fire({ icon: 'warning', title: 'Mínimo una categoría' }); db.collection("config").doc("global").set({ categories: config.categories.filter(c => c !== cat) }, { merge: true }); }
+        
+        function compressHeroImage(input) { if (!input.files || !input.files[0]) return; const reader = new FileReader(); reader.readAsDataURL(input.files[0]); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); let w = img.width > 1200 ? 1200 : img.width; canvas.width = w; canvas.height = img.height * (w / img.width); canvas.getContext('2d').drawImage(img, 0, 0, w, canvas.height); selectedHeroImg = canvas.toDataURL('image/jpeg', 0.8); document.getElementById('hero-preview').src = selectedHeroImg; document.getElementById('hero-preview').classList.remove('hidden'); document.getElementById('hero-preview-container').classList.add('bg-darker/80'); } } }
+        async function saveHeroConfig() { const btn = document.getElementById('btn-save-hero'); btn.innerText = "Subiendo..."; btn.disabled = true; try { let img = config.heroImage || ""; if (selectedHeroImg) img = await uploadImageToStorage(selectedHeroImg, `config/hero_bg_${Date.now()}.jpg`); await db.collection("config").doc("hero").set({ heroTitle: document.getElementById('config-hero-title').value, heroSubtitle: document.getElementById('config-hero-subtitle').value, heroImage: img }, { merge: true }); btn.innerText = "¡Actualizado!"; setTimeout(() => { btn.innerText = "Actualizar Hero"; btn.disabled = false; }, 2000); } catch (e) { btn.disabled = false; } }
+
+        function renderConfig() { document.getElementById('config-slogan').value = config.slogan || ""; document.getElementById('config-about-title').value = config.aboutTitle || ""; document.getElementById('config-about-desc').value = config.aboutDesc || ""; document.getElementById('config-whatsapp').value = config.whatsapp || ""; document.getElementById('config-instagram').value = config.instagram || ""; }
+        function saveGlobalConfig() { db.collection("config").doc("global").set({ slogan: document.getElementById('config-slogan').value, aboutTitle: document.getElementById('config-about-title').value, aboutDesc: document.getElementById('config-about-desc').value, whatsapp: document.getElementById('config-whatsapp').value, instagram: document.getElementById('config-instagram').value }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Guardado' })); const p = document.getElementById('config-password').value; if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> document.getElementById('config-password').value = ""); }
+
+        window.onload = init;
     </script>
 </body>
 </html>
