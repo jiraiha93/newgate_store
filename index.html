@@ -22,11 +22,10 @@
     </script>
     
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- OPTIMIZACIÓN: Se agregó maximum-scale=1.0 para evitar el zoom indeseado en móviles -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NEW GATE | Streetwear Exclusivo</title>
     <meta name="description" content="New Gate no es una marca, es un destino. Diseñamos para la tripulación que prefiere el asfalto.">
-    <meta property="og:title" content="NEW GATE | Streetwear Exclusivo">
-    <meta property="og:description" content="Explora nuestro catálogo de ropa Oversize de lujo.">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -37,7 +36,7 @@
             theme: {
                 extend: {
                     colors: { primary: '#d4af37', dark: '#0a0a0a', darker: '#050505' },
-                    fontFamily: { sans: ['"Inter"', 'sans-serif'], serif: ['"Fredericka the Great"', 'serif'], graffiti: ['"Permanent Marker"', 'cursive'] }
+                    fontFamily: { sans: ['"Inter"', 'sans-serif'], serif: ['"Playfair Display"', 'serif'], graffiti: ['"Permanent Marker"', 'cursive'] }
                 }
             }
         }
@@ -45,7 +44,6 @@
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Permanent+Marker&display=swap');
-        @import url('https://fonts.googleapis.com/css2?family=Fredericka+the+Great&display=swap');
         
         .section-fade { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
         .section-fade.active { display: block; opacity: 1; }
@@ -68,7 +66,7 @@
         .loader {
             border: 3px solid rgba(212, 175, 55, 0.3); border-radius: 50%;
             border-top: 3px solid #d4af37; width: 20px; height: 20px;
-            -webkit-animation: spin 1s linear infinite; animation: spin 1s linear infinite; display: none;
+            animation: spin 1s linear infinite; display: none;
         }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
@@ -76,9 +74,14 @@
         .dot.active { background-color: #d4af37; width: 12px; border-radius: 4px; }
         
         .swal2-container { z-index: 9999 !important; }
-        
-        /* Smooth image transition class */
         .img-transition { transition: opacity 0.4s ease-in-out; }
+        
+        /* Mobile Menu */
+        #mobile-menu { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
+        #mobile-menu.active { transform: translateX(0); }
+        
+        /* Badge UI */
+        .status-badge { position: absolute; top: 12px; left: 12px; padding: 4px 10px; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; z-index: 10; border-radius: 2px; }
     </style>
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark">
@@ -92,86 +95,99 @@
             <nav class="hidden md:flex space-x-8 items-center">
                 <span onclick="showSection('inicio')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Tienda</span>
                 <span onclick="showSection('nosotros')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Nosotros</span>
+                <span onclick="abrirMisPedidos()" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-400 hover:text-primary font-bold transition-colors">
+                    <i class="fas fa-history"></i> Mis Pedidos
+                </span>
                 <span onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-primary hover:text-white font-bold transition-colors border border-primary/20 px-3 py-1.5 rounded">
                     <i class="fas fa-shopping-bag"></i> Mi Pedido (<span id="cart-count">0</span>)
                 </span>
             </nav>
             
-            <button onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="md:hidden text-primary text-xl">
-                <i class="fas fa-shopping-bag"></i><span id="cart-count-mobile" class="text-[10px] align-top ml-1">0</span>
-            </button>
+            <!-- MENÚ MÓVIL MEJORADO -->
+            <div class="md:hidden flex items-center gap-5 text-primary text-xl">
+                <button onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="relative">
+                    <i class="fas fa-shopping-bag"></i>
+                    <span id="cart-count-mobile" class="absolute -top-2 -right-2 bg-white text-dark text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
+                </button>
+                <button onclick="toggleMobileMenu()" class="text-white hover:text-primary transition-colors">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
         </div>
     </header>
 
+    <!-- SIDEBAR MENÚ MÓVIL -->
+    <div id="mobile-menu" class="fixed inset-0 bg-darker/95 backdrop-blur-xl z-[200] flex flex-col pt-24 px-8 border-l border-white/10 md:hidden">
+        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-white text-3xl hover:text-primary"><i class="fas fa-times"></i></button>
+        <div class="flex flex-col gap-8 text-center mt-10">
+            <span onclick="toggleMobileMenu(); showSection('inicio')" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-white hover:text-primary font-bold">Tienda</span>
+            <span onclick="toggleMobileMenu(); showSection('nosotros')" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-white hover:text-primary font-bold">Nosotros</span>
+            <span onclick="toggleMobileMenu(); abrirMisPedidos()" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-gray-400 hover:text-primary font-bold"><i class="fas fa-history"></i> Mis Pedidos</span>
+            <span onclick="toggleMobileMenu(); document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-primary font-bold"><i class="fas fa-shopping-bag"></i> Ir a Pagar</span>
+        </div>
+    </div>
+
+    <!-- MODAL MIS PEDIDOS CLIENTE -->
+    <div id="mis-pedidos-modal" class="modal-overlay" onclick="cerrarMisPedidos(event)">
+        <div class="modal-content p-6 animate-in fade-in zoom-in duration-300 max-w-lg" onclick="event.stopPropagation()">
+            <button onclick="cerrarMisPedidos()" class="absolute top-4 right-4 text-white hover:text-primary text-xl z-30 transition-colors w-8 h-8 flex items-center justify-center"><i class="fas fa-times"></i></button>
+            <h2 class="font-serif text-2xl text-white italic mb-2 border-b border-white/10 pb-4"><i class="fas fa-receipt text-primary"></i> Historial de Pedidos</h2>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4">Tus últimos pedidos realizados desde este dispositivo</p>
+            <div id="lista-mis-pedidos" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+                <!-- Se llenan por JS -->
+            </div>
+            <button onclick="limpiarMisPedidos()" class="w-full mt-6 bg-red-900/30 text-red-400 border border-red-500/30 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all rounded">Borrar Historial</button>
+        </div>
+    </div>
+
+    <!-- MODAL PRODUCTO -->
     <div id="product-modal" class="modal-overlay" onclick="closeModal(event)">
         <div class="modal-content animate-in fade-in zoom-in duration-300" onclick="event.stopPropagation()">
-            <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-primary text-xl z-30 transition-colors bg-darker/80 backdrop-blur-sm border border-white/10 w-10 h-10 rounded-full flex items-center justify-center shadow-lg">
-                <i class="fas fa-times"></i>
-            </button>
+            <button onclick="closeModal()" class="absolute top-6 right-6 text-white hover:text-primary text-xl z-30 transition-colors bg-darker/80 backdrop-blur-sm border border-white/10 w-10 h-10 rounded-full flex items-center justify-center shadow-lg"><i class="fas fa-times"></i></button>
             <div class="grid grid-cols-1 lg:grid-cols-2">
-                <!-- Se añadieron eventos touch para swipe en móviles -->
                 <div id="modal-img-container" class="h-[500px] lg:h-[600px] bg-darker flex flex-col items-center justify-center relative group select-none" ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)">
-                    
-                    <!-- Botones mejorados para contraste sobre fondos blancos -->
-                    <button id="btn-prev-img" onclick="changeImage(-1)" class="absolute left-4 z-20 text-white bg-darker/60 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center hover:text-primary hover:bg-darker transition-all opacity-0 group-hover:opacity-100 hidden shadow-xl">
-                        <i class="fas fa-chevron-left text-xl"></i>
-                    </button>
-                    
+                    <button id="btn-prev-img" onclick="changeImage(-1)" class="absolute left-4 z-20 text-white bg-darker/60 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center hover:text-primary transition-all opacity-0 group-hover:opacity-100 hidden shadow-xl"><i class="fas fa-chevron-left text-xl"></i></button>
                     <img id="modal-img" src="" alt="Producto" class="max-w-full max-h-full object-contain absolute inset-0 m-auto img-transition">
-                    <!-- Loader para transición suave de imágenes -->
-                    <div id="modal-img-loader" class="absolute inset-0 flex items-center justify-center bg-darker/50 z-10 hidden">
-                        <div class="loader !block"></div>
-                    </div>
-                    
-                    <button id="btn-next-img" onclick="changeImage(1)" class="absolute right-4 z-20 text-white bg-darker/60 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center hover:text-primary hover:bg-darker transition-all opacity-0 group-hover:opacity-100 hidden shadow-xl">
-                        <i class="fas fa-chevron-right text-xl"></i>
-                    </button>
-                    
+                    <div id="modal-img-loader" class="absolute inset-0 flex items-center justify-center bg-darker/50 z-10 hidden"><div class="loader !block"></div></div>
+                    <button id="btn-next-img" onclick="changeImage(1)" class="absolute right-4 z-20 text-white bg-darker/60 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center hover:text-primary transition-all opacity-0 group-hover:opacity-100 hidden shadow-xl"><i class="fas fa-chevron-right text-xl"></i></button>
                     <div id="carousel-dots" class="absolute bottom-4 flex justify-center w-full space-x-2 z-20 bg-darker/30 py-2 backdrop-blur-sm rounded-full mx-auto w-max px-4"></div>
                 </div>
 
                 <div class="p-8 lg:p-10 flex flex-col justify-center">
                     <div class="flex justify-between items-start mb-2">
                         <p id="modal-cat" class="text-primary text-[10px] uppercase tracking-[0.4em] font-bold"></p>
-                        <button onclick="shareProduct()" class="text-gray-500 hover:text-primary transition-colors text-sm border border-white/5 rounded-full w-8 h-8 flex items-center justify-center" title="Copiar enlace"><i class="fas fa-share-alt"></i></button>
+                        <button onclick="shareProduct()" class="text-gray-500 hover:text-primary transition-colors text-sm border border-white/5 rounded-full w-8 h-8 flex items-center justify-center"><i class="fas fa-share-alt"></i></button>
                     </div>
                     
                     <h2 id="modal-title" class="font-serif text-4xl text-white italic mb-1"></h2>
-                    <p id="modal-sku-display" class="text-gray-600 text-[10px] uppercase tracking-widest mb-4 font-bold"></p>
+                    <div class="flex items-center gap-3 mb-4">
+                        <p id="modal-sku-display" class="text-gray-600 text-[10px] uppercase tracking-widest font-bold"></p>
+                        <span id="modal-status-badge" class="px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded hidden"></span>
+                    </div>
+                    
                     <p id="modal-desc" class="text-gray-400 text-sm leading-relaxed mb-6"></p>
                     
                     <div id="modal-measures-container" class="mb-6 hidden">
                         <h4 class="text-white text-[10px] uppercase tracking-widest mb-4 border-b border-white/10 pb-2 flex items-center gap-2 font-bold">
                             <i class="fas fa-ruler text-primary"></i> Guía de Medidas (cm)
                         </h4>
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-[10px] text-gray-500 uppercase text-left">
-                                <thead>
-                                    <tr class="text-gray-300 border-b border-white/5">
-                                        <th class="py-2">Talla</th>
-                                        <th class="py-2 text-center">Pecho</th>
-                                        <th class="py-2 text-center">Largo</th>
-                                        <th class="py-2 text-center">Ancho</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="modal-measures-body" class="divide-y divide-white/5"></tbody>
-                            </table>
-                        </div>
+                        <table class="w-full text-[10px] text-gray-500 uppercase text-left">
+                            <thead><tr class="text-gray-300 border-b border-white/5"><th class="py-2">Talla</th><th class="py-2 text-center">Pecho</th><th class="py-2 text-center">Largo</th><th class="py-2 text-center">Ancho</th></tr></thead>
+                            <tbody id="modal-measures-body" class="divide-y divide-white/5"></tbody>
+                        </table>
                     </div>
 
                     <div id="modal-talla-select-container" class="mb-6 hidden">
                         <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Selecciona tu talla</label>
-                        <select id="modal-talla" class="w-full bg-darker border border-white/10 px-4 py-3 outline-none focus:border-primary text-white text-sm transition-colors cursor-pointer">
-                        </select>
+                        <select id="modal-talla" class="w-full bg-darker border border-white/10 px-4 py-3 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors cursor-pointer"></select>
                     </div>
 
-                    <!-- NUEVO: Selector de cantidad -->
-                    <div class="flex items-center gap-4 mb-8">
+                    <div id="modal-quantity-container" class="flex items-center gap-4 mb-8">
                         <label class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Cantidad:</label>
                         <div class="flex items-center bg-darker border border-white/10 rounded">
-                            <button onclick="updateQuantity(-1)" class="w-10 h-10 flex items-center justify-center text-white hover:text-primary transition-colors hover:bg-white/5"><i class="fas fa-minus text-xs"></i></button>
+                            <button onclick="updateQuantity(-1)" class="w-10 h-10 text-white hover:text-primary"><i class="fas fa-minus text-xs"></i></button>
                             <span id="modal-quantity" class="text-white text-sm font-bold w-8 text-center select-none">1</span>
-                            <button onclick="updateQuantity(1)" class="w-10 h-10 flex items-center justify-center text-white hover:text-primary transition-colors hover:bg-white/5"><i class="fas fa-plus text-xs"></i></button>
+                            <button onclick="updateQuantity(1)" class="w-10 h-10 text-white hover:text-primary"><i class="fas fa-plus text-xs"></i></button>
                         </div>
                     </div>
 
@@ -180,6 +196,8 @@
                         <button id="btn-add-cart" onclick="agregarAlPedido()" class="w-full sm:w-auto bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all text-center flex items-center justify-center gap-2">
                             <i class="fas fa-cart-plus"></i> Añadir al Pedido
                         </button>
+                        <!-- Mensaje alternativo si está agotado o preventa -->
+                        <div id="modal-disabled-msg" class="hidden w-full sm:w-auto bg-darker border border-white/10 text-gray-500 px-10 py-4 font-bold uppercase text-[10px] tracking-widest text-center cursor-not-allowed"></div>
                     </div>
                 </div>
             </div>
@@ -227,8 +245,7 @@
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
                     <div class="lg:col-span-2 bg-dark p-6 border border-white/5 shadow-2xl h-fit">
                         <h3 class="text-primary uppercase tracking-widest text-xs font-bold mb-4 border-b border-white/10 pb-4"><i class="fas fa-shopping-bag"></i> Tu Selección</h3>
-                        <div id="carrito-list" class="space-y-3 max-h-[350px] overflow-y-auto pr-2">
-                        </div>
+                        <div id="carrito-list" class="space-y-3 max-h-[350px] overflow-y-auto pr-2"></div>
                         <div class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
                             <span class="text-white text-[10px] font-bold uppercase tracking-widest">Total Estimado:</span>
                             <span id="cart-total" class="text-primary text-2xl font-serif font-bold">L0.00</span>
@@ -238,16 +255,18 @@
                     <div class="lg:col-span-3 space-y-6 bg-dark p-8 border border-white/5 shadow-2xl">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Nombre Completo</label>
-                            <input type="text" id="nombre" placeholder="Ej: Juan Pérez" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-sm transition-colors">
+                            <!-- OPTIMIZACIÓN: text-[16px] evita zoom en móviles -->
+                            <input type="text" id="nombre" placeholder="Ej: Juan Pérez" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors">
                         </div>
                         
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Mensaje Adicional</label>
-                            <textarea id="mensaje" rows="4" maxlength="150" placeholder="Ej: ¿Tienen envío a domicilio? (Máx. 150 caracteres)" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-sm transition-colors resize-none"></textarea>
+                            <!-- OPTIMIZACIÓN: text-[16px] evita zoom en móviles -->
+                            <textarea id="mensaje" rows="4" maxlength="150" placeholder="Ej: ¿Tienen envío a domicilio? (Máx. 150 caracteres)" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors resize-none"></textarea>
                             <p class="text-right text-[9px] text-gray-600 mt-1 uppercase tracking-wider">Máx 150 caracteres</p>
                         </div>
 
-                        <button onclick="enviarWhatsApp()" class="w-full py-5 bg-primary text-dark font-bold uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-primary/10 flex items-center justify-center gap-3">
+                        <button onclick="procesarEnvioPedido()" class="w-full py-5 bg-primary text-dark font-bold uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-primary/10 flex items-center justify-center gap-3">
                             <i class="fab fa-whatsapp text-xl"></i> <span id="btn-wa-text">Enviar Pedido a Tienda</span>
                         </button>
                     </div>
@@ -285,10 +304,8 @@
 
         const DEFAULT_CONFIG = {
             slogan: "Nuestras piezas exclusivas",
-            aboutTitle: "Legacy Over Size",
-            aboutDesc: "New Gate no es una marca, es un destino. Diseñamos para la tripulación que prefiere el asfalto y el estilo que no se rinde ante el tiempo.",
-            whatsapp: "50400000000", instagram: "#", facebook: "#",
-            categories: ["urban", "anime", "autos"],
+            aboutTitle: "Legacy Over Size", aboutDesc: "New Gate no es una marca, es un destino.",
+            whatsapp: "50400000000", instagram: "#", facebook: "#", categories: ["urban", "anime"],
             heroTitle: "ESTILO SIN LÍMITES", heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE", heroImage: ""
         };
 
@@ -298,18 +315,50 @@
         let currentModalImages = [];
         let currentImageIndex = 0;
         let hasCheckedUrlParams = false; 
-        
-        // Variables para el control de cantidad y touch (swipe)
         let productQuantity = 1;
-        let touchStartX = 0;
-        let touchEndX = 0;
+        let touchStartX = 0; let touchEndX = 0;
 
         function init() {
-            applyConfig();
-            escucharFirebase(); 
-            escucharHero();
-            escucharConfigGlobal(); 
-            renderCarrito();
+            applyConfig(); escucharFirebase(); escucharHero(); escucharConfigGlobal(); renderCarrito();
+        }
+
+        // MANEJO MENÚ MÓVIL
+        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('active'); }
+
+        // MANEJO HISTORIAL DE PEDIDOS CLIENTE (LocalStorage)
+        function abrirMisPedidos() {
+            renderMisPedidos();
+            document.getElementById('mis-pedidos-modal').classList.add('active');
+        }
+        function cerrarMisPedidos(e) { if(e) e.stopPropagation(); document.getElementById('mis-pedidos-modal').classList.remove('active'); }
+        
+        function renderMisPedidos() {
+            const lista = document.getElementById('lista-mis-pedidos');
+            const historial = JSON.parse(localStorage.getItem('ng_pedidos') || '[]');
+            
+            if(historial.length === 0) {
+                lista.innerHTML = `<div class="text-center py-8"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">No tienes pedidos recientes</p></div>`;
+                return;
+            }
+
+            lista.innerHTML = historial.reverse().map(pedido => `
+                <div class="bg-darker border border-white/10 p-4 rounded-lg">
+                    <div class="flex justify-between items-center mb-2 border-b border-white/5 pb-2">
+                        <span class="text-primary text-[10px] font-bold uppercase tracking-widest">${pedido.idPedido}</span>
+                        <span class="text-gray-500 text-[9px]">${new Date(pedido.fecha).toLocaleDateString()}</span>
+                    </div>
+                    <div class="space-y-1 mb-2">
+                        ${pedido.items.map(item => `<p class="text-white text-[10px] truncate"><span class="text-gray-500">x${item.cantidad}</span> ${item.titulo} <span class="text-gray-500 ml-1">(${item.talla})</span></p>`).join('')}
+                    </div>
+                    <div class="text-right"><span class="text-primary font-bold text-sm">L${pedido.total.toFixed(2)}</span></div>
+                </div>
+            `).join('');
+        }
+        
+        function limpiarMisPedidos() {
+            localStorage.removeItem('ng_pedidos');
+            renderMisPedidos();
+            Toast.fire({icon: 'info', title: 'Historial borrado'});
         }
 
         function escucharConfigGlobal() {
@@ -322,6 +371,14 @@
         function escucharFirebase() {
             db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                
+                // ORDENAMIENTO: Preventa siempre de primero
+                inventario.sort((a, b) => {
+                    if (a.isPresale && !b.isPresale) return -1;
+                    if (!a.isPresale && b.isPresale) return 1;
+                    return 0; // Mantiene el orden por defecto (fecha) para el resto
+                });
+
                 renderGallery();
                 
                 if (!hasCheckedUrlParams && inventario.length > 0) {
@@ -330,17 +387,15 @@
                     if (prodId) {
                         const productExists = inventario.find(p => p.id === prodId);
                         if (productExists) setTimeout(() => openModalById(prodId), 400); 
-                        else { Toast.fire({ icon: 'error', title: 'El producto ya no está disponible' }); window.history.pushState({}, '', window.location.pathname); }
+                        else window.history.pushState({}, '', window.location.pathname);
                     }
                     hasCheckedUrlParams = true;
                 }
-            }, (error) => console.error("❌ Error Firebase:", error));
+            }, (error) => console.error("Error Firebase:", error));
         }
 
         function escucharHero() {
-            db.collection("config").doc("hero").onSnapshot((doc) => {
-                if (doc.exists) { config = { ...config, ...doc.data() }; applyConfig(); }
-            });
+            db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; applyConfig(); } });
         }
 
         function showSection(id) {
@@ -355,33 +410,46 @@
             if(!grid) return;
             
             if(inventario.length === 0) {
-                 grid.innerHTML = '<div class="col-span-full text-center py-20"><i class="fas fa-box-open text-4xl text-white/10 mb-4 block"></i><p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Catálogo vacío por el momento</p></div>';
-            } else {
-                grid.innerHTML = inventario.map(prod => {
-                    const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
-                    
-                    return `
-                    <div class="gallery-item group cursor-pointer animate-in fade-in duration-500" data-category="${prod.categoria || 'general'}">
-                        <div class="relative aspect-[3/4] overflow-hidden bg-darker border border-white/5 shadow-2xl">
-                            <img src="${coverImg}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
-                            <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-                            
-                            ${prod.imagenes && prod.imagenes.length > 1 ? `<div class="absolute top-2 right-2 bg-dark/70 text-white text-[9px] px-2 py-1 rounded font-bold"><i class="fas fa-clone"></i> ${prod.imagenes.length}</div>` : ''}
+                 grid.innerHTML = '<div class="col-span-full text-center py-20"><p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Catálogo vacío</p></div>';
+                 return;
+            }
+            
+            grid.innerHTML = inventario.map(prod => {
+                const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
+                
+                // Banderas de estado
+                let badgeHTML = '';
+                let overlayHTML = '';
+                
+                if (prod.isPresale) {
+                    badgeHTML = `<div class="status-badge bg-blue-600 text-white shadow-lg"><i class="fas fa-clock mr-1"></i> Próximamente</div>`;
+                } else if (prod.stock !== undefined && prod.stock <= 0) {
+                    badgeHTML = `<div class="status-badge bg-red-600 text-white shadow-lg">Agotado</div>`;
+                    overlayHTML = `<div class="absolute inset-0 bg-darker/60 flex items-center justify-center z-10 pointer-events-none"><span class="bg-red-600/90 text-white font-bold px-4 py-2 uppercase tracking-widest text-xs rotate-[-15deg] shadow-2xl border border-white/20">Sold Out</span></div>`;
+                }
 
-                            <div class="absolute bottom-4 left-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-500 ease-out">
-                                <button onclick="openModalById('${prod.id}')" class="w-full bg-white text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary transition-colors shadow-lg">Ver Detalles</button>
-                            </div>
-                        </div>
-                        <div class="mt-4 flex justify-between items-start">
-                            <div class="overflow-hidden">
-                                <h3 class="text-white font-medium uppercase tracking-widest text-sm truncate pr-2">${prod.titulo}</h3>
-                                <p class="text-gray-500 text-[9px] uppercase font-bold mt-1">${prod.sku ? prod.sku + ' | ' : ''}${prod.categoria || 'General'}</p>
-                            </div>
-                            <span class="text-primary font-bold whitespace-nowrap">${prod.precio}</span>
+                return `
+                <div class="gallery-item group cursor-pointer animate-in fade-in duration-500" data-category="${prod.categoria || 'general'}">
+                    <div class="relative aspect-[3/4] overflow-hidden bg-darker border border-white/5 shadow-2xl">
+                        ${badgeHTML}
+                        ${overlayHTML}
+                        <img src="${coverImg}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
+                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                        
+                        <div class="absolute bottom-4 left-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-500 ease-out z-20">
+                            <button onclick="openModalById('${prod.id}')" class="w-full bg-white text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary transition-colors shadow-lg">Ver Detalles</button>
                         </div>
                     </div>
-                `}).join('');
-            }
+                    <div class="mt-4 flex justify-between items-start">
+                        <div class="overflow-hidden">
+                            <h3 class="text-white font-medium uppercase tracking-widest text-sm truncate pr-2">${prod.titulo}</h3>
+                            <p class="text-gray-500 text-[9px] uppercase font-bold mt-1">${prod.categoria || 'General'}</p>
+                        </div>
+                        <span class="text-primary font-bold whitespace-nowrap">${prod.precio}</span>
+                    </div>
+                </div>
+            `}).join('');
+            
             renderFilters();
         }
 
@@ -396,18 +464,12 @@
         }
 
         function filterGallery(cat, e) {
-            document.querySelectorAll('.filter-btn').forEach(b => {
-                b.classList.remove('text-primary', 'border-primary', 'font-bold'); b.classList.add('text-gray-500');
-            });
+            document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('text-primary', 'border-primary', 'font-bold'); b.classList.add('text-gray-500'); });
             e.target.classList.remove('text-gray-500'); e.target.classList.add('text-primary', 'border-primary', 'font-bold');
-            
             const grid = document.getElementById('gallery-grid');
             grid.style.opacity = '0';
-            
             setTimeout(() => {
-                document.querySelectorAll('.gallery-item').forEach(item => {
-                    item.style.display = (cat === 'all' || item.dataset.category === cat) ? 'block' : 'none';
-                });
+                document.querySelectorAll('.gallery-item').forEach(item => { item.style.display = (cat === 'all' || item.dataset.category === cat) ? 'block' : 'none'; });
                 grid.style.opacity = '1';
             }, 300);
         }
@@ -415,15 +477,10 @@
         function openModalById(id) {
             const p = inventario.find(x => x.id === id);
             if(!p) return;
-            window.lastViewedProduct = p;
-            window.history.pushState({ productId: id }, '', `?producto=${id}`);
+            window.lastViewedProduct = p; window.history.pushState({ productId: id }, '', `?producto=${id}`);
 
-            // Resetear cantidad al abrir modal
-            productQuantity = 1;
-            document.getElementById('modal-quantity').innerText = productQuantity;
-
-            currentModalImages = p.imagenes && p.imagenes.length > 0 ? p.imagenes : [p.imagen];
-            currentImageIndex = 0;
+            productQuantity = 1; document.getElementById('modal-quantity').innerText = productQuantity;
+            currentModalImages = p.imagenes && p.imagenes.length > 0 ? p.imagenes : [p.imagen]; currentImageIndex = 0;
             updateCarouselView();
 
             document.getElementById('modal-title').innerText = p.titulo;
@@ -431,6 +488,27 @@
             document.getElementById('modal-desc').innerText = p.descripcion;
             document.getElementById('modal-price').innerText = p.precio;
             document.getElementById('modal-cat').innerText = p.categoria || 'General';
+            
+            // Evaluar estado para botones
+            const btnAddCart = document.getElementById('btn-add-cart');
+            const msgDisabled = document.getElementById('modal-disabled-msg');
+            const qtyContainer = document.getElementById('modal-quantity-container');
+            const badge = document.getElementById('modal-status-badge');
+            
+            badge.classList.remove('hidden', 'bg-blue-600', 'bg-red-600', 'text-white');
+            
+            if (p.isPresale) {
+                badge.classList.add('bg-blue-600', 'text-white'); badge.innerText = "Próximamente";
+                btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden');
+                msgDisabled.innerText = "Disponible Próximamente";
+            } else if (p.stock !== undefined && p.stock <= 0) {
+                badge.classList.add('bg-red-600', 'text-white'); badge.innerText = "Agotado";
+                btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden');
+                msgDisabled.innerText = "Producto Agotado";
+            } else {
+                badge.classList.add('hidden');
+                btnAddCart.classList.remove('hidden'); msgDisabled.classList.add('hidden'); qtyContainer.classList.remove('hidden');
+            }
             
             const measuresContainer = document.getElementById('modal-measures-container');
             const tallaSelectContainer = document.getElementById('modal-talla-select-container');
@@ -441,206 +519,111 @@
                     const m = p.medidas && p.medidas[t] ? p.medidas[t] : {pecho:'-', largo:'-', ancho:'-'};
                     return `<tr class="hover:bg-white/5 transition-colors"><td class="py-3 px-2 text-primary font-bold">${t}</td><td class="py-3 text-center text-gray-400 font-bold">${m.pecho}</td><td class="py-3 text-center text-gray-400 font-bold">${m.largo}</td><td class="py-3 text-center text-gray-400 font-bold">${m.ancho}</td></tr>`;
                 }).join('');
-                
                 tallaSelectContainer.classList.remove('hidden');
                 document.getElementById('modal-talla').innerHTML = '<option value="" disabled selected>Elige una talla</option>' + p.tallas.map(t => `<option value="${t}">${t}</option>`).join('');
                 document.getElementById('modal-talla').classList.remove('border-red-500');
             } else {
-                measuresContainer.classList.add('hidden');
-                tallaSelectContainer.classList.add('hidden');
+                measuresContainer.classList.add('hidden'); tallaSelectContainer.classList.add('hidden');
             }
             
             document.getElementById('product-modal').classList.add('active');
         }
 
-        // --- LÓGICA DE ACTUALIZACIÓN DE CANTIDAD ---
         function updateQuantity(change) {
             productQuantity += change;
-            if(productQuantity < 1) productQuantity = 1; // Mínimo 1 producto
-            if(productQuantity > 20) productQuantity = 20; // Límite por precaución
+            if(productQuantity < 1) productQuantity = 1;
+            if(productQuantity > 20) productQuantity = 20;
             document.getElementById('modal-quantity').innerText = productQuantity;
         }
 
-        // --- LÓGICA DE SWIPE (TACTIL) PARA CARRUSEL ---
-        function handleTouchStart(e) {
-            touchStartX = e.changedTouches[0].screenX;
-        }
-
-        function handleTouchEnd(e) {
-            touchEndX = e.changedTouches[0].screenX;
-            handleSwipe();
-        }
-
+        function handleTouchStart(e) { touchStartX = e.changedTouches[0].screenX; }
+        function handleTouchEnd(e) { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }
         function handleSwipe() {
             if(currentModalImages.length <= 1) return;
-            const swipeThreshold = 50; // Pixeles mínimos para considerar swipe
-            if (touchEndX < touchStartX - swipeThreshold) changeImage(1); // Swipe Izquierda -> Siguiente
-            if (touchEndX > touchStartX + swipeThreshold) changeImage(-1); // Swipe Derecha -> Anterior
+            const th = 50;
+            if (touchEndX < touchStartX - th) changeImage(1); 
+            if (touchEndX > touchStartX + th) changeImage(-1);
         }
 
         function shareProduct() {
             const url = window.location.href;
             if (navigator.share) navigator.share({ title: `NEW GATE: ${window.lastViewedProduct.titulo}`, text: '¡Mira este drop exclusivo!', url: url }).catch(console.error);
-            else navigator.clipboard.writeText(url).then(() => Toast.fire({ icon: 'success', title: 'Enlace copiado al portapapeles' }));
+            else navigator.clipboard.writeText(url).then(() => Toast.fire({ icon: 'success', title: 'Enlace copiado' }));
         }
 
-        function closeModal(e) { 
-            window.history.pushState({}, '', window.location.pathname);
-            document.getElementById('product-modal').classList.remove('active'); 
-        }
+        function closeModal(e) { window.history.pushState({}, '', window.location.pathname); document.getElementById('product-modal').classList.remove('active'); }
+        window.addEventListener('popstate', (event) => { const params = new URLSearchParams(window.location.search); const prodId = params.get('producto'); if(prodId) openModalById(prodId); else document.getElementById('product-modal').classList.remove('active'); });
 
-        window.addEventListener('popstate', (event) => {
-            const params = new URLSearchParams(window.location.search);
-            const prodId = params.get('producto');
-            if(prodId) openModalById(prodId); else document.getElementById('product-modal').classList.remove('active');
-        });
-
-        function changeImage(direction) {
-            currentImageIndex += direction;
+        function changeImage(dir) {
+            currentImageIndex += dir;
             if (currentImageIndex >= currentModalImages.length) currentImageIndex = 0;
             if (currentImageIndex < 0) currentImageIndex = currentModalImages.length - 1;
             updateCarouselView();
         }
 
-        // --- CARGA DE IMAGEN MEJORADA (TRANSICIÓN SUAVE ANTI-FLASH) ---
         function updateCarouselView() {
             const imgElement = document.getElementById('modal-img');
             const loader = document.getElementById('modal-img-loader');
-            
-            // Ocultar imagen actual y mostrar loader leve
-            imgElement.style.opacity = 0;
-            loader.classList.remove('hidden');
-            
-            // Pre-cargar la nueva imagen en memoria antes de inyectarla al DOM
-            const newImg = new Image();
-            newImg.src = currentModalImages[currentImageIndex];
-            
-            newImg.onload = () => {
-                imgElement.src = newImg.src;
-                loader.classList.add('hidden');
-                imgElement.style.opacity = 1; // Fade in por CSS
-            };
-
-            const prevBtn = document.getElementById('btn-prev-img');
-            const nextBtn = document.getElementById('btn-next-img');
-            const dotsContainer = document.getElementById('carousel-dots');
-
+            imgElement.style.opacity = 0; loader.classList.remove('hidden');
+            const newImg = new Image(); newImg.src = currentModalImages[currentImageIndex];
+            newImg.onload = () => { imgElement.src = newImg.src; loader.classList.add('hidden'); imgElement.style.opacity = 1; };
+            const prevBtn = document.getElementById('btn-prev-img'), nextBtn = document.getElementById('btn-next-img'), dotsContainer = document.getElementById('carousel-dots');
             if (currentModalImages.length > 1) {
                 prevBtn.classList.remove('hidden'); nextBtn.classList.remove('hidden');
                 dotsContainer.innerHTML = currentModalImages.map((_, idx) => `<span class="dot ${idx === currentImageIndex ? 'active' : ''}"></span>`).join('');
-            } else {
-                prevBtn.classList.add('hidden'); nextBtn.classList.add('hidden'); dotsContainer.innerHTML = ''; 
-            }
+            } else { prevBtn.classList.add('hidden'); nextBtn.classList.add('hidden'); dotsContainer.innerHTML = ''; }
         }
 
-        // --- LÓGICA DE CARRITO ACTUALIZADA PARA AGRUPAR POR CANTIDAD ---
         function agregarAlPedido() {
             const p = window.lastViewedProduct;
+            if (p.isPresale || (p.stock !== undefined && p.stock <= 0)) return; // Doble validación
+
             let tallaElegida = "Única";
-            
             if (p.hasMeasures && p.tallas && p.tallas.length > 0) {
                 const select = document.getElementById('modal-talla');
-                if (!select.value) {
-                    select.classList.add('border-red-500');
-                    setTimeout(() => select.classList.remove('border-red-500'), 1500);
-                    Toast.fire({ icon: 'warning', title: 'Debes seleccionar una talla' });
-                    return;
-                }
+                if (!select.value) { select.classList.add('border-red-500'); setTimeout(() => select.classList.remove('border-red-500'), 1500); return Toast.fire({ icon: 'warning', title: 'Debes seleccionar una talla' }); }
                 tallaElegida = select.value;
             }
 
-            // Verificar si el producto con la misma talla ya existe en el carrito
             const existingItemIndex = carrito.findIndex(item => item.id === p.id && item.talla === tallaElegida);
+            if (existingItemIndex !== -1) carrito[existingItemIndex].cantidad += productQuantity;
+            else carrito.push({ id: p.id, titulo: p.titulo, sku: p.sku || '', precio: p.precio, talla: tallaElegida, cantidad: productQuantity, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen });
 
-            if (existingItemIndex !== -1) {
-                // Si existe, sumar la cantidad
-                carrito[existingItemIndex].cantidad += productQuantity;
-            } else {
-                // Si no existe, agregarlo como nuevo elemento con su cantidad
-                carrito.push({
-                    id: p.id,
-                    titulo: p.titulo,
-                    sku: p.sku || '',
-                    precio: p.precio,
-                    talla: tallaElegida,
-                    cantidad: productQuantity, // Guardamos la cantidad
-                    img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen
-                });
-            }
-
-            const btn = document.getElementById('btn-add-cart');
-            const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-check"></i> ¡Añadido (${productQuantity})!`;
-            btn.classList.add('bg-white');
-            
-            renderCarrito();
-            
-            Toast.fire({ icon: 'success', title: 'Añadido a tu pedido' });
-
-            setTimeout(() => {
-                btn.innerHTML = originalHTML;
-                btn.classList.remove('bg-white');
-                closeModal();
-            }, 1000);
+            const btn = document.getElementById('btn-add-cart'); const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-check"></i> ¡Añadido!`; btn.classList.add('bg-white');
+            renderCarrito(); Toast.fire({ icon: 'success', title: 'Añadido a tu pedido' });
+            setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('bg-white'); closeModal(); }, 1000);
         }
 
-        function eliminarDelPedido(index) {
-            carrito.splice(index, 1);
-            renderCarrito();
-            Toast.fire({ icon: 'info', title: 'Artículo removido' });
-        }
+        function eliminarDelPedido(index) { carrito.splice(index, 1); renderCarrito(); Toast.fire({ icon: 'info', title: 'Artículo removido' }); }
 
         function renderCarrito() {
-            // Contamos el total de items basados en la cantidad sumada
             const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
-            
-            document.getElementById('cart-count').innerText = totalItems;
-            document.getElementById('cart-count-mobile').innerText = totalItems;
-            
-            const container = document.getElementById('carrito-list');
-            const totalContainer = document.getElementById('cart-total');
+            document.getElementById('cart-count').innerText = totalItems; document.getElementById('cart-count-mobile').innerText = totalItems;
+            const container = document.getElementById('carrito-list'); const totalContainer = document.getElementById('cart-total');
             
             if (carrito.length === 0) {
-                container.innerHTML = `
-                <div class="text-center py-6 border border-dashed border-white/10 rounded">
-                    <i class="fas fa-shopping-bag text-2xl text-white/10 mb-2"></i>
-                    <p class="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Tu carrito está vacío</p>
-                </div>`;
-                totalContainer.innerText = "L0.00";
-                return;
+                container.innerHTML = `<div class="text-center py-6 border border-dashed border-white/10 rounded"><i class="fas fa-shopping-bag text-2xl text-white/10 mb-2"></i><p class="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Tu carrito está vacío</p></div>`;
+                totalContainer.innerText = "L0.00"; return;
             }
 
             let total = 0;
-
             container.innerHTML = carrito.map((item, index) => {
-                // Calcular el precio numérico y multiplicarlo por la cantidad
                 const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
-                const subtotalItem = precioNum * item.cantidad;
-                total += subtotalItem;
-
+                const subtotalItem = precioNum * item.cantidad; total += subtotalItem;
                 return `
                 <div class="flex items-center gap-4 bg-darker border border-white/5 p-3 rounded group relative">
-                    <div class="w-12 h-12 bg-dark rounded border border-white/10 overflow-hidden shrink-0 relative">
-                        <img src="${item.img}" class="w-full h-full object-cover">
-                        <div class="absolute bottom-0 right-0 bg-primary text-dark text-[8px] font-bold px-1 rounded-tl">x${item.cantidad}</div>
+                    <div class="w-12 h-12 bg-dark rounded border border-white/10 overflow-hidden shrink-0 relative"><img src="${item.img}" class="w-full h-full object-cover"><div class="absolute bottom-0 right-0 bg-primary text-dark text-[8px] font-bold px-1 rounded-tl">x${item.cantidad}</div></div>
+                    <div class="flex-1 min-w-0"><p class="text-white text-[11px] font-bold uppercase truncate">${item.titulo}</p>
+                        <div class="flex justify-between items-center mt-0.5"><p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white font-bold">${item.talla}</span></p><p class="text-primary text-[10px] font-bold">L${subtotalItem.toFixed(2)}</p></div>
                     </div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-white text-[11px] font-bold uppercase truncate">${item.titulo}</p>
-                        <div class="flex justify-between items-center mt-0.5">
-                            <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white font-bold">${item.talla}</span> ${item.sku ? `| SKU: ${item.sku}` : ''}</p>
-                            <p class="text-primary text-[10px] font-bold">L${subtotalItem.toFixed(2)}</p>
-                        </div>
-                    </div>
-                    <button onclick="eliminarDelPedido(${index})" class="text-red-500 hover:text-red-400 bg-red-500/10 w-8 h-8 rounded shrink-0 transition-colors">
-                        <i class="fas fa-trash-alt"></i>
-                    </button>
-                </div>
-            `}).join('');
-
+                    <button onclick="eliminarDelPedido(${index})" class="text-red-500 bg-red-500/10 w-8 h-8 rounded shrink-0"><i class="fas fa-trash-alt"></i></button>
+                </div>`;
+            }).join('');
             totalContainer.innerText = `L${total.toFixed(2)}`;
         }
 
-        function enviarWhatsApp() {
+        async function procesarEnvioPedido() {
             const n = document.getElementById('nombre').value.trim();
             const m = document.getElementById('mensaje').value.trim();
             
@@ -651,41 +634,57 @@
             const originalText = btnText.innerText;
             btnText.innerText = "Procesando...";
             
-            let msg = `🔥 *NUEVO PEDIDO NEW GATE* 🔥\n\n`;
-            msg += `👤 *Cliente:* ${n}\n\n`;
-            msg += `🛍️ *PRODUCTOS SELECCIONADOS:*\n`;
-            
+            // Generar ID único corto para el pedido (Admin y Cliente)
+            const orderId = `NG-${Math.floor(1000 + Math.random() * 9000)}`;
             let total = 0;
+            
+            let msg = `🔥 *NUEVO PEDIDO: ${orderId}* 🔥\n\n👤 *Cliente:* ${n}\n\n🛍️ *PRODUCTOS:*\n`;
 
             carrito.forEach((item, index) => {
                 const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
-                const subtotalItem = precioNum * item.cantidad;
-                total += subtotalItem;
-                
-                // Formato con Cantidad
-                msg += `${index + 1}. [x${item.cantidad}] ${item.titulo} ${item.sku ? `(SKU: ${item.sku})` : ''} \n   📏 Talla: *${item.talla}* | 💰 L${subtotalItem.toFixed(2)}\n`;
+                const subtotalItem = precioNum * item.cantidad; total += subtotalItem;
+                msg += `${index + 1}. [x${item.cantidad}] ${item.titulo} \n   📏 Talla: *${item.talla}* | 💰 L${subtotalItem.toFixed(2)}\n`;
             });
 
-            msg += `\n💵 *TOTAL ESTIMADO: L${total.toFixed(2)}*\n`;
+            msg += `\n💵 *TOTAL: L${total.toFixed(2)}*\n`;
+            if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
 
-            if(m) msg += `\n💬 *Mensaje Adicional:*\n_${m}_\n`;
-            msg += `\n_Enviado desde la tienda web_`;
-            
-            setTimeout(() => {
+            // GUARDAR EN BASE DE DATOS PARA EL ADMIN
+            const pedidoData = {
+                idPedido: orderId, cliente: n, mensaje: m, items: carrito, total: total,
+                estado: 'pendiente', createdAt: firebase.firestore.FieldValue.serverTimestamp()
+            };
+
+            try {
+                // Guardamos en Firebase (Intentamos. Si falla por permisos, igual manda el WA)
+                await db.collection("pedidos").add(pedidoData);
+                
+                // Guardamos en LocalStorage para el Historial del Cliente
+                const historialLocal = JSON.parse(localStorage.getItem('ng_pedidos') || '[]');
+                historialLocal.push({ idPedido: orderId, fecha: new Date().toISOString(), items: carrito, total: total });
+                localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
+
+                // Redirigir a WhatsApp
+                setTimeout(() => {
+                    window.open(`https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+                    btnText.innerText = originalText;
+                    Toast.fire({ icon: 'success', title: 'Pedido Procesado' });
+                    
+                    // Limpiar formulario y carrito
+                    carrito = []; renderCarrito(); document.getElementById('mensaje').value = '';
+                }, 500);
+
+            } catch (error) {
+                console.error("No se pudo guardar en Firebase, pero se enviará por WA", error);
                 window.open(`https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
                 btnText.innerText = originalText;
-                Toast.fire({ icon: 'success', title: 'Abriendo WhatsApp...' });
-            }, 800);
+            }
         }
 
         function applyConfig() {
-            document.getElementById('display-hero-title').innerText = config.heroTitle;
-            document.getElementById('display-hero-subtitle').innerText = config.heroSubtitle;
+            document.getElementById('display-hero-title').innerText = config.heroTitle; document.getElementById('display-hero-subtitle').innerText = config.heroSubtitle;
             document.getElementById('hero-display').style.backgroundImage = `url('${config.heroImage}')`;
-            document.getElementById('display-shop-slogan').innerText = config.slogan;
-            document.getElementById('display-about-title').innerText = config.aboutTitle;
-            document.getElementById('display-about-desc').innerText = config.aboutDesc;
-            
+            document.getElementById('display-shop-slogan').innerText = config.slogan; document.getElementById('display-about-title').innerText = config.aboutTitle; document.getElementById('display-about-desc').innerText = config.aboutDesc;
             const waLink = document.getElementById('link-whatsapp'); if(waLink) waLink.href = `https://wa.me/${config.whatsapp}`;
             const igLink = document.getElementById('link-instagram'); if(igLink) { igLink.href = config.instagram !== "#" ? config.instagram : "#"; igLink.style.display = config.instagram === "#" || !config.instagram ? "none" : "inline-block"; }
             const fbLink = document.getElementById('link-facebook'); if(fbLink) { fbLink.href = config.facebook !== "#" ? config.facebook : "#"; fbLink.style.display = config.facebook === "#" || !config.facebook ? "none" : "inline-block"; }
