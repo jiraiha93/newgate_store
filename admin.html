@@ -360,8 +360,16 @@
                         <p class="text-white text-xs mb-1 uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
                         ${pedido.mensaje ? `<p class="text-gray-400 text-[10px] italic mb-3 bg-white/5 p-2 rounded border-l-2 border-primary">" ${pedido.mensaje} "</p>` : ''}
                         
-                        <div class="bg-black/30 p-3 rounded space-y-1 mt-3">
-                            ${(pedido.items || []).map(i => `<p class="text-gray-300 text-[10px]"><span class="text-primary font-bold mr-1">x${i.cantidad}</span> ${i.titulo} - <span class="text-white font-bold">${i.talla}</span></p>`).join('')}
+                        <div class="bg-black/30 p-3 rounded space-y-2 mt-3">
+                            ${(pedido.items || []).map(i => `
+                                <div class="flex items-center gap-3 bg-darker border border-white/5 p-2 rounded">
+                                    <div class="w-10 h-10 bg-dark rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-white text-[10px] font-bold uppercase truncate">${i.titulo}</p>
+                                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
                     <div class="flex flex-col items-end gap-3 w-full md:w-auto mt-4 md:mt-0">
@@ -375,12 +383,39 @@
         }
 
         function despacharPedido(docId) {
+            const pedido = pedidosList.find(p => p.id === docId);
+            if(!pedido) return;
+
             DarkAlert.fire({
-                title: '¿Pedido Despachado?', text: "Se eliminará del panel para mantener el orden", icon: 'question',
+                title: '¿Despachar Pedido?', 
+                text: "Esto rebajará automáticamente el stock del inventario y borrará el pedido de la lista.", 
+                icon: 'question',
                 showCancelButton: true, confirmButtonText: 'Sí, Despachar', cancelButtonText: 'Cancelar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    db.collection("pedidos").doc(docId).delete().then(() => Toast.fire({ icon: 'success', title: 'Pedido Completado' }));
+                    const batch = db.batch();
+                    
+                    // 1. Rebajar inventario por cada producto en el pedido
+                    (pedido.items || []).forEach(item => {
+                        const prodInStock = inventario.find(p => p.id === item.id);
+                        if(prodInStock) {
+                            const prodRef = db.collection("productos").doc(item.id);
+                            let newStock = (prodInStock.stock || 0) - item.cantidad;
+                            if(newStock < 0) newStock = 0; // Evitar stock negativo por seguridad
+                            batch.update(prodRef, { stock: newStock });
+                        }
+                    });
+
+                    // 2. Eliminar el pedido de la lista
+                    const orderRef = db.collection("pedidos").doc(docId);
+                    batch.delete(orderRef);
+
+                    // 3. Ejecutar ambas acciones al mismo tiempo (Transacción Batch)
+                    batch.commit().then(() => {
+                        Toast.fire({ icon: 'success', title: 'Pedido Despachado y Stock Actualizado' });
+                    }).catch(error => {
+                        DarkAlert.fire({ icon: 'error', title: 'Error al despachar', text: error.message });
+                    });
                 }
             });
         }
