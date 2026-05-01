@@ -623,7 +623,7 @@
             totalContainer.innerText = `L${total.toFixed(2)}`;
         }
 
-        async function procesarEnvioPedido() {
+        function procesarEnvioPedido() {
             const n = document.getElementById('nombre').value.trim();
             const m = document.getElementById('mensaje').value.trim();
             
@@ -632,7 +632,7 @@
             
             const btnText = document.getElementById('btn-wa-text');
             const originalText = btnText.innerText;
-            btnText.innerText = "Procesando...";
+            btnText.innerText = "Abriendo WhatsApp...";
             
             // Generar ID único corto para el pedido (Admin y Cliente)
             const orderId = `NG-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -655,30 +655,24 @@
                 estado: 'pendiente', createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            try {
-                // Guardamos en Firebase (Intentamos. Si falla por permisos, igual manda el WA)
-                await db.collection("pedidos").add(pedidoData);
-                
-                // Guardamos en LocalStorage para el Historial del Cliente
-                const historialLocal = JSON.parse(localStorage.getItem('ng_pedidos') || '[]');
-                historialLocal.push({ idPedido: orderId, fecha: new Date().toISOString(), items: carrito, total: total });
-                localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
+            // 1. Guardar en Firebase en segundo plano (Evitamos que un retraso de internet bloquee WhatsApp)
+            db.collection("pedidos").add(pedidoData).catch(error => {
+                console.error("Error al guardar en Firebase, pero se envió el WA", error);
+            });
+            
+            // 2. Guardamos en LocalStorage para el Historial del Cliente
+            const historialLocal = JSON.parse(localStorage.getItem('ng_pedidos') || '[]');
+            historialLocal.push({ idPedido: orderId, fecha: new Date().toISOString(), items: carrito, total: total });
+            localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
 
-                // Redirigir a WhatsApp
-                setTimeout(() => {
-                    window.open(`https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
-                    btnText.innerText = originalText;
-                    Toast.fire({ icon: 'success', title: 'Pedido Procesado' });
-                    
-                    // Limpiar formulario y carrito
-                    carrito = []; renderCarrito(); document.getElementById('mensaje').value = '';
-                }, 500);
+            // 3. Preparar limpieza de UI
+            Toast.fire({ icon: 'success', title: 'Pedido Procesado' });
+            carrito = []; renderCarrito(); document.getElementById('mensaje').value = '';
+            btnText.innerText = originalText;
 
-            } catch (error) {
-                console.error("No se pudo guardar en Firebase, pero se enviará por WA", error);
-                window.open(`https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
-                btnText.innerText = originalText;
-            }
+            // 4. Redirigir a WhatsApp (Usar window.location.href evita el bloqueo de pop-ups en celulares)
+            const urlWa = `https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`;
+            window.location.href = urlWa;
         }
 
         function applyConfig() {
