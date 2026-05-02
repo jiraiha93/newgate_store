@@ -22,7 +22,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     const storage = firebase.storage(); 
-    console.log("🔥 Firebase conectado: Panel Administrador + Storage");
+    console.log("🔥 Firebase conectado: Panel Administrador + Storage + Facturación");
     </script>
     
     <meta charset="UTF-8">
@@ -76,9 +76,20 @@
         .img-thumb-remove { position: absolute; top: 2px; right: 2px; background: rgba(220, 38, 38, 0.9); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
         
         .swal2-container { z-index: 9999 !important; }
+
+        /* ESTILOS EXCLUSIVOS PARA IMPRESIÓN DE FACTURAS */
+        #printable-invoice { display: none; }
+        @media print {
+            body > *:not(#printable-invoice) { display: none !important; }
+            #printable-invoice { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; }
+            body { background: white !important; color: black !important; margin: 0; padding: 0; }
+        }
     </style>
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark min-h-screen flex flex-col">
+
+    <!-- CONTENEDOR OCULTO PARA IMPRESIÓN (RECIBO TIPO TICKET POS) -->
+    <div id="printable-invoice"></div>
 
     <header class="w-full z-[100] bg-darker border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
@@ -106,28 +117,46 @@
             
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-12 gap-4">
                 <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide pb-2">
-                    <button onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-receipt"></i> Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
+                    <button onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-bell"></i> Nuevos Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
+                    <!-- NUEVA PESTAÑA DE FACTURAS -->
+                    <button onclick="showAdminTab('facturas', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-file-invoice"></i> Historial Facturas</button>
                     <button onclick="showAdminTab('inventario', event)" class="tab-btn active py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-box"></i> Inventario</button>
                     <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-cog"></i> Ajustes</button>
                 </div>
                 <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
 
+            <!-- TAB NUEVOS PEDIDOS -->
             <div id="tab-pedidos" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
-                            <i class="fas fa-clipboard-list"></i> Pedidos de Clientes
+                            <i class="fas fa-clipboard-list"></i> Pedidos Entrantes
                         </h3>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Gestión segura de inventario y pedidos.</p>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Al despachar, se mueven a Facturas.</p>
                     </div>
-                    
                     <div id="admin-pedidos-list" class="space-y-4">
                         <div class="text-center py-10"><div class="loader !block border-t-primary w-8 h-8 mx-auto"></div></div>
                     </div>
                 </div>
             </div>
 
+            <!-- NUEVA TAB: HISTORIAL Y FACTURAS -->
+            <div id="tab-facturas" class="admin-tab hidden">
+                <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-white uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
+                            <i class="fas fa-archive text-primary"></i> Facturación e Historial
+                        </h3>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Imprime tickets o elimina registros antiguos.</p>
+                    </div>
+                    <div id="admin-facturas-list" class="space-y-4">
+                        <div class="text-center py-10"><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Cargando facturas...</p></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB INVENTARIO -->
             <div id="tab-inventario" class="admin-tab">
                 <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
                     <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
@@ -251,6 +280,7 @@
                 <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
+            <!-- TAB AJUSTES GLOBALES -->
             <div id="tab-config" class="admin-tab hidden space-y-10">
                 
                 <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
@@ -300,7 +330,6 @@
         let inventario = []; let pedidosList = []; let config = { ...DEFAULT_CONFIG };
         let selectedBase64Imgs = []; let selectedHeroImg = ""; let editId = null;
         
-        // Estado completamente dinámico y control de interfaz
         let currentFormSizes = ["S", "M", "L", "XL"];
         let currentFormColumns = ["Pecho", "Largo", "Ancho"];
 
@@ -308,7 +337,7 @@
             auth.onAuthStateChanged((user) => {
                 if (user) {
                     document.getElementById('login-modal').classList.remove('active'); document.getElementById('admin').style.display = 'block'; setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
-                    renderMedidasForm(); escucharConfigGlobal(); escucharFirebase(); escucharHero(); escucharPedidos();
+                    renderMedidasForm(); escucharConfigGlobal(); escucharFirebase(); escucharPedidos();
                 } else {
                     document.getElementById('admin').classList.remove('active'); document.getElementById('admin').style.display = 'none'; document.getElementById('login-modal').classList.add('active');
                 }
@@ -323,11 +352,12 @@
         }
         function logoutAdmin() { auth.signOut(); }
 
-        // --- SISTEMA DE PEDIDOS ---
+        // --- SISTEMA DE PEDIDOS Y FACTURAS ---
         function escucharPedidos() {
             db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 pedidosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderPedidosList();
+                renderFacturasList(); // Renderiza la nueva pestaña
             }, (error) => {
                 console.error("Error al obtener pedidos:", error);
                 Toast.fire({ icon: 'error', title: 'Error al cargar pedidos' });
@@ -338,18 +368,21 @@
             const list = document.getElementById('admin-pedidos-list');
             const badge = document.getElementById('badge-pedidos');
             
-            if(pedidosList.length > 0) {
-                badge.classList.remove('hidden'); badge.innerText = pedidosList.length;
+            // FILTRAR SOLO PEDIDOS NO DESPACHADOS
+            const pedidosPendientes = pedidosList.filter(p => p.estado !== 'despachado');
+
+            if(pedidosPendientes.length > 0) {
+                badge.classList.remove('hidden'); badge.innerText = pedidosPendientes.length;
             } else {
                 badge.classList.add('hidden');
             }
 
-            if(pedidosList.length === 0) {
-                list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No se encontraron pedidos</p></div>`;
+            if(pedidosPendientes.length === 0) {
+                list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay pedidos nuevos</p></div>`;
                 return;
             }
 
-            list.innerHTML = pedidosList.map(pedido => {
+            list.innerHTML = pedidosPendientes.map(pedido => {
                 const dateStr = (pedido.createdAt && typeof pedido.createdAt.toDate === 'function') 
                     ? new Date(pedido.createdAt.toDate()).toLocaleDateString() 
                     : 'Nuevo / Pendiente';
@@ -360,7 +393,7 @@
                     <div class="flex-1 w-full">
                         <div class="flex justify-between items-center border-b border-white/5 pb-2 mb-3">
                             <h4 class="text-primary text-sm font-bold uppercase tracking-widest">PEDIDO: ${pedido.idPedido || 'S/N'}</h4>
-                            <span class="text-[10px] text-gray-500 font-bold">${dateStr}</span>
+                            <span class="text-[10px] text-gray-500 font-bold"><i class="fas fa-clock text-red-500 mr-1"></i> ${dateStr}</span>
                         </div>
                         <p class="text-white text-xs mb-1 uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
                         ${pedido.mensaje ? `<p class="text-gray-400 text-[10px] italic mb-3 bg-white/5 p-2 rounded border-l-2 border-primary">" ${pedido.mensaje} "</p>` : ''}
@@ -381,10 +414,10 @@
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
                         <p class="text-2xl text-white font-serif font-bold w-full text-right sm:text-left mb-2 sm:mb-0">L${(pedido.total || 0).toFixed(2)}</p>
                         <div class="flex gap-2 w-full sm:w-auto">
-                            <button onclick="cancelarPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded shadow-xl" title="Borrar sin rebajar inventario">
+                            <button onclick="cancelarPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded shadow-xl" title="Cancelar sin rebajar inventario">
                                 <i class="fas fa-times"></i> Cancelar
                             </button>
-                            <button onclick="despacharPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2 rounded shadow-xl" title="Despachar y rebajar inventario">
+                            <button onclick="despacharPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2 rounded shadow-xl" title="Despachar y guardar factura">
                                 <i class="fas fa-check-double"></i> Despachar
                             </button>
                         </div>
@@ -393,36 +426,79 @@
             `}).join('');
         }
 
+        // RENDERIZAR PESTAÑA FACTURAS
+        function renderFacturasList() {
+            const list = document.getElementById('admin-facturas-list');
+            
+            // FILTRAR SOLO PEDIDOS DESPACHADOS
+            const facturas = pedidosList.filter(p => p.estado === 'despachado');
+
+            if(facturas.length === 0) {
+                list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-archive text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay facturas registradas</p></div>`;
+                return;
+            }
+
+            list.innerHTML = facturas.map(pedido => {
+                const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') 
+                    ? new Date(pedido.despachadoAt.toDate()).toLocaleString() 
+                    : 'Fecha desconocida';
+
+                return `
+                <div class="bg-darker border border-white/5 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl opacity-80 hover:opacity-100 transition-opacity">
+                    <div class="flex-1 w-full">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-white text-sm font-bold uppercase tracking-widest"><i class="fas fa-file-alt text-gray-600 mr-2"></i>FACTURA: ${pedido.idPedido || 'S/N'}</h4>
+                            <p class="text-primary font-serif font-bold">L${(pedido.total || 0).toFixed(2)}</p>
+                        </div>
+                        <p class="text-gray-400 text-[10px] uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
+                        <p class="text-gray-500 text-[9px] mt-1"><i class="fas fa-calendar-check text-green-500/50 w-4"></i> Despachado: ${dateStr}</p>
+                    </div>
+                    
+                    <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                        <button onclick="imprimirFactura('${pedido.id}')" class="flex-1 md:flex-none bg-blue-900/30 text-blue-400 border border-blue-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all rounded shadow-xl">
+                            <i class="fas fa-print"></i> Imprimir
+                        </button>
+                        <button onclick="eliminarFactura('${pedido.id}')" class="flex-1 md:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-red-600 hover:text-white transition-all rounded shadow-xl" title="Eliminar del historial permanente">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        // ELIMINAR PEDIDO NUEVO SIN REBAJAR INVENTARIO
         function cancelarPedido(docId) {
             DarkAlert.fire({
                 title: '¿Cancelar Pedido?', 
-                text: "El pedido se eliminará SIN REBAJAR el inventario.", 
+                text: "El pedido se eliminará por completo.", 
                 icon: 'warning',
                 showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Sí, Cancelar', cancelButtonText: 'Atrás'
             }).then((result) => {
                 if (result.isConfirmed) {
                     db.collection("pedidos").doc(docId).delete().then(() => {
-                        Toast.fire({ icon: 'info', title: 'Pedido cancelado correctamente' });
+                        Toast.fire({ icon: 'info', title: 'Pedido cancelado' });
                     }).catch(error => {
-                        DarkAlert.fire({ icon: 'error', title: 'Error al cancelar', text: error.message });
+                        DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message });
                     });
                 }
             });
         }
 
+        // DESPACHAR PEDIDO: REBAJA INVENTARIO Y CAMBIA ESTADO A 'DESPACHADO'
         function despacharPedido(docId) {
             const pedido = pedidosList.find(p => p.id === docId);
             if(!pedido) return;
 
             DarkAlert.fire({
                 title: '¿Despachar Pedido?', 
-                text: "Esto rebajará automáticamente el stock del inventario y borrará el pedido de esta lista.", 
+                text: "Esto rebajará el inventario y moverá el pedido a Facturas.", 
                 icon: 'question',
-                showCancelButton: true, confirmButtonText: '<i class="fas fa-check"></i> Sí, Despachar', cancelButtonText: 'Atrás'
+                showCancelButton: true, confirmButtonText: '<i class="fas fa-check-double"></i> Despachar', cancelButtonText: 'Atrás'
             }).then((result) => {
                 if (result.isConfirmed) {
                     const batch = db.batch();
                     
+                    // 1. Rebajar el inventario
                     (pedido.items || []).forEach(item => {
                         const prodInStock = inventario.find(p => p.id === item.id);
                         if(prodInStock) {
@@ -433,19 +509,96 @@
                         }
                     });
 
+                    // 2. ACTUALIZAR ESTADO DEL PEDIDO (NO BORRARLO)
                     const orderRef = db.collection("pedidos").doc(docId);
-                    batch.delete(orderRef);
+                    batch.update(orderRef, { 
+                        estado: 'despachado',
+                        despachadoAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
 
                     batch.commit().then(() => {
-                        Toast.fire({ icon: 'success', title: 'Despachado y Stock Actualizado' });
+                        Toast.fire({ icon: 'success', title: 'Despachado con éxito' });
                     }).catch(error => {
-                        DarkAlert.fire({ icon: 'error', title: 'Error al despachar', text: error.message });
+                        DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message });
                     });
                 }
             });
         }
 
-        // --- SISTEMA INVENTARIO ---
+        // ELIMINAR FACTURA PERMANENTEMENTE
+        function eliminarFactura(docId) {
+            DarkAlert.fire({
+                title: '¿Borrar Factura?', 
+                text: "Esta acción no se puede deshacer y borrará el registro del historial.", 
+                icon: 'warning',
+                showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Eliminar Permanentemente', cancelButtonText: 'Atrás'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    db.collection("pedidos").doc(docId).delete().then(() => {
+                        Toast.fire({ icon: 'info', title: 'Factura eliminada' });
+                    });
+                }
+            });
+        }
+
+        // IMPRIMIR FACTURA (FORMATO POS TICKET O A4)
+        function imprimirFactura(docId) {
+            const f = pedidosList.find(p => p.id === docId);
+            if(!f) return;
+            
+            const dateStr = (f.despachadoAt && f.despachadoAt.toDate) ? new Date(f.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
+            
+            const itemsHtml = (f.items || []).map(i => {
+                const pNum = parseFloat(i.precio.replace(/[^0-9.-]+/g,"")) || 0;
+                return `
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;">Talla: ${i.talla}</small></td>
+                    <td style="text-align: center; font-size: 12px;">${i.cantidad}</td>
+                    <td style="text-align: right; font-size: 12px;">L${(pNum * i.cantidad).toFixed(2)}</td>
+                </tr>`;
+            }).join('');
+
+            const ticketHtml = `
+                <div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;">
+                    <h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2>
+                    <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">STREETWEAR EXCLUSIVO</p>
+                    
+                    <hr style="border: 1px dashed #000; margin: 15px 0;">
+                    
+                    <p style="font-size: 13px; margin: 5px 0;"><strong>FACTURA:</strong> ${f.idPedido}</p>
+                    <p style="font-size: 13px; margin: 5px 0;"><strong>CLIENTE:</strong> ${f.cliente}</p>
+                    <p style="font-size: 13px; margin: 5px 0;"><strong>FECHA:</strong> ${dateStr}</p>
+                    
+                    <hr style="border: 1px dashed #000; margin: 15px 0;">
+                    
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #000;">
+                                <th style="text-align: left; padding-bottom: 5px; font-size: 12px;">DESC.</th>
+                                <th style="text-align: center; padding-bottom: 5px; font-size: 12px;">CANT</th>
+                                <th style="text-align: right; padding-bottom: 5px; font-size: 12px;">SUB</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                    </table>
+                    
+                    <hr style="border: 1px dashed #000; margin: 15px 0;">
+                    
+                    <h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: L${(f.total || 0).toFixed(2)}</h3>
+                    
+                    <p style="text-align: center; margin-top: 30px; font-size: 11px;">¡Gracias por preferir el asfalto!<br>IG: @newgate</p>
+                </div>
+            `;
+            
+            // Inyectar en el div oculto e invocar la ventana de impresión del navegador
+            const printDiv = document.getElementById('printable-invoice');
+            printDiv.innerHTML = ticketHtml;
+            window.print();
+        }
+
+        // --- SISTEMA INVENTARIO Y UI ADMIN ---
         function escucharFirebase() { db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); }); }
         function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
         function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderHeroConfig(); } }); }
@@ -548,7 +701,6 @@
         }
 
         function renderMedidasForm() {
-            // Respaldamos los valores actuales antes de limpiar el DOM
             const currentValues = {};
             currentFormSizes.forEach(s => {
                 const safeS = s.replace(/[^a-zA-Z0-9_-]/g, '');
@@ -560,7 +712,6 @@
                 });
             });
 
-            // Generamos Cabeceras Dinámicas
             let headerHTML = `<div class="flex items-center gap-2 mb-2 pr-8">
                 <div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div>
                 <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">`;
@@ -573,7 +724,6 @@
             });
             headerHTML += `</div></div>`;
 
-            // Generamos las filas combinando valores respaldados y las nuevas configuraciones
             let rowsHTML = currentFormSizes.map(t => {
                 const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
                 let inputsHTML = currentFormColumns.map(c => {
@@ -679,7 +829,6 @@
             document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
             selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []); renderThumbnails();
             
-            // Cargar estado dinámico de tallas y columnas previamente guardadas
             currentFormSizes = ["S", "M", "L", "XL"];
             currentFormColumns = p.columnas && p.columnas.length > 0 ? p.columnas : ["Pecho", "Largo", "Ancho"];
 
@@ -698,7 +847,6 @@
                             currentFormColumns.forEach(c => {
                                 const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
                                 const el = document.getElementById(`measure-${safeT}-${safeC}`);
-                                // Mantiene la compatibilidad hacia atrás
                                 const val = p.medidas[t][c] !== undefined ? p.medidas[t][c] : (p.medidas[t][c.toLowerCase()] !== undefined ? p.medidas[t][c.toLowerCase()] : "00");
                                 if(el) el.value = val;
                             });
