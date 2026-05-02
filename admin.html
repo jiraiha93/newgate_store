@@ -88,7 +88,6 @@
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark min-h-screen flex flex-col">
 
-    <!-- CONTENEDOR OCULTO PARA IMPRESIÓN (RECIBO TIPO TICKET POS) -->
     <div id="printable-invoice"></div>
 
     <header class="w-full z-[100] bg-darker border-b border-white/5">
@@ -104,8 +103,8 @@
         <div class="modal-content p-8 text-center shadow-2xl">
             <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
             <div class="space-y-4">
-                <input type="email" id="admin-email-input" placeholder="Correo electrónico" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center">
-                <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center" onkeyup="if(event.key === 'Enter') validateAdmin()">
+                <input type="email" id="admin-email-input" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center">
+                <input type="password" id="admin-pass-input" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center" onkeyup="if(event.key === 'Enter') validateAdmin()">
                 <button onclick="validateAdmin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar</button>
                 <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Credenciales Incorrectas</p>
             </div>
@@ -118,7 +117,6 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-12 gap-4">
                 <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide pb-2">
                     <button onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-bell"></i> Nuevos Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
-                    <!-- NUEVA PESTAÑA DE FACTURAS -->
                     <button onclick="showAdminTab('facturas', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-file-invoice"></i> Historial Facturas</button>
                     <button onclick="showAdminTab('inventario', event)" class="tab-btn active py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-box"></i> Inventario</button>
                     <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-cog"></i> Ajustes</button>
@@ -126,7 +124,6 @@
                 <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
 
-            <!-- TAB NUEVOS PEDIDOS -->
             <div id="tab-pedidos" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
@@ -141,7 +138,6 @@
                 </div>
             </div>
 
-            <!-- NUEVA TAB: HISTORIAL Y FACTURAS -->
             <div id="tab-facturas" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
@@ -156,7 +152,6 @@
                 </div>
             </div>
 
-            <!-- TAB INVENTARIO -->
             <div id="tab-inventario" class="admin-tab">
                 <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
                     <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
@@ -169,7 +164,8 @@
                             <div class="flex flex-col sm:flex-row gap-4 bg-darker p-4 border border-white/5 rounded">
                                 <div class="flex-1">
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="No visible en tienda, controla el estado 'Agotado'">Stock / Cantidad</label>
-                                    <input type="number" id="new-stock" placeholder="Ej: 10" value="10" min="0" class="w-full bg-dark border border-white/10 px-4 py-2 text-sm focus:border-primary outline-none text-white transition-colors">
+                                    <!-- UX: Eliminados valores por defecto y placeholders innecesarios -->
+                                    <input type="number" id="new-stock" min="0" class="w-full bg-dark border border-white/10 px-4 py-2 text-sm focus:border-primary outline-none text-white transition-colors">
                                 </div>
                                 <div class="flex items-center justify-between sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
                                     <span class="text-[9px] uppercase tracking-widest text-blue-400 font-bold">Modo Preventa</span>
@@ -187,14 +183,14 @@
                                 </div>
                                 <div>
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Código SKU</label>
-                                    <input type="text" id="new-sku" placeholder="Ej: NG-001" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white font-mono uppercase transition-colors">
+                                    <input type="text" id="new-sku" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white font-mono uppercase transition-colors">
                                 </div>
                             </div>
                             
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div>
-                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio (Ej: L650.00)</label>
-                                    <input type="text" id="new-price" placeholder="L650.00" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio</label>
+                                    <input type="text" id="new-price" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
                                 </div>
                                 <div>
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Categoría</label>
@@ -216,11 +212,11 @@
                                 
                                 <div class="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-4 mt-2">
                                     <div class="flex-1 flex gap-2 items-center">
-                                        <input type="text" id="new-size-input" placeholder="Talla (Ej. XXL)" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white uppercase outline-none focus:border-primary w-full">
+                                        <input type="text" id="new-size-input" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white uppercase outline-none focus:border-primary w-full">
                                         <button type="button" onclick="addNewSizeToForm()" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 text-[10px] uppercase font-bold hover:bg-primary hover:text-dark transition-all rounded whitespace-nowrap"><i class="fas fa-plus"></i> Talla</button>
                                     </div>
                                     <div class="flex-1 flex gap-2 items-center">
-                                        <input type="text" id="new-column-input" placeholder="Columna (Ej. Manga)" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white capitalize outline-none focus:border-primary w-full">
+                                        <input type="text" id="new-column-input" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white capitalize outline-none focus:border-primary w-full">
                                         <button type="button" onclick="addNewColumnToForm()" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 text-[10px] uppercase font-bold hover:bg-primary hover:text-dark transition-all rounded whitespace-nowrap"><i class="fas fa-plus"></i> Columna</button>
                                     </div>
                                 </div>
@@ -261,7 +257,7 @@
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-16 shadow-2xl">
                     <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-4 italic flex items-center gap-2"><i class="fas fa-tags"></i> Gestión de Categorías</h3>
                     <div class="flex flex-col md:flex-row gap-4 mb-6">
-                        <input type="text" id="new-category-name" placeholder="Nueva categoría (Ej. Jeans)" class="flex-1 bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white">
+                        <input type="text" id="new-category-name" class="flex-1 bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white">
                         <button onclick="addNewCategory()" class="bg-darker border border-primary/40 text-primary px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-dark transition-all"><i class="fas fa-plus"></i> Guardar</button>
                     </div>
                     <div id="categories-manager-list" class="flex flex-wrap gap-2"></div>
@@ -274,7 +270,7 @@
                     </div>
                     <div class="relative">
                         <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
-                        <input type="text" id="search-inventory" placeholder="Buscar por nombre, SKU o categoría..." class="w-full bg-darker border border-white/10 pl-10 pr-4 py-3 text-sm focus:border-primary outline-none text-white rounded" oninput="renderAdminList()">
+                        <input type="text" id="search-inventory" class="w-full bg-darker border border-white/10 pl-10 pr-4 py-3 text-sm focus:border-primary outline-none text-white rounded" oninput="renderAdminList()">
                     </div>
                 </div>
                 <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -301,21 +297,35 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
-                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Textos de la Marca</h3>
-                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Eslogan en Tienda</label><input type="text" id="config-slogan" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
-                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título "Nosotros"</label><input type="text" id="config-about-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
-                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Descripción "Nosotros"</label><textarea id="config-about-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-32"></textarea></div>
+                    <!-- UX/FEATURE: Formulario de marca independiente con nuevos ajustes de factura -->
+                    <div class="bg-dark p-8 border border-white/5 shadow-2xl rounded-lg flex flex-col justify-between h-full">
+                        <div class="space-y-6">
+                            <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Textos de la Marca</h3>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Eslogan en Tienda</label><input type="text" id="config-slogan" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título "Nosotros"</label><input type="text" id="config-about-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Descripción "Nosotros"</label><textarea id="config-about-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-24"></textarea></div>
+                            
+                            <hr class="border-white/5 my-4">
+                            
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Mensaje Compartir WhatsApp</label><input type="text" id="config-share-text" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Encabezado de Factura</label><input type="text" id="config-invoice-header" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Pie de Factura (Notas/Legal)</label><input type="text" id="config-invoice-footer" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                        </div>
+                        <button onclick="saveBrandTexts()" class="w-full mt-8 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-white transition-all shadow-xl rounded">Guardar Textos de Marca</button>
                     </div>
-                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
-                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes Sociales</h3>
-                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña</label><input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none" placeholder="Nueva clave (Mín. 6 caracteres)"><p class="text-[8px] text-gray-500 mt-1 italic">Déjalo en blanco si no deseas cambiarla.</p></div>
-                        <hr class="border-white/5">
-                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp (Ej: 50499998888)</label><input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
-                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label><input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                    
+                    <!-- UX: Formulario de seguridad independiente -->
+                    <div class="bg-dark p-8 border border-white/5 shadow-2xl rounded-lg flex flex-col justify-between h-full">
+                        <div class="space-y-6">
+                            <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes Sociales</h3>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña</label><input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"><p class="text-[8px] text-gray-500 mt-1 italic">Déjalo en blanco si no deseas cambiarla (Mín. 6 caracteres).</p></div>
+                            <hr class="border-white/5 my-4">
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</label><input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label><input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                        </div>
+                        <button onclick="saveSecuritySocials()" class="w-full mt-8 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-white transition-all shadow-xl rounded">Guardar Seguridad y Redes</button>
                     </div>
                 </div>
-                <div><button onclick="saveGlobalConfig()" class="w-full bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-2xl shadow-primary/20 rounded">Guardar Ajustes Globales</button></div>
             </div>
         </div>
     </div>
@@ -324,8 +334,9 @@
         const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10 !py-2 !px-4 !w-auto shadow-2xl', title: '!text-[11px] !font-bold tracking-widest uppercase' } });
         const DarkAlert = Swal.mixin({ background: '#0f0f0f', color: '#fff', confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626', customClass: { popup: 'border border-white/10', confirmButton: 'text-dark font-bold uppercase text-xs px-6 py-2 rounded', cancelButton: 'font-bold uppercase text-xs px-6 py-2 rounded' } });
 
-        const DEFAULT_CONFIG = { slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], heroTitle: "", heroSubtitle: "", heroImage: "" };
-        const DEFAULT_MEASURES = { "S": { pecho: "00", largo: "00", ancho: "00" }, "M": { pecho: "00", largo: "00", ancho: "00" }, "L": { pecho: "00", largo: "00", ancho: "00" }, "XL": { pecho: "00", largo: "00", ancho: "00" } };
+        // CLEANUP: Eliminados los textos por defecto sensibles, las variables nuevas incluidas
+        const DEFAULT_CONFIG = { slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], heroTitle: "", heroSubtitle: "", heroImage: "", invoiceHeader: "", invoiceFooter: "", shareText: "" };
+        const DEFAULT_MEASURES = { "S": { pecho: "", largo: "", ancho: "" }, "M": { pecho: "", largo: "", ancho: "" }, "L": { pecho: "", largo: "", ancho: "" }, "XL": { pecho: "", largo: "", ancho: "" } };
 
         let inventario = []; let pedidosList = []; let config = { ...DEFAULT_CONFIG };
         let selectedBase64Imgs = []; let selectedHeroImg = ""; let editId = null;
@@ -352,12 +363,11 @@
         }
         function logoutAdmin() { auth.signOut(); }
 
-        // --- SISTEMA DE PEDIDOS Y FACTURAS ---
         function escucharPedidos() {
             db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 pedidosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderPedidosList();
-                renderFacturasList(); // Renderiza la nueva pestaña
+                renderFacturasList(); 
             }, (error) => {
                 console.error("Error al obtener pedidos:", error);
                 Toast.fire({ icon: 'error', title: 'Error al cargar pedidos' });
@@ -368,7 +378,6 @@
             const list = document.getElementById('admin-pedidos-list');
             const badge = document.getElementById('badge-pedidos');
             
-            // FILTRAR SOLO PEDIDOS NO DESPACHADOS
             const pedidosPendientes = pedidosList.filter(p => p.estado !== 'despachado');
 
             if(pedidosPendientes.length > 0) {
@@ -404,7 +413,7 @@
                                     <div class="w-10 h-10 bg-dark rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-white text-[10px] font-bold uppercase truncate">${i.titulo}</p>
-                                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p>
+                                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white notranslate" translate="no">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p>
                                     </div>
                                 </div>
                             `).join('')}
@@ -426,11 +435,9 @@
             `}).join('');
         }
 
-        // RENDERIZAR PESTAÑA FACTURAS
         function renderFacturasList() {
             const list = document.getElementById('admin-facturas-list');
             
-            // FILTRAR SOLO PEDIDOS DESPACHADOS
             const facturas = pedidosList.filter(p => p.estado === 'despachado');
 
             if(facturas.length === 0) {
@@ -466,7 +473,6 @@
             `}).join('');
         }
 
-        // ELIMINAR PEDIDO NUEVO SIN REBAJAR INVENTARIO
         function cancelarPedido(docId) {
             DarkAlert.fire({
                 title: '¿Cancelar Pedido?', 
@@ -484,7 +490,6 @@
             });
         }
 
-        // DESPACHAR PEDIDO: REBAJA INVENTARIO Y CAMBIA ESTADO A 'DESPACHADO'
         function despacharPedido(docId) {
             const pedido = pedidosList.find(p => p.id === docId);
             if(!pedido) return;
@@ -498,7 +503,6 @@
                 if (result.isConfirmed) {
                     const batch = db.batch();
                     
-                    // 1. Rebajar el inventario
                     (pedido.items || []).forEach(item => {
                         const prodInStock = inventario.find(p => p.id === item.id);
                         if(prodInStock) {
@@ -509,7 +513,6 @@
                         }
                     });
 
-                    // 2. ACTUALIZAR ESTADO DEL PEDIDO (NO BORRARLO)
                     const orderRef = db.collection("pedidos").doc(docId);
                     batch.update(orderRef, { 
                         estado: 'despachado',
@@ -525,7 +528,6 @@
             });
         }
 
-        // ELIMINAR FACTURA PERMANENTEMENTE
         function eliminarFactura(docId) {
             DarkAlert.fire({
                 title: '¿Borrar Factura?', 
@@ -541,18 +543,21 @@
             });
         }
 
-        // IMPRIMIR FACTURA (FORMATO POS TICKET O A4)
         function imprimirFactura(docId) {
             const f = pedidosList.find(p => p.id === docId);
             if(!f) return;
             
             const dateStr = (f.despachadoAt && f.despachadoAt.toDate) ? new Date(f.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
             
+            // FEATURE: Uso dinámico de los textos configurados en la DB
+            const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO';
+            const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
+
             const itemsHtml = (f.items || []).map(i => {
                 const pNum = parseFloat(i.precio.replace(/[^0-9.-]+/g,"")) || 0;
                 return `
                 <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;">Talla: ${i.talla}</small></td>
+                    <td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td>
                     <td style="text-align: center; font-size: 12px;">${i.cantidad}</td>
                     <td style="text-align: right; font-size: 12px;">L${(pNum * i.cantidad).toFixed(2)}</td>
                 </tr>`;
@@ -561,7 +566,7 @@
             const ticketHtml = `
                 <div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;">
                     <h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2>
-                    <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">STREETWEAR EXCLUSIVO</p>
+                    <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p>
                     
                     <hr style="border: 1px dashed #000; margin: 15px 0;">
                     
@@ -588,17 +593,15 @@
                     
                     <h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: L${(f.total || 0).toFixed(2)}</h3>
                     
-                    <p style="text-align: center; margin-top: 30px; font-size: 11px;">¡Gracias por preferir el asfalto!<br>IG: @newgate</p>
+                    <p style="text-align: center; margin-top: 30px; font-size: 11px;">${invFooter}</p>
                 </div>
             `;
             
-            // Inyectar en el div oculto e invocar la ventana de impresión del navegador
             const printDiv = document.getElementById('printable-invoice');
             printDiv.innerHTML = ticketHtml;
             window.print();
         }
 
-        // --- SISTEMA INVENTARIO Y UI ADMIN ---
         function escucharFirebase() { db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); }); }
         function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
         function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderHeroConfig(); } }); }
@@ -665,7 +668,6 @@
         
         function toggleMeasuresVisibility() { document.getElementById('measures-config-panel').style.display = document.getElementById('toggle-measures').checked ? 'block' : 'none'; }
 
-        // MANEJO ROBUSTO DE COLUMNAS Y TALLAS DINÁMICAS
         function addNewSizeToForm() {
             const input = document.getElementById('new-size-input');
             const val = input.value.trim().toUpperCase();
@@ -726,21 +728,23 @@
 
             let rowsHTML = currentFormSizes.map(t => {
                 const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
+                // UX: Inputs en medidas ahora inician limpios por defecto
                 let inputsHTML = currentFormColumns.map(c => {
                     const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
-                    let defaultVal = "00";
+                    let defaultVal = "";
                     if (currentValues[t] && currentValues[t][c] !== undefined) {
                         defaultVal = currentValues[t][c];
-                    } else if (!editId && DEFAULT_MEASURES[t] && DEFAULT_MEASURES[t][c.toLowerCase()]) {
+                    } else if (!editId && DEFAULT_MEASURES[t] && DEFAULT_MEASURES[t][c.toLowerCase()] !== undefined) {
                         defaultVal = DEFAULT_MEASURES[t][c.toLowerCase()];
                     }
-                    return `<input type="text" id="measure-${safeT}-${safeC}" placeholder="${c.charAt(0)}" class="measure-input rounded w-full" value="${defaultVal}">`;
+                    return `<input type="text" id="measure-${safeT}-${safeC}" class="measure-input rounded w-full" value="${defaultVal}">`;
                 }).join('');
 
+                // FIX: notranslate a las tallas aquí también para mayor consistencia
                 return `<div class="flex items-center gap-2 mb-2">
                     <div class="w-12">
                         <input type="checkbox" id="t-${safeT}" value="${t}" checked class="hidden">
-                        <label for="t-${safeT}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1" title="${t}">${t}</label>
+                        <label for="t-${safeT}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1 notranslate" translate="no" title="${t}">${t}</label>
                     </div>
                     <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">
                         ${inputsHTML}
@@ -782,7 +786,7 @@
                             currentFormColumns.forEach(c => {
                                 const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
                                 const inputEl = document.getElementById(`measure-${safeT}-${safeC}`);
-                                medidas[t][c] = inputEl ? inputEl.value : "00";
+                                medidas[t][c] = inputEl ? inputEl.value : "";
                             });
                         } 
                     }); 
@@ -823,7 +827,7 @@
             document.getElementById('new-price').value = p.precio || ""; document.getElementById('new-desc').value = p.descripcion || "";
             if (p.categoria) document.getElementById('new-cat').value = p.categoria;
             
-            document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 10;
+            document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0;
             document.getElementById('toggle-presale').checked = !!p.isPresale;
             
             document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
@@ -847,7 +851,7 @@
                             currentFormColumns.forEach(c => {
                                 const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
                                 const el = document.getElementById(`measure-${safeT}-${safeC}`);
-                                const val = p.medidas[t][c] !== undefined ? p.medidas[t][c] : (p.medidas[t][c.toLowerCase()] !== undefined ? p.medidas[t][c.toLowerCase()] : "00");
+                                const val = p.medidas[t][c] !== undefined ? p.medidas[t][c] : (p.medidas[t][c.toLowerCase()] !== undefined ? p.medidas[t][c.toLowerCase()] : "");
                                 if(el) el.value = val;
                             });
                         } 
@@ -862,7 +866,7 @@
             
             document.getElementById('new-title').value = ""; document.getElementById('new-sku').value = "";
             document.getElementById('new-price').value = ""; document.getElementById('new-desc').value = "";
-            document.getElementById('new-stock').value = "10"; document.getElementById('toggle-presale').checked = false;
+            document.getElementById('new-stock').value = ""; document.getElementById('toggle-presale').checked = false;
             document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
             
             selectedBase64Imgs = []; renderThumbnails(); 
@@ -917,8 +921,41 @@
         function compressHeroImage(input) { if (!input.files || !input.files[0]) return; const reader = new FileReader(); reader.readAsDataURL(input.files[0]); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); let w = img.width > 1200 ? 1200 : img.width; canvas.width = w; canvas.height = img.height * (w / img.width); canvas.getContext('2d').drawImage(img, 0, 0, w, canvas.height); selectedHeroImg = canvas.toDataURL('image/jpeg', 0.8); document.getElementById('hero-preview').src = selectedHeroImg; document.getElementById('hero-preview').classList.remove('hidden'); document.getElementById('hero-preview-container').classList.add('bg-darker/80'); } } }
         async function saveHeroConfig() { const btn = document.getElementById('btn-save-hero'); btn.innerText = "Subiendo..."; btn.disabled = true; try { let img = config.heroImage || ""; if (selectedHeroImg) img = await uploadImageToStorage(selectedHeroImg, `config/hero_bg_${Date.now()}.jpg`); await db.collection("config").doc("hero").set({ heroTitle: document.getElementById('config-hero-title').value, heroSubtitle: document.getElementById('config-hero-subtitle').value, heroImage: img }, { merge: true }); btn.innerText = "¡Actualizado!"; setTimeout(() => { btn.innerText = "Actualizar Textos y Foto Hero"; btn.disabled = false; }, 2000); } catch (e) { btn.disabled = false; } }
 
-        function renderConfig() { document.getElementById('config-slogan').value = config.slogan || ""; document.getElementById('config-about-title').value = config.aboutTitle || ""; document.getElementById('config-about-desc').value = config.aboutDesc || ""; document.getElementById('config-whatsapp').value = config.whatsapp || ""; document.getElementById('config-instagram').value = config.instagram || ""; }
-        function saveGlobalConfig() { db.collection("config").doc("global").set({ slogan: document.getElementById('config-slogan').value, aboutTitle: document.getElementById('config-about-title').value, aboutDesc: document.getElementById('config-about-desc').value, whatsapp: document.getElementById('config-whatsapp').value, instagram: document.getElementById('config-instagram').value }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Guardado' })); const p = document.getElementById('config-password').value; if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> document.getElementById('config-password').value = ""); }
+        function renderConfig() { 
+            document.getElementById('config-slogan').value = config.slogan || ""; 
+            document.getElementById('config-about-title').value = config.aboutTitle || ""; 
+            document.getElementById('config-about-desc').value = config.aboutDesc || ""; 
+            document.getElementById('config-whatsapp').value = config.whatsapp || ""; 
+            document.getElementById('config-instagram').value = config.instagram || ""; 
+            document.getElementById('config-invoice-header').value = config.invoiceHeader || ""; 
+            document.getElementById('config-invoice-footer').value = config.invoiceFooter || ""; 
+            document.getElementById('config-share-text').value = config.shareText || ""; 
+        }
+
+        // UX: Botones independientes para guardado modular
+        function saveBrandTexts() { 
+            db.collection("config").doc("global").set({ 
+                slogan: document.getElementById('config-slogan').value, 
+                aboutTitle: document.getElementById('config-about-title').value, 
+                aboutDesc: document.getElementById('config-about-desc').value,
+                invoiceHeader: document.getElementById('config-invoice-header').value,
+                invoiceFooter: document.getElementById('config-invoice-footer').value,
+                shareText: document.getElementById('config-share-text').value
+            }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Textos Guardados' })); 
+        }
+
+        function saveSecuritySocials() {
+            db.collection("config").doc("global").set({ 
+                whatsapp: document.getElementById('config-whatsapp').value, 
+                instagram: document.getElementById('config-instagram').value 
+            }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Redes Actualizadas' })); 
+
+            const p = document.getElementById('config-password').value; 
+            if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> {
+                document.getElementById('config-password').value = "";
+                Toast.fire({ icon:'success', title:'Contraseña Cambiada' });
+            }); 
+        }
 
         function renderHeroConfig() {
             document.getElementById('config-hero-title').value = config.heroTitle || "";

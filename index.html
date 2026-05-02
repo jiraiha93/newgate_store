@@ -24,7 +24,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NEW GATE | Streetwear Exclusivo</title>
-    <meta name="description" content="New Gate no es una marca, es un destino. Diseñamos para la tripulación que prefiere el asfalto.">
+    <!-- CLEANUP: Texto anclado eliminado -->
+    <meta name="description" content="Streetwear Exclusivo.">
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -78,7 +79,7 @@
         #mobile-menu { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
         #mobile-menu.active { transform: translateX(0); }
         
-        .status-badge { position: absolute; top: 12px; left: 12px; padding: 4px 10px; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; z-index: 10; border-radius: 2px; }
+        .status-badge { position: absolute; top: 8px; left: 8px; padding: 4px 8px; font-size: 8px; md:font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; z-index: 10; border-radius: 2px; }
     </style>
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark">
@@ -220,7 +221,8 @@
                 <div class="flex flex-wrap gap-6 text-xs uppercase tracking-widest text-gray-500" id="filter-container"></div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 transition-opacity duration-300" id="gallery-grid">
+            <!-- UI FEATURE: Ajuste a grid-cols-2 md:grid-cols-3 lg:grid-cols-4 para optimizar tamaño y cantidad -->
+            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 transition-opacity duration-300" id="gallery-grid">
                 <div class="col-span-full text-center py-20 flex flex-col items-center justify-center">
                      <div class="loader !border-t-primary !border-white/10 !w-8 !h-8 mb-4 !block"></div>
                      <p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Cargando colección exclusiva...</p>
@@ -248,13 +250,13 @@
                     <div class="lg:col-span-3 space-y-6 bg-dark p-8 border border-white/5 shadow-2xl">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Nombre Completo</label>
-                            <!-- MEJORA: Cambio de ID para evitar conflictos de auto-rellenado que causaban problemas al guardar el nombre -->
-                            <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors">
+                            <!-- UX: Eliminados placeholders innecesarios -->
+                            <input type="text" id="cliente-nombre" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors">
                         </div>
                         
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Mensaje Adicional</label>
-                            <textarea id="mensaje" rows="4" maxlength="150" placeholder="Ej: ¿Tienen envío a domicilio? (Máx. 150 caracteres)" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors resize-none"></textarea>
+                            <textarea id="mensaje" rows="4" maxlength="150" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors resize-none"></textarea>
                             <p class="text-right text-[9px] text-gray-600 mt-1 uppercase tracking-wider">Máx 150 caracteres</p>
                         </div>
 
@@ -294,11 +296,13 @@
             customClass: { popup: 'border border-white/10 rounded-lg shadow-2xl !py-2 !px-4 !w-auto', title: '!text-[11px] !font-bold tracking-widest uppercase' }
         });
 
+        // CLEANUP: Config por defecto limpiado de placeholders sensibles
         const DEFAULT_CONFIG = {
-            slogan: "Nuestras piezas exclusivas",
-            aboutTitle: "Legacy Over Size", aboutDesc: "New Gate no es una marca, es un destino.",
-            whatsapp: "50400000000", instagram: "#", facebook: "#", categories: ["urban", "anime"],
-            heroTitle: "ESTILO SIN LÍMITES", heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE", heroImage: ""
+            slogan: "",
+            aboutTitle: "", aboutDesc: "",
+            whatsapp: "", instagram: "#", facebook: "#", categories: ["urban", "anime"],
+            heroTitle: "", heroSubtitle: "", heroImage: "",
+            shareText: ""
         };
 
         let inventario = [];
@@ -343,7 +347,7 @@
                                 <div class="w-10 h-10 bg-darker rounded border border-white/10 overflow-hidden shrink-0"><img src="${item.img}" class="w-full h-full object-cover"></div>
                                 <div class="flex-1 min-w-0">
                                     <p class="text-white text-[10px] font-bold uppercase truncate">${item.titulo}</p>
-                                    <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${item.talla}</span> | Cant: <span class="text-primary">x${item.cantidad}</span></p>
+                                    <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white font-bold notranslate" translate="no">${item.talla}</span> | Cant: <span class="text-primary">x${item.cantidad}</span></p>
                                 </div>
                             </div>
                         `).join('')}
@@ -428,16 +432,16 @@
                         <img src="${coverImg}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         
-                        <div class="absolute bottom-4 left-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-500 ease-out z-20">
-                            <button onclick="openModalById('${prod.id}')" class="w-full bg-white text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary transition-colors shadow-lg">Ver Detalles</button>
+                        <div class="absolute bottom-2 left-2 right-2 md:bottom-4 md:left-4 md:right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-500 ease-out z-20">
+                            <button onclick="openModalById('${prod.id}')" class="w-full bg-white text-dark py-2 md:py-3 font-bold uppercase text-[9px] md:text-[10px] tracking-widest hover:bg-primary transition-colors shadow-lg">Ver</button>
                         </div>
                     </div>
-                    <div class="mt-4 flex justify-between items-start">
-                        <div class="overflow-hidden">
-                            <h3 class="text-white font-medium uppercase tracking-widest text-sm truncate pr-2">${prod.titulo}</h3>
-                            <p class="text-gray-500 text-[9px] uppercase font-bold mt-1">${prod.categoria || 'General'}</p>
+                    <div class="mt-3 md:mt-4 flex flex-col xl:flex-row justify-between items-start">
+                        <div class="overflow-hidden w-full xl:w-auto">
+                            <h3 class="text-white font-medium uppercase tracking-widest text-[10px] md:text-xs truncate pr-2">${prod.titulo}</h3>
+                            <p class="text-gray-500 text-[8px] md:text-[9px] uppercase font-bold mt-1">${prod.categoria || 'General'}</p>
                         </div>
-                        <span class="text-primary font-bold whitespace-nowrap">${prod.precio}</span>
+                        <span class="text-primary font-bold whitespace-nowrap text-xs md:text-sm mt-1 xl:mt-0">${prod.precio}</span>
                     </div>
                 </div>
             `}).join('');
@@ -504,28 +508,24 @@
             const measuresContainer = document.getElementById('modal-measures-container');
             const tallaSelectContainer = document.getElementById('modal-talla-select-container');
             
-            // RENDERIZADO DINÁMICO DE COLUMNAS DE MEDIDAS
             if(p.hasMeasures && p.tallas && p.tallas.length > 0) {
                 measuresContainer.classList.remove('hidden');
-                
                 const cols = p.columnas && p.columnas.length > 0 ? p.columnas : ['Pecho', 'Largo', 'Ancho'];
                 
-                // Generar cabeceras
                 document.getElementById('modal-measures-head').innerHTML = `<th class="py-2 pr-2 w-16">Talla</th>` + cols.map(c => `<th class="py-2 px-1 text-center whitespace-nowrap">${c}</th>`).join('');
                 
-                // Generar filas
+                // FIX: notranslate a las tallas inyectadas
                 document.getElementById('modal-measures-body').innerHTML = p.tallas.map(t => {
                     const m = p.medidas && p.medidas[t] ? p.medidas[t] : {};
                     const tds = cols.map(c => {
-                        // Compatibilidad hacia atrás (busca Columna exacta o versión en minúsculas)
-                        const val = m[c] !== undefined ? m[c] : (m[c.toLowerCase()] !== undefined ? m[c.toLowerCase()] : '-');
+                        const val = m[c] !== undefined && m[c] !== "" ? m[c] : (m[c.toLowerCase()] !== undefined && m[c.toLowerCase()] !== "" ? m[c.toLowerCase()] : '-');
                         return `<td class="py-3 px-1 text-center text-gray-400 font-bold whitespace-nowrap">${val}</td>`;
                     }).join('');
-                    return `<tr class="hover:bg-white/5 transition-colors"><td class="py-3 pr-2 text-primary font-bold whitespace-nowrap">${t}</td>${tds}</tr>`;
+                    return `<tr class="hover:bg-white/5 transition-colors"><td class="py-3 pr-2 text-primary font-bold whitespace-nowrap notranslate" translate="no">${t}</td>${tds}</tr>`;
                 }).join('');
 
                 tallaSelectContainer.classList.remove('hidden');
-                document.getElementById('modal-talla').innerHTML = '<option value="" disabled selected>Elige una talla</option>' + p.tallas.map(t => `<option value="${t}">${t}</option>`).join('');
+                document.getElementById('modal-talla').innerHTML = '<option value="" disabled selected>Elige una talla</option>' + p.tallas.map(t => `<option value="${t}" class="notranslate" translate="no">${t}</option>`).join('');
                 document.getElementById('modal-talla').classList.remove('border-red-500');
             } else {
                 measuresContainer.classList.add('hidden'); tallaSelectContainer.classList.add('hidden');
@@ -550,10 +550,16 @@
             if (touchEndX > touchStartX + th) changeImage(-1);
         }
 
+        // FEATURE: Texto de compartir WhatsApp personalizado integrado
         function shareProduct() {
             const url = window.location.href;
-            if (navigator.share) navigator.share({ title: `NEW GATE: ${window.lastViewedProduct.titulo}`, text: '¡Mira este drop exclusivo!', url: url }).catch(console.error);
-            else navigator.clipboard.writeText(url).then(() => Toast.fire({ icon: 'success', title: 'Enlace copiado' }));
+            const shareText = config.shareText || '¡Mira este drop exclusivo!';
+            
+            if (navigator.share) {
+                navigator.share({ title: `NEW GATE: ${window.lastViewedProduct.titulo}`, text: shareText, url: url }).catch(console.error);
+            } else {
+                navigator.clipboard.writeText(`${shareText} ${url}`).then(() => Toast.fire({ icon: 'success', title: 'Enlace copiado' }));
+            }
         }
 
         function closeModal(e) { window.history.pushState({}, '', window.location.pathname); document.getElementById('product-modal').classList.remove('active'); }
@@ -613,6 +619,7 @@
             }
 
             let total = 0;
+            // FIX: notranslate inyectado en el carrito también
             container.innerHTML = carrito.map((item, index) => {
                 const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
                 const subtotalItem = precioNum * item.cantidad; total += subtotalItem;
@@ -620,7 +627,7 @@
                 <div class="flex items-center gap-4 bg-darker border border-white/5 p-3 rounded group relative">
                     <div class="w-12 h-12 bg-dark rounded border border-white/10 overflow-hidden shrink-0 relative"><img src="${item.img}" class="w-full h-full object-cover"><div class="absolute bottom-0 right-0 bg-primary text-dark text-[8px] font-bold px-1 rounded-tl">x${item.cantidad}</div></div>
                     <div class="flex-1 min-w-0"><p class="text-white text-[11px] font-bold uppercase truncate">${item.titulo}</p>
-                        <div class="flex justify-between items-center mt-0.5"><p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white font-bold">${item.talla}</span></p><p class="text-primary text-[10px] font-bold">L${subtotalItem.toFixed(2)}</p></div>
+                        <div class="flex justify-between items-center mt-0.5"><p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white font-bold notranslate" translate="no">${item.talla}</span></p><p class="text-primary text-[10px] font-bold">L${subtotalItem.toFixed(2)}</p></div>
                     </div>
                     <button onclick="eliminarDelPedido(${index})" class="text-red-500 bg-red-500/10 w-8 h-8 rounded shrink-0"><i class="fas fa-trash-alt"></i></button>
                 </div>`;
@@ -629,7 +636,6 @@
         }
 
         function procesarEnvioPedido() {
-            // MEJORA: Cambio a ID único para prevenir sobreescritura externa
             const inputNombre = document.getElementById('cliente-nombre');
             const n = inputNombre ? inputNombre.value.trim() : "";
             const m = document.getElementById('mensaje').value.trim();
@@ -655,7 +661,6 @@
             msg += `\n💵 *TOTAL: L${total.toFixed(2)}*\n`;
             if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
 
-            // SE ASEGURA DE GUARDAR EL NOMBRE EXTRAÍDO SEGURO
             const pedidoData = {
                 idPedido: orderId, cliente: n || 'Desconocido', mensaje: m, items: carrito, total: total,
                 estado: 'pendiente', createdAt: firebase.firestore.FieldValue.serverTimestamp()
@@ -670,7 +675,7 @@
             localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
 
             Toast.fire({ icon: 'success', title: 'Pedido Procesado' });
-            carrito = []; renderCarrito(); document.getElementById('mensaje').value = '';
+            carrito = []; renderCarrito(); document.getElementById('mensaje').value = ''; document.getElementById('cliente-nombre').value = '';
             btnText.innerText = originalText;
 
             const urlWa = `https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`;
