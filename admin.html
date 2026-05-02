@@ -22,7 +22,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     const storage = firebase.storage(); 
-    console.log("🔥 Firebase conectado: Panel Administrador + Storage + Facturación");
+    console.log("🔥 Firebase conectado: Panel Administrador Múltiple");
     </script>
     
     <meta charset="UTF-8">
@@ -92,38 +92,83 @@
 
     <header class="w-full z-[100] bg-darker border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="font-graffiti text-3xl text-white tracking-wider">ADMIN<span class="text-primary">.</span></div>
+            <div id="header-title" class="font-graffiti text-3xl text-white tracking-wider">NEW GATE<span class="text-primary">.</span></div>
             <nav class="flex items-center">
                 <a href="index.html" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-colors border border-white/10 px-4 py-2 rounded"><i class="fas fa-store"></i> Ir a Tienda</a>
             </nav>
         </div>
     </header>
 
-    <div id="login-modal" class="modal-overlay active">
+    <!-- SELECTOR DE MÓDULO INICIAL -->
+    <div id="selector-modal" class="modal-overlay active">
+        <div class="modal-content p-8 text-center shadow-2xl !max-w-2xl bg-darker">
+            <h2 class="font-graffiti text-4xl text-white mb-2">NEW GATE<span class="text-primary">.</span></h2>
+            <p class="text-[10px] uppercase tracking-widest text-gray-500 mb-8 font-bold">Selecciona tu módulo de acceso</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- POS -->
+                <div onclick="selectModule('POS')" class="bg-dark border border-white/5 p-8 rounded-lg cursor-pointer hover:border-primary/50 transition-colors group">
+                    <i class="fas fa-cash-register text-4xl text-primary mb-4 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-white font-serif italic text-xl mb-2">Punto de Venta</h3>
+                    <p class="text-gray-500 text-[10px] uppercase tracking-widest">Gestión de pedidos y facturación</p>
+                </div>
+                <!-- ADMIN GLOBAL -->
+                <div onclick="selectModule('ADMIN')" class="bg-dark border border-white/5 p-8 rounded-lg cursor-pointer hover:border-primary/50 transition-colors group">
+                    <i class="fas fa-cogs text-4xl text-primary mb-4 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-white font-serif italic text-xl mb-2">Ajustes Globales</h3>
+                    <p class="text-gray-500 text-[10px] uppercase tracking-widest">Inventario y configuración web</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ACCESO: POS (PIN) -->
+    <div id="pin-modal" class="modal-overlay">
         <div class="modal-content p-8 text-center shadow-2xl">
-            <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
+            <button onclick="goBackToSelector('pin-modal')" class="absolute top-4 left-4 text-gray-500 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-serif text-2xl text-white italic mb-2">Acceso POS</h2>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Ingresa tu PIN de seguridad</p>
             <div class="space-y-4">
-                <input type="email" id="admin-email-input" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center">
-                <input type="password" id="admin-pass-input" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center" onkeyup="if(event.key === 'Enter') validateAdmin()">
+                <input type="password" inputmode="numeric" id="pos-pin-input" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center tracking-[0.5em] text-2xl" onkeyup="if(event.key === 'Enter') validatePIN()">
+                <button onclick="validatePIN()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar al POS</button>
+                <p id="pin-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">PIN Incorrecto</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DE ACCESO: ADMINISTRADOR (EMAIL/PASS) -->
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal-content p-8 text-center shadow-2xl">
+            <button onclick="goBackToSelector('login-modal')" class="absolute top-4 left-4 text-gray-500 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-serif text-2xl text-white italic mb-2">Ajustes Globales</h2>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Acceso Restringido</p>
+            <div class="space-y-4">
+                <input type="email" id="admin-email-input" placeholder="Correo electrónico" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center">
+                <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center" onkeyup="if(event.key === 'Enter') validateAdmin()">
                 <button onclick="validateAdmin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar</button>
                 <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Credenciales Incorrectas</p>
             </div>
         </div>
     </div>
 
+    <!-- PANEL PRINCIPAL -->
     <div id="admin" class="section-fade py-12 bg-darker flex-1">
         <div class="max-w-6xl mx-auto px-6">
             
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-12 gap-4">
                 <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide pb-2">
-                    <button onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-bell"></i> Nuevos Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
-                    <button onclick="showAdminTab('facturas', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-file-invoice"></i> Historial Facturas</button>
-                    <button onclick="showAdminTab('inventario', event)" class="tab-btn active py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-box"></i> Inventario</button>
-                    <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-cog"></i> Ajustes</button>
+                    <!-- TABS POS -->
+                    <button id="nav-pedidos" onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-bell"></i> Nuevos Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
+                    <button id="nav-facturas" onclick="showAdminTab('facturas', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-file-invoice"></i> Historial Facturas</button>
+                    
+                    <!-- TABS ADMIN -->
+                    <button id="nav-inventario" onclick="showAdminTab('inventario', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-box"></i> Inventario</button>
+                    <button id="nav-config" onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-cog"></i> Ajustes</button>
                 </div>
-                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+                <button onclick="exitModule()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Salir al Menú</button>
             </div>
 
+            <!-- TAB NUEVOS PEDIDOS (Solo POS) -->
             <div id="tab-pedidos" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
@@ -138,6 +183,7 @@
                 </div>
             </div>
 
+            <!-- TAB HISTORIAL Y FACTURAS (Solo POS) -->
             <div id="tab-facturas" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
@@ -152,7 +198,8 @@
                 </div>
             </div>
 
-            <div id="tab-inventario" class="admin-tab">
+            <!-- TAB INVENTARIO (Solo Admin Global) -->
+            <div id="tab-inventario" class="admin-tab hidden">
                 <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
                     <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
                         <i class="fas fa-box-open"></i> Añadir Nuevo Producto
@@ -276,7 +323,7 @@
                 <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
-            <!-- TAB AJUSTES GLOBALES -->
+            <!-- TAB AJUSTES GLOBALES (Solo Admin Global) -->
             <div id="tab-config" class="admin-tab hidden space-y-10">
                 
                 <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
@@ -297,7 +344,6 @@
                 </div>
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
-                    <!-- UX/FEATURE: Formulario de marca independiente con nuevos ajustes de factura -->
                     <div class="bg-dark p-8 border border-white/5 shadow-2xl rounded-lg flex flex-col justify-between h-full">
                         <div class="space-y-6">
                             <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Textos de la Marca</h3>
@@ -314,11 +360,11 @@
                         <button onclick="saveBrandTexts()" class="w-full mt-8 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-white transition-all shadow-xl rounded">Guardar Textos de Marca</button>
                     </div>
                     
-                    <!-- UX: Formulario de seguridad independiente -->
                     <div class="bg-dark p-8 border border-white/5 shadow-2xl rounded-lg flex flex-col justify-between h-full">
                         <div class="space-y-6">
                             <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes Sociales</h3>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña</label><input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"><p class="text-[8px] text-gray-500 mt-1 italic">Déjalo en blanco si no deseas cambiarla (Mín. 6 caracteres).</p></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña (Ajustes Globales)</label><input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"><p class="text-[8px] text-gray-500 mt-1 italic">Mínimo 6 caracteres. Dejar vacío para ignorar.</p></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-key text-primary"></i> Cambiar PIN (Punto de Venta)</label><input type="password" inputmode="numeric" id="config-pos-pin" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none tracking-[0.5em] text-center"><p class="text-[8px] text-gray-500 mt-1 italic">Mínimo 4 dígitos numéricos. (PIN por defecto: 1234).</p></div>
                             <hr class="border-white/5 my-4">
                             <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</label><input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
                             <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label><input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
@@ -334,34 +380,154 @@
         const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10 !py-2 !px-4 !w-auto shadow-2xl', title: '!text-[11px] !font-bold tracking-widest uppercase' } });
         const DarkAlert = Swal.mixin({ background: '#0f0f0f', color: '#fff', confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626', customClass: { popup: 'border border-white/10', confirmButton: 'text-dark font-bold uppercase text-xs px-6 py-2 rounded', cancelButton: 'font-bold uppercase text-xs px-6 py-2 rounded' } });
 
-        // CLEANUP: Eliminados los textos por defecto sensibles, las variables nuevas incluidas
         const DEFAULT_CONFIG = { slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], heroTitle: "", heroSubtitle: "", heroImage: "", invoiceHeader: "", invoiceFooter: "", shareText: "" };
         const DEFAULT_MEASURES = { "S": { pecho: "", largo: "", ancho: "" }, "M": { pecho: "", largo: "", ancho: "" }, "L": { pecho: "", largo: "", ancho: "" }, "XL": { pecho: "", largo: "", ancho: "" } };
 
         let inventario = []; let pedidosList = []; let config = { ...DEFAULT_CONFIG };
         let selectedBase64Imgs = []; let selectedHeroImg = ""; let editId = null;
-        
         let currentFormSizes = ["S", "M", "L", "XL"];
         let currentFormColumns = ["Pecho", "Largo", "Ancho"];
 
+        // CONTROL DE ACCESO
+        let currentFirebaseUser = null;
+        let activeModule = null; // 'POS' o 'ADMIN'
+        let listenersInitialized = { pos: false, admin: false };
+
+        // Función segura de Hash para validación de PIN POS (No se guarda en texto plano)
+        async function hashPIN(pin) {
+            const msgBuffer = new TextEncoder().encode(pin);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         function init() {
+            // Observador global de Auth para Administrador
             auth.onAuthStateChanged((user) => {
-                if (user) {
-                    document.getElementById('login-modal').classList.remove('active'); document.getElementById('admin').style.display = 'block'; setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
-                    renderMedidasForm(); escucharConfigGlobal(); escucharFirebase(); escucharPedidos();
+                currentFirebaseUser = user;
+            });
+            // Escuchar config global para poder validar PINs inmediatamente
+            escucharConfigGlobal();
+            renderMedidasForm();
+            
+            // Forzar UI a estado base: mostrar selector, limpiar inputs
+            document.getElementById('selector-modal').classList.add('active');
+            document.getElementById('pin-modal').classList.remove('active');
+            document.getElementById('login-modal').classList.remove('active');
+        }
+
+        function selectModule(module) {
+            if (module === 'POS') {
+                if (sessionStorage.getItem('posMode') === 'true') {
+                    enterModule('POS');
                 } else {
-                    document.getElementById('admin').classList.remove('active'); document.getElementById('admin').style.display = 'none'; document.getElementById('login-modal').classList.add('active');
+                    document.getElementById('selector-modal').classList.remove('active');
+                    document.getElementById('pin-modal').classList.add('active');
+                    document.getElementById('pos-pin-input').focus();
                 }
+            } else if (module === 'ADMIN') {
+                if (currentFirebaseUser) {
+                    enterModule('ADMIN');
+                } else {
+                    document.getElementById('selector-modal').classList.remove('active');
+                    document.getElementById('login-modal').classList.add('active');
+                    document.getElementById('admin-email-input').focus();
+                }
+            }
+        }
+
+        function goBackToSelector(modalId) {
+            document.getElementById(modalId).classList.remove('active');
+            document.getElementById('selector-modal').classList.add('active');
+            document.getElementById('pos-pin-input').value = "";
+            document.getElementById('pin-error').classList.add('hidden');
+            document.getElementById('admin-pass-input').value = "";
+            document.getElementById('login-error').classList.add('hidden');
+        }
+
+        // VALIDAR PIN POS (Valida Hash del PIN vs la DB)
+        async function validatePIN() {
+            const pin = document.getElementById('pos-pin-input').value.trim();
+            if(!pin) return;
+            
+            const hashedInput = await hashPIN(pin);
+            // Default: Hash de "1234" si no hay configurado
+            const validHash = config.posPin || '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; 
+
+            if (hashedInput === validHash) {
+                sessionStorage.setItem('posMode', 'true');
+                document.getElementById('pin-modal').classList.remove('active');
+                document.getElementById('pos-pin-input').value = "";
+                document.getElementById('pin-error').classList.add('hidden');
+                enterModule('POS');
+                Toast.fire({ icon: 'success', title: 'POS Autorizado' });
+            } else {
+                document.getElementById('pin-error').classList.remove('hidden');
+            }
+        }
+
+        // VALIDAR ADMIN GLOBAL
+        function validateAdmin() {
+            const email = document.getElementById('admin-email-input').value.trim(); 
+            const pass = document.getElementById('admin-pass-input').value;
+            if(!email || !pass) return;
+            auth.signInWithEmailAndPassword(email, pass).then(() => { 
+                document.getElementById('login-error').classList.add('hidden'); 
+                document.getElementById('admin-pass-input').value = ""; 
+                document.getElementById('login-modal').classList.remove('active');
+                enterModule('ADMIN');
+                Toast.fire({ icon: 'success', title: 'Administrador Autorizado' }); 
+            }).catch(() => { 
+                document.getElementById('login-error').classList.remove('hidden'); 
             });
         }
 
-        function validateAdmin() {
-            const email = document.getElementById('admin-email-input').value.trim(); const pass = document.getElementById('admin-pass-input').value;
-            if(!email || !pass) return;
-            auth.signInWithEmailAndPassword(email, pass).then(() => { document.getElementById('login-error').classList.add('hidden'); document.getElementById('admin-pass-input').value = ""; Toast.fire({ icon: 'success', title: 'Panel activado' }); })
-            .catch(() => { document.getElementById('login-error').classList.remove('hidden'); });
+        // INGRESO AL MÓDULO CORRESPONDIENTE
+        function enterModule(module) {
+            activeModule = module;
+            document.getElementById('admin').style.display = 'block'; 
+            setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
+            
+            const btnPedidos = document.getElementById('nav-pedidos');
+            const btnFacturas = document.getElementById('nav-facturas');
+            const btnInventario = document.getElementById('nav-inventario');
+            const btnConfig = document.getElementById('nav-config');
+            const title = document.getElementById('header-title');
+
+            if (module === 'POS') {
+                title.innerHTML = 'POS<span class="text-primary">.</span>';
+                btnPedidos.style.display = 'flex'; btnFacturas.style.display = 'flex';
+                btnInventario.style.display = 'none'; btnConfig.style.display = 'none';
+                
+                showAdminTab('pedidos');
+                if (!listenersInitialized.pos) { escucharPedidos(); listenersInitialized.pos = true; }
+                
+            } else if (module === 'ADMIN') {
+                title.innerHTML = 'ADMIN<span class="text-primary">.</span>';
+                btnPedidos.style.display = 'none'; btnFacturas.style.display = 'none';
+                btnInventario.style.display = 'flex'; btnConfig.style.display = 'flex';
+                
+                showAdminTab('inventario');
+                if (!listenersInitialized.admin) { escucharFirebase(); escucharHero(); listenersInitialized.admin = true; }
+            }
         }
-        function logoutAdmin() { auth.signOut(); }
+
+        function exitModule() {
+            // Destruir todas las sesiones activas en el dispositivo
+            sessionStorage.removeItem('posMode');
+            if (currentFirebaseUser) auth.signOut();
+            
+            activeModule = null;
+            document.getElementById('admin').classList.remove('active'); 
+            setTimeout(() => { 
+                document.getElementById('admin').style.display = 'none'; 
+                document.getElementById('selector-modal').classList.add('active'); 
+            }, 400);
+            Toast.fire({ icon: 'info', title: 'Sesión Finalizada' });
+        }
+
+
+        // === LOGICA POS Y FACTURACIÓN ===
 
         function escucharPedidos() {
             db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
@@ -370,21 +536,16 @@
                 renderFacturasList(); 
             }, (error) => {
                 console.error("Error al obtener pedidos:", error);
-                Toast.fire({ icon: 'error', title: 'Error al cargar pedidos' });
             });
         }
 
         function renderPedidosList() {
             const list = document.getElementById('admin-pedidos-list');
             const badge = document.getElementById('badge-pedidos');
-            
             const pedidosPendientes = pedidosList.filter(p => p.estado !== 'despachado');
 
-            if(pedidosPendientes.length > 0) {
-                badge.classList.remove('hidden'); badge.innerText = pedidosPendientes.length;
-            } else {
-                badge.classList.add('hidden');
-            }
+            if(pedidosPendientes.length > 0) { badge.classList.remove('hidden'); badge.innerText = pedidosPendientes.length; } 
+            else { badge.classList.add('hidden'); }
 
             if(pedidosPendientes.length === 0) {
                 list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay pedidos nuevos</p></div>`;
@@ -392,9 +553,7 @@
             }
 
             list.innerHTML = pedidosPendientes.map(pedido => {
-                const dateStr = (pedido.createdAt && typeof pedido.createdAt.toDate === 'function') 
-                    ? new Date(pedido.createdAt.toDate()).toLocaleDateString() 
-                    : 'Nuevo / Pendiente';
+                const dateStr = (pedido.createdAt && typeof pedido.createdAt.toDate === 'function') ? new Date(pedido.createdAt.toDate()).toLocaleDateString() : 'Nuevo / Pendiente';
 
                 return `
                 <div class="bg-darker border border-white/5 p-6 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-xl relative overflow-hidden">
@@ -423,21 +582,16 @@
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
                         <p class="text-2xl text-white font-serif font-bold w-full text-right sm:text-left mb-2 sm:mb-0">L${(pedido.total || 0).toFixed(2)}</p>
                         <div class="flex gap-2 w-full sm:w-auto">
-                            <button onclick="cancelarPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded shadow-xl" title="Cancelar sin rebajar inventario">
-                                <i class="fas fa-times"></i> Cancelar
-                            </button>
-                            <button onclick="despacharPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2 rounded shadow-xl" title="Despachar y guardar factura">
-                                <i class="fas fa-check-double"></i> Despachar
-                            </button>
+                            <button onclick="cancelarPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded shadow-xl" title="Cancelar sin rebajar inventario"><i class="fas fa-times"></i> Cancelar</button>
+                            <button onclick="despacharPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2 rounded shadow-xl" title="Despachar y guardar factura"><i class="fas fa-check-double"></i> Despachar</button>
                         </div>
                     </div>
-                </div>
-            `}).join('');
+                </div>`
+            }).join('');
         }
 
         function renderFacturasList() {
             const list = document.getElementById('admin-facturas-list');
-            
             const facturas = pedidosList.filter(p => p.estado === 'despachado');
 
             if(facturas.length === 0) {
@@ -446,9 +600,7 @@
             }
 
             list.innerHTML = facturas.map(pedido => {
-                const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') 
-                    ? new Date(pedido.despachadoAt.toDate()).toLocaleString() 
-                    : 'Fecha desconocida';
+                const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') ? new Date(pedido.despachadoAt.toDate()).toLocaleString() : 'Fecha desconocida';
 
                 return `
                 <div class="bg-darker border border-white/5 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl opacity-80 hover:opacity-100 transition-opacity">
@@ -460,96 +612,58 @@
                         <p class="text-gray-400 text-[10px] uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
                         <p class="text-gray-500 text-[9px] mt-1"><i class="fas fa-calendar-check text-green-500/50 w-4"></i> Despachado: ${dateStr}</p>
                     </div>
-                    
                     <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
-                        <button onclick="imprimirFactura('${pedido.id}')" class="flex-1 md:flex-none bg-blue-900/30 text-blue-400 border border-blue-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all rounded shadow-xl">
-                            <i class="fas fa-print"></i> Imprimir
-                        </button>
-                        <button onclick="eliminarFactura('${pedido.id}')" class="flex-1 md:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-red-600 hover:text-white transition-all rounded shadow-xl" title="Eliminar del historial permanente">
-                            <i class="fas fa-trash"></i> Eliminar
-                        </button>
+                        <button onclick="imprimirFactura('${pedido.id}')" class="flex-1 md:flex-none bg-blue-900/30 text-blue-400 border border-blue-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all rounded shadow-xl"><i class="fas fa-print"></i> Imprimir</button>
+                        <button onclick="eliminarFactura('${pedido.id}')" class="flex-1 md:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-red-600 hover:text-white transition-all rounded shadow-xl" title="Eliminar del historial permanente"><i class="fas fa-trash"></i> Eliminar</button>
                     </div>
-                </div>
-            `}).join('');
+                </div>`
+            }).join('');
         }
 
         function cancelarPedido(docId) {
-            DarkAlert.fire({
-                title: '¿Cancelar Pedido?', 
-                text: "El pedido se eliminará por completo.", 
-                icon: 'warning',
-                showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Sí, Cancelar', cancelButtonText: 'Atrás'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    db.collection("pedidos").doc(docId).delete().then(() => {
-                        Toast.fire({ icon: 'info', title: 'Pedido cancelado' });
-                    }).catch(error => {
-                        DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message });
-                    });
-                }
-            });
+            DarkAlert.fire({ title: '¿Cancelar Pedido?', text: "El pedido se eliminará por completo.", icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Sí, Cancelar', cancelButtonText: 'Atrás' })
+            .then((result) => { if (result.isConfirmed) { db.collection("pedidos").doc(docId).delete().then(() => { Toast.fire({ icon: 'info', title: 'Pedido cancelado' }); }); }});
         }
 
         function despacharPedido(docId) {
             const pedido = pedidosList.find(p => p.id === docId);
             if(!pedido) return;
 
-            DarkAlert.fire({
-                title: '¿Despachar Pedido?', 
-                text: "Esto rebajará el inventario y moverá el pedido a Facturas.", 
-                icon: 'question',
-                showCancelButton: true, confirmButtonText: '<i class="fas fa-check-double"></i> Despachar', cancelButtonText: 'Atrás'
-            }).then((result) => {
+            DarkAlert.fire({ title: '¿Despachar Pedido?', text: "Esto rebajará el inventario (si existe) y moverá el pedido a Facturas.", icon: 'question', showCancelButton: true, confirmButtonText: '<i class="fas fa-check-double"></i> Despachar', cancelButtonText: 'Atrás' })
+            .then((result) => {
                 if (result.isConfirmed) {
                     const batch = db.batch();
-                    
-                    (pedido.items || []).forEach(item => {
-                        const prodInStock = inventario.find(p => p.id === item.id);
-                        if(prodInStock) {
-                            const prodRef = db.collection("productos").doc(item.id);
-                            let newStock = (prodInStock.stock || 0) - item.cantidad;
-                            if(newStock < 0) newStock = 0; 
-                            batch.update(prodRef, { stock: newStock });
-                        }
-                    });
+                    // Rebaja de inventario solo si el producto sigue existiendo (Si un admin no lo borró mientras tanto)
+                    if (inventario.length > 0) {
+                        (pedido.items || []).forEach(item => {
+                            const prodInStock = inventario.find(p => p.id === item.id);
+                            if(prodInStock) {
+                                const prodRef = db.collection("productos").doc(item.id);
+                                let newStock = (prodInStock.stock || 0) - item.cantidad;
+                                if(newStock < 0) newStock = 0; 
+                                batch.update(prodRef, { stock: newStock });
+                            }
+                        });
+                    }
 
                     const orderRef = db.collection("pedidos").doc(docId);
-                    batch.update(orderRef, { 
-                        estado: 'despachado',
-                        despachadoAt: firebase.firestore.FieldValue.serverTimestamp()
-                    });
+                    batch.update(orderRef, { estado: 'despachado', despachadoAt: firebase.firestore.FieldValue.serverTimestamp() });
 
-                    batch.commit().then(() => {
-                        Toast.fire({ icon: 'success', title: 'Despachado con éxito' });
-                    }).catch(error => {
-                        DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message });
-                    });
+                    batch.commit().then(() => Toast.fire({ icon: 'success', title: 'Despachado con éxito' }))
+                    .catch(error => DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message }));
                 }
             });
         }
 
         function eliminarFactura(docId) {
-            DarkAlert.fire({
-                title: '¿Borrar Factura?', 
-                text: "Esta acción no se puede deshacer y borrará el registro del historial.", 
-                icon: 'warning',
-                showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Eliminar Permanentemente', cancelButtonText: 'Atrás'
-            }).then((result) => {
-                if (result.isConfirmed) {
-                    db.collection("pedidos").doc(docId).delete().then(() => {
-                        Toast.fire({ icon: 'info', title: 'Factura eliminada' });
-                    });
-                }
-            });
+            DarkAlert.fire({ title: '¿Borrar Factura?', text: "Esta acción no se puede deshacer y borrará el registro.", icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Eliminar Permanentemente', cancelButtonText: 'Atrás' })
+            .then((result) => { if (result.isConfirmed) { db.collection("pedidos").doc(docId).delete().then(() => Toast.fire({ icon: 'info', title: 'Factura eliminada' })); }});
         }
 
         function imprimirFactura(docId) {
             const f = pedidosList.find(p => p.id === docId);
             if(!f) return;
-            
             const dateStr = (f.despachadoAt && f.despachadoAt.toDate) ? new Date(f.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
-            
-            // FEATURE: Uso dinámico de los textos configurados en la DB
             const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO';
             const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
 
@@ -567,15 +681,11 @@
                 <div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;">
                     <h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2>
                     <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p>
-                    
                     <hr style="border: 1px dashed #000; margin: 15px 0;">
-                    
                     <p style="font-size: 13px; margin: 5px 0;"><strong>FACTURA:</strong> ${f.idPedido}</p>
                     <p style="font-size: 13px; margin: 5px 0;"><strong>CLIENTE:</strong> ${f.cliente}</p>
                     <p style="font-size: 13px; margin: 5px 0;"><strong>FECHA:</strong> ${dateStr}</p>
-                    
                     <hr style="border: 1px dashed #000; margin: 15px 0;">
-                    
                     <table style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr style="border-bottom: 2px solid #000;">
@@ -584,23 +694,19 @@
                                 <th style="text-align: right; padding-bottom: 5px; font-size: 12px;">SUB</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            ${itemsHtml}
-                        </tbody>
+                        <tbody>${itemsHtml}</tbody>
                     </table>
-                    
                     <hr style="border: 1px dashed #000; margin: 15px 0;">
-                    
                     <h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: L${(f.total || 0).toFixed(2)}</h3>
-                    
                     <p style="text-align: center; margin-top: 30px; font-size: 11px;">${invFooter}</p>
                 </div>
             `;
-            
             const printDiv = document.getElementById('printable-invoice');
             printDiv.innerHTML = ticketHtml;
             window.print();
         }
+
+        // === LOGICA ADMIN GLOBAL E INVENTARIO ===
 
         function escucharFirebase() { db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); }); }
         function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
@@ -633,27 +739,12 @@
         }
 
         function removeImage(index) { selectedBase64Imgs.splice(index, 1); renderThumbnails(); }
-        
-        function moveImageLeft(index) {
-            if (index <= 0) return;
-            const temp = selectedBase64Imgs[index];
-            selectedBase64Imgs[index] = selectedBase64Imgs[index - 1];
-            selectedBase64Imgs[index - 1] = temp;
-            renderThumbnails();
-        }
-
-        function moveImageRight(index) {
-            if (index >= selectedBase64Imgs.length - 1) return;
-            const temp = selectedBase64Imgs[index];
-            selectedBase64Imgs[index] = selectedBase64Imgs[index + 1];
-            selectedBase64Imgs[index + 1] = temp;
-            renderThumbnails();
-        }
+        function moveImageLeft(index) { if (index <= 0) return; const temp = selectedBase64Imgs[index]; selectedBase64Imgs[index] = selectedBase64Imgs[index - 1]; selectedBase64Imgs[index - 1] = temp; renderThumbnails(); }
+        function moveImageRight(index) { if (index >= selectedBase64Imgs.length - 1) return; const temp = selectedBase64Imgs[index]; selectedBase64Imgs[index] = selectedBase64Imgs[index + 1]; selectedBase64Imgs[index + 1] = temp; renderThumbnails(); }
 
         function renderThumbnails() {
             const c = document.getElementById('thumbnails-container');
             if (selectedBase64Imgs.length === 0) return c.innerHTML = `<p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6">Aún no hay imágenes seleccionadas</p>`;
-            
             c.innerHTML = selectedBase64Imgs.map((imgSrc, index) => `
             <div class="img-thumb-container group relative">
                 <img src="${imgSrc}">
@@ -668,248 +759,79 @@
         
         function toggleMeasuresVisibility() { document.getElementById('measures-config-panel').style.display = document.getElementById('toggle-measures').checked ? 'block' : 'none'; }
 
-        function addNewSizeToForm() {
-            const input = document.getElementById('new-size-input');
-            const val = input.value.trim().toUpperCase();
-            if(!val) return;
-            if(!currentFormSizes.includes(val)) {
-                currentFormSizes.push(val);
-                renderMedidasForm();
-            } else { Toast.fire({ icon: 'info', title: 'La talla ya existe' }); }
-            input.value = "";
-        }
-
-        function removeSizeFromForm(size) {
-            currentFormSizes = currentFormSizes.filter(s => s !== size);
-            renderMedidasForm();
-        }
-
-        function addNewColumnToForm() {
-            const input = document.getElementById('new-column-input');
-            const val = input.value.trim();
-            const formattedVal = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
-            if(!formattedVal) return;
-            if(!currentFormColumns.includes(formattedVal)) {
-                currentFormColumns.push(formattedVal);
-                renderMedidasForm();
-            } else { Toast.fire({ icon: 'info', title: 'La columna ya existe' }); }
-            input.value = "";
-        }
-
-        function removeColumnFromForm(col) {
-            if(currentFormColumns.length <= 1) return Toast.fire({ icon: 'warning', title: 'Mínimo 1 columna requerida' });
-            currentFormColumns = currentFormColumns.filter(c => c !== col);
-            renderMedidasForm();
-        }
+        function addNewSizeToForm() { const input = document.getElementById('new-size-input'); const val = input.value.trim().toUpperCase(); if(!val) return; if(!currentFormSizes.includes(val)) { currentFormSizes.push(val); renderMedidasForm(); } else { Toast.fire({ icon: 'info', title: 'La talla ya existe' }); } input.value = ""; }
+        function removeSizeFromForm(size) { currentFormSizes = currentFormSizes.filter(s => s !== size); renderMedidasForm(); }
+        function addNewColumnToForm() { const input = document.getElementById('new-column-input'); const val = input.value.trim(); const formattedVal = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase(); if(!formattedVal) return; if(!currentFormColumns.includes(formattedVal)) { currentFormColumns.push(formattedVal); renderMedidasForm(); } else { Toast.fire({ icon: 'info', title: 'La columna ya existe' }); } input.value = ""; }
+        function removeColumnFromForm(col) { if(currentFormColumns.length <= 1) return Toast.fire({ icon: 'warning', title: 'Mínimo 1 columna requerida' }); currentFormColumns = currentFormColumns.filter(c => c !== col); renderMedidasForm(); }
 
         function renderMedidasForm() {
             const currentValues = {};
-            currentFormSizes.forEach(s => {
-                const safeS = s.replace(/[^a-zA-Z0-9_-]/g, '');
-                currentValues[s] = {};
-                currentFormColumns.forEach(c => {
-                    const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
-                    const el = document.getElementById(`measure-${safeS}-${safeC}`);
-                    if (el) currentValues[s][c] = el.value;
-                });
-            });
-
-            let headerHTML = `<div class="flex items-center gap-2 mb-2 pr-8">
-                <div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div>
-                <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">`;
-            
-            currentFormColumns.forEach(c => {
-                headerHTML += `<div class="relative group text-center">
-                    <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold inline-block truncate w-full" title="${c}">${c}</p>
-                    <button onclick="removeColumnFromForm('${c}')" class="absolute -top-2 -right-2 text-red-500 hidden group-hover:flex bg-darker border border-white/10 rounded-full w-4 h-4 text-[8px] items-center justify-center cursor-pointer"><i class="fas fa-times"></i></button>
-                </div>`;
-            });
+            currentFormSizes.forEach(s => { const safeS = s.replace(/[^a-zA-Z0-9_-]/g, ''); currentValues[s] = {}; currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const el = document.getElementById(`measure-${safeS}-${safeC}`); if (el) currentValues[s][c] = el.value; }); });
+            let headerHTML = `<div class="flex items-center gap-2 mb-2 pr-8"><div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div><div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">`;
+            currentFormColumns.forEach(c => { headerHTML += `<div class="relative group text-center"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold inline-block truncate w-full" title="${c}">${c}</p><button onclick="removeColumnFromForm('${c}')" class="absolute -top-2 -right-2 text-red-500 hidden group-hover:flex bg-darker border border-white/10 rounded-full w-4 h-4 text-[8px] items-center justify-center cursor-pointer"><i class="fas fa-times"></i></button></div>`; });
             headerHTML += `</div></div>`;
-
             let rowsHTML = currentFormSizes.map(t => {
                 const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
-                // UX: Inputs en medidas ahora inician limpios por defecto
-                let inputsHTML = currentFormColumns.map(c => {
-                    const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
-                    let defaultVal = "";
-                    if (currentValues[t] && currentValues[t][c] !== undefined) {
-                        defaultVal = currentValues[t][c];
-                    } else if (!editId && DEFAULT_MEASURES[t] && DEFAULT_MEASURES[t][c.toLowerCase()] !== undefined) {
-                        defaultVal = DEFAULT_MEASURES[t][c.toLowerCase()];
-                    }
-                    return `<input type="text" id="measure-${safeT}-${safeC}" class="measure-input rounded w-full" value="${defaultVal}">`;
-                }).join('');
-
-                // FIX: notranslate a las tallas aquí también para mayor consistencia
-                return `<div class="flex items-center gap-2 mb-2">
-                    <div class="w-12">
-                        <input type="checkbox" id="t-${safeT}" value="${t}" checked class="hidden">
-                        <label for="t-${safeT}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1 notranslate" translate="no" title="${t}">${t}</label>
-                    </div>
-                    <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">
-                        ${inputsHTML}
-                    </div>
-                    <button onclick="removeSizeFromForm('${t}')" class="w-6 text-red-500 hover:text-red-400 p-1 flex justify-center cursor-pointer"><i class="fas fa-trash text-xs"></i></button>
-                </div>`;
+                let inputsHTML = currentFormColumns.map(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); let defaultVal = ""; if (currentValues[t] && currentValues[t][c] !== undefined) { defaultVal = currentValues[t][c]; } else if (!editId && DEFAULT_MEASURES[t] && DEFAULT_MEASURES[t][c.toLowerCase()] !== undefined) { defaultVal = DEFAULT_MEASURES[t][c.toLowerCase()]; } return `<input type="text" id="measure-${safeT}-${safeC}" class="measure-input rounded w-full" value="${defaultVal}">`; }).join('');
+                return `<div class="flex items-center gap-2 mb-2"><div class="w-12"><input type="checkbox" id="t-${safeT}" value="${t}" checked class="hidden"><label for="t-${safeT}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1 notranslate" translate="no" title="${t}">${t}</label></div><div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">${inputsHTML}</div><button onclick="removeSizeFromForm('${t}')" class="w-6 text-red-500 hover:text-red-400 p-1 flex justify-center cursor-pointer"><i class="fas fa-trash text-xs"></i></button></div>`;
             }).join('');
-
             document.getElementById('medidas-inputs-container').innerHTML = headerHTML + rowsHTML;
         }
 
-        async function uploadImageToStorage(b64, path) {
-            if (!b64.startsWith('data:image')) return b64;
-            const res = await fetch(b64); const blob = await res.blob();
-            const ref = storage.ref().child(path); await ref.put(blob); return await ref.getDownloadURL();
-        }
+        async function uploadImageToStorage(b64, path) { if (!b64.startsWith('data:image')) return b64; const res = await fetch(b64); const blob = await res.blob(); const ref = storage.ref().child(path); await ref.put(blob); return await ref.getDownloadURL(); }
 
         async function addProduct() {
-            const title = document.getElementById('new-title').value.trim();
-            const price = document.getElementById('new-price').value.trim();
+            const title = document.getElementById('new-title').value.trim(); const price = document.getElementById('new-price').value.trim();
             if(!title || !price || selectedBase64Imgs.length === 0) return Toast.fire({ icon: 'warning', title: 'Faltan campos/fotos' });
-
             document.getElementById('btn-submit-admin').disabled = true; document.getElementById('btn-submit-loader').style.display = "block";
-
             try {
                 let docId = editId; let docRef = docId ? db.collection("productos").doc(docId) : db.collection("productos").doc(); docId = docRef.id;
                 const imageUrls = await Promise.all(selectedBase64Imgs.map((b64, idx) => uploadImageToStorage(b64, `productos/${docId}/img_${idx}_${Date.now()}.jpg`)));
-                
                 const hasMeasures = document.getElementById('toggle-measures').checked;
                 const tallas = []; const medidas = {};
-                
-                if(hasMeasures) { 
-                    currentFormSizes.forEach(t => { 
-                        const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
-                        const checkbox = document.getElementById(`t-${safeT}`);
-                        if(checkbox && checkbox.checked) { 
-                            tallas.push(t); 
-                            medidas[t] = {};
-                            currentFormColumns.forEach(c => {
-                                const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
-                                const inputEl = document.getElementById(`measure-${safeT}-${safeC}`);
-                                medidas[t][c] = inputEl ? inputEl.value : "";
-                            });
-                        } 
-                    }); 
-                }
-
-                const productData = {
-                    sku: document.getElementById('new-sku').value.trim().toUpperCase() || "",
-                    categoria: document.getElementById('new-cat').value || 'general',
-                    titulo: title,
-                    descripcion: document.getElementById('new-desc').value.trim() || "",
-                    precio: price,
-                    stock: parseInt(document.getElementById('new-stock').value) || 0,
-                    isPresale: document.getElementById('toggle-presale').checked,
-                    hasMeasures, tallas, medidas, columnas: currentFormColumns,
-                    imagen: imageUrls[0] || "", imagenes: imageUrls || []         
-                };
+                if(hasMeasures) { currentFormSizes.forEach(t => { const safeT = t.replace(/[^a-zA-Z0-9_-]/g, ''); const checkbox = document.getElementById(`t-${safeT}`); if(checkbox && checkbox.checked) { tallas.push(t); medidas[t] = {}; currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const inputEl = document.getElementById(`measure-${safeT}-${safeC}`); medidas[t][c] = inputEl ? inputEl.value : ""; }); } }); }
+                const productData = { sku: document.getElementById('new-sku').value.trim().toUpperCase() || "", categoria: document.getElementById('new-cat').value || 'general', titulo: title, descripcion: document.getElementById('new-desc').value.trim() || "", precio: price, stock: parseInt(document.getElementById('new-stock').value) || 0, isPresale: document.getElementById('toggle-presale').checked, hasMeasures, tallas, medidas, columnas: currentFormColumns, imagen: imageUrls[0] || "", imagenes: imageUrls || [] };
                 if (!editId) productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-
-                await docRef.set(productData, { merge: true });
-                Toast.fire({ icon: 'success', title: 'Guardado exitoso' });
-                cancelEdit(); 
+                await docRef.set(productData, { merge: true }); Toast.fire({ icon: 'success', title: 'Guardado exitoso' }); cancelEdit(); 
             } catch (error) { DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message }); }
             finally { document.getElementById('btn-submit-admin').disabled = false; document.getElementById('btn-submit-loader').style.display = "none"; }
         }
 
-        function deleteProduct(id) {
-            DarkAlert.fire({ title: '¿Eliminar producto?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' })
-            .then((r) => { if (r.isConfirmed) db.collection("productos").doc(id).delete().then(() => Toast.fire({ icon: 'success', title: 'Eliminado' })); });
-        }
+        function deleteProduct(id) { DarkAlert.fire({ title: '¿Eliminar producto?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' }).then((r) => { if (r.isConfirmed) db.collection("productos").doc(id).delete().then(() => Toast.fire({ icon: 'success', title: 'Eliminado' })); }); }
 
         function startEdit(id) {
             const p = inventario.find(x => x.id === id); if(!p) return;
             editId = id; showAdminTab('inventario'); window.scrollTo({top: 0, behavior: 'smooth'});
-            document.getElementById('admin-form-container').classList.add('editing-mode');
-            document.getElementById('btn-cancel-edit').classList.remove('hidden');
-
-            document.getElementById('new-title').value = p.titulo || ""; document.getElementById('new-sku').value = p.sku || "";
-            document.getElementById('new-price').value = p.precio || ""; document.getElementById('new-desc').value = p.descripcion || "";
+            document.getElementById('admin-form-container').classList.add('editing-mode'); document.getElementById('btn-cancel-edit').classList.remove('hidden');
+            document.getElementById('new-title').value = p.titulo || ""; document.getElementById('new-sku').value = p.sku || ""; document.getElementById('new-price').value = p.precio || ""; document.getElementById('new-desc').value = p.descripcion || "";
             if (p.categoria) document.getElementById('new-cat').value = p.categoria;
-            
-            document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0;
-            document.getElementById('toggle-presale').checked = !!p.isPresale;
-            
-            document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
+            document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0; document.getElementById('toggle-presale').checked = !!p.isPresale; document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
             selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []); renderThumbnails();
-            
-            currentFormSizes = ["S", "M", "L", "XL"];
-            currentFormColumns = p.columnas && p.columnas.length > 0 ? p.columnas : ["Pecho", "Largo", "Ancho"];
-
-            if(p.hasMeasures && p.tallas) { 
-                p.tallas.forEach(t => { if(!currentFormSizes.includes(t)) currentFormSizes.push(t); });
-            }
+            currentFormSizes = ["S", "M", "L", "XL"]; currentFormColumns = p.columnas && p.columnas.length > 0 ? p.columnas : ["Pecho", "Largo", "Ancho"];
+            if(p.hasMeasures && p.tallas) { p.tallas.forEach(t => { if(!currentFormSizes.includes(t)) currentFormSizes.push(t); }); }
             renderMedidasForm();
-            
-            if(p.hasMeasures && p.tallas) { 
-                currentFormSizes.forEach(t => { 
-                    const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
-                    const checkbox = document.getElementById(`t-${safeT}`);
-                    if(checkbox) {
-                        checkbox.checked = p.tallas.includes(t); 
-                        if(p.medidas && p.medidas[t]) { 
-                            currentFormColumns.forEach(c => {
-                                const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
-                                const el = document.getElementById(`measure-${safeT}-${safeC}`);
-                                const val = p.medidas[t][c] !== undefined ? p.medidas[t][c] : (p.medidas[t][c.toLowerCase()] !== undefined ? p.medidas[t][c.toLowerCase()] : "");
-                                if(el) el.value = val;
-                            });
-                        } 
-                    }
-                }); 
-            }
+            if(p.hasMeasures && p.tallas) { currentFormSizes.forEach(t => { const safeT = t.replace(/[^a-zA-Z0-9_-]/g, ''); const checkbox = document.getElementById(`t-${safeT}`); if(checkbox) { checkbox.checked = p.tallas.includes(t); if(p.medidas && p.medidas[t]) { currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const el = document.getElementById(`measure-${safeT}-${safeC}`); const val = p.medidas[t][c] !== undefined ? p.medidas[t][c] : (p.medidas[t][c.toLowerCase()] !== undefined ? p.medidas[t][c.toLowerCase()] : ""); if(el) el.value = val; }); } } }); }
         }
 
         function cancelEdit() {
-            editId = null; document.getElementById('admin-form-container').classList.remove('editing-mode');
-            document.getElementById('btn-cancel-edit').classList.add('hidden');
-            
-            document.getElementById('new-title').value = ""; document.getElementById('new-sku').value = "";
-            document.getElementById('new-price').value = ""; document.getElementById('new-desc').value = "";
-            document.getElementById('new-stock').value = ""; document.getElementById('toggle-presale').checked = false;
-            document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
-            
-            selectedBase64Imgs = []; renderThumbnails(); 
-            currentFormSizes = ["S", "M", "L", "XL"]; 
-            currentFormColumns = ["Pecho", "Largo", "Ancho"]; 
-            renderMedidasForm();
+            editId = null; document.getElementById('admin-form-container').classList.remove('editing-mode'); document.getElementById('btn-cancel-edit').classList.add('hidden');
+            document.getElementById('new-title').value = ""; document.getElementById('new-sku').value = ""; document.getElementById('new-price').value = ""; document.getElementById('new-desc').value = ""; document.getElementById('new-stock').value = ""; document.getElementById('toggle-presale').checked = false; document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
+            selectedBase64Imgs = []; renderThumbnails(); currentFormSizes = ["S", "M", "L", "XL"]; currentFormColumns = ["Pecho", "Largo", "Ancho"]; renderMedidasForm();
         }
 
         function renderAdminList() {
             const list = document.getElementById('admin-list'); const term = (document.getElementById('search-inventory').value || "").toLowerCase();
-            
-            const filt = inventario.filter(p => 
-                (p.titulo || "").toLowerCase().includes(term) || 
-                (p.sku || "").toLowerCase().includes(term) ||
-                (p.categoria || "").toLowerCase().includes(term)
-            );
-
+            const filt = inventario.filter(p => (p.titulo || "").toLowerCase().includes(term) || (p.sku || "").toLowerCase().includes(term) || (p.categoria || "").toLowerCase().includes(term));
             document.getElementById('inventory-count').innerText = `${filt.length} Productos`;
             if(filt.length === 0) return list.innerHTML = `<p class="col-span-full text-gray-500 text-xs italic text-center py-4">No se encontraron productos.</p>`;
-            
             list.innerHTML = filt.map(prod => {
                 const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
-                const total = prod.imagenes ? prod.imagenes.length : 1;
-                
                 let statusInfo = `<span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria || 'Gen'}</span>`;
                 if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Próximamente</span>`;
                 else if(prod.stock <= 0) statusInfo += `<span class="bg-red-600/20 text-red-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-ban"></i> Agotado</span>`;
                 else statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-check"></i> Stock: ${prod.stock}</span>`;
 
-                return `
-                <div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg hover:border-primary/30 transition-all shadow-lg">
-                    <div class="flex items-center gap-4 truncate">
-                        <div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden relative"><img src="${cover}" class="w-full h-full object-cover"></div>
-                        <div class="truncate">
-                            <p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo} <span class="text-gray-500 font-normal text-[10px]">#${prod.sku||''}</span></p>
-                            <div class="flex gap-1 mt-1 items-center flex-wrap">${statusInfo}</div>
-                        </div>
-                    </div>
-                    <div class="flex gap-1 flex-shrink-0 ml-2">
-                        <button onclick="startEdit('${prod.id}')" class="w-8 h-8 text-primary bg-primary/5 hover:bg-primary/20 rounded"><i class="fas fa-edit"></i></button>
-                        <button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded"><i class="fas fa-trash"></i></button>
-                    </div>
-                </div>`
+                return `<div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg hover:border-primary/30 transition-all shadow-lg"><div class="flex items-center gap-4 truncate"><div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden relative"><img src="${cover}" class="w-full h-full object-cover"></div><div class="truncate"><p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo} <span class="text-gray-500 font-normal text-[10px]">#${prod.sku||''}</span></p><div class="flex gap-1 mt-1 items-center flex-wrap">${statusInfo}</div></div></div><div class="flex gap-1 flex-shrink-0 ml-2"><button onclick="startEdit('${prod.id}')" class="w-8 h-8 text-primary bg-primary/5 hover:bg-primary/20 rounded"><i class="fas fa-edit"></i></button><button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded"><i class="fas fa-trash"></i></button></div></div>`
             }).join('');
         }
 
@@ -932,7 +854,6 @@
             document.getElementById('config-share-text').value = config.shareText || ""; 
         }
 
-        // UX: Botones independientes para guardado modular
         function saveBrandTexts() { 
             db.collection("config").doc("global").set({ 
                 slogan: document.getElementById('config-slogan').value, 
@@ -944,11 +865,22 @@
             }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Textos Guardados' })); 
         }
 
-        function saveSecuritySocials() {
-            db.collection("config").doc("global").set({ 
+        async function saveSecuritySocials() {
+            const updates = { 
                 whatsapp: document.getElementById('config-whatsapp').value, 
                 instagram: document.getElementById('config-instagram').value 
-            }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Redes Actualizadas' })); 
+            };
+
+            const newPin = document.getElementById('config-pos-pin').value.trim();
+            if (newPin) {
+                if (newPin.length < 4) return Toast.fire({ icon: 'warning', title: 'El PIN debe tener al menos 4 dígitos' });
+                updates.posPin = await hashPIN(newPin);
+            }
+
+            db.collection("config").doc("global").set(updates, { merge: true }).then(()=> {
+                Toast.fire({ icon:'success', title:'Seguridad y Redes Guardadas' });
+                document.getElementById('config-pos-pin').value = ""; // Limpiar el input para seguridad
+            }); 
 
             const p = document.getElementById('config-password').value; 
             if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> {
