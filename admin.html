@@ -22,7 +22,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     const storage = firebase.storage(); 
-    console.log("?? Firebase conectado: Panel Administrador Múltiple");
+    console.log("🔥 Firebase conectado: Panel Administrador Múltiple Seguro");
     </script>
     
     <meta charset="UTF-8">
@@ -122,30 +122,16 @@
         </div>
     </div>
 
-    <!-- MODAL DE ACCESO: POS (PIN) -->
-    <div id="pin-modal" class="modal-overlay">
-        <div class="modal-content p-8 text-center shadow-2xl">
-            <button onclick="goBackToSelector('pin-modal')" class="absolute top-4 left-4 text-gray-500 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-serif text-2xl text-white italic mb-2">Acceso POS</h2>
-            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Ingresa tu PIN de seguridad</p>
-            <div class="space-y-4">
-                <input type="password" inputmode="numeric" id="pos-pin-input" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center tracking-[0.5em] text-2xl" onkeyup="if(event.key === 'Enter') validatePIN()">
-                <button onclick="validatePIN()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar al POS</button>
-                <p id="pin-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">PIN Incorrecto</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL DE ACCESO: ADMINISTRADOR (EMAIL/PASS) -->
+    <!-- MODAL UNIFICADO DE ACCESO (EMAIL/PASS) -->
     <div id="login-modal" class="modal-overlay">
         <div class="modal-content p-8 text-center shadow-2xl">
-            <button onclick="goBackToSelector('login-modal')" class="absolute top-4 left-4 text-gray-500 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded"><i class="fas fa-arrow-left"></i></button>
-            <h2 class="font-serif text-2xl text-white italic mb-2">Ajustes Globales</h2>
-            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Acceso Restringido</p>
+            <button onclick="goBackToSelector()" class="absolute top-4 left-4 text-gray-500 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded"><i class="fas fa-arrow-left"></i></button>
+            <h2 class="font-serif text-2xl text-white italic mb-2">Acceso al Sistema</h2>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Ingresa tus credenciales</p>
             <div class="space-y-4">
                 <input type="email" id="admin-email-input" placeholder="Correo electrónico" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center">
-                <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center" onkeyup="if(event.key === 'Enter') validateAdmin()">
-                <button onclick="validateAdmin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar</button>
+                <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center" onkeyup="if(event.key === 'Enter') validateLogin()">
+                <button onclick="validateLogin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar</button>
                 <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Credenciales Incorrectas</p>
             </div>
         </div>
@@ -165,7 +151,7 @@
                     <button id="nav-inventario" onclick="showAdminTab('inventario', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-box"></i> Inventario</button>
                     <button id="nav-config" onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-cog"></i> Ajustes</button>
                 </div>
-                <button onclick="exitModule()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Salir al Menú</button>
+                <button onclick="exitModule()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
 
             <!-- TAB NUEVOS PEDIDOS (Solo POS) -->
@@ -362,8 +348,7 @@
                     <div class="bg-dark p-8 border border-white/5 shadow-2xl rounded-lg flex flex-col justify-between h-full">
                         <div class="space-y-6">
                             <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes Sociales</h3>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña (Ajustes Globales)</label><input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"><p class="text-[8px] text-gray-500 mt-1 italic">Mínimo 6 caracteres. Dejar vacío para ignorar.</p></div>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-key text-primary"></i> Cambiar PIN (Punto de Venta)</label><input type="password" inputmode="numeric" id="config-pos-pin" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none tracking-[0.5em] text-center"><p class="text-[8px] text-gray-500 mt-1 italic">Mínimo 4 dígitos numéricos. (PIN por defecto: 1234).</p></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña de la Cuenta Actual</label><input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"><p class="text-[8px] text-gray-500 mt-1 italic">Mínimo 6 caracteres. Dejar vacío para ignorar.</p></div>
                             <hr class="border-white/5 my-4">
                             <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</label><input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
                             <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label><input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
@@ -387,17 +372,10 @@
         let currentFormSizes = ["S", "M", "L", "XL"];
         let currentFormColumns = ["Pecho", "Largo", "Ancho"];
 
-        // CONTROL DE ACCESO
+        // CONTROL DE ACCESO (Optimizado)
         let currentFirebaseUser = null;
         let activeModule = null; // 'POS' o 'ADMIN'
         let listenersInitialized = { pos: false, admin: false };
-
-        async function hashPIN(pin) {
-            const msgBuffer = new TextEncoder().encode(pin);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
 
         function init() {
             auth.onAuthStateChanged((user) => {
@@ -407,68 +385,53 @@
             renderMedidasForm();
             
             document.getElementById('selector-modal').classList.add('active');
-            document.getElementById('pin-modal').classList.remove('active');
             document.getElementById('login-modal').classList.remove('active');
         }
 
         function selectModule(module) {
-            if (module === 'POS') {
-                if (sessionStorage.getItem('posMode') === 'true') {
-                    enterModule('POS');
-                } else {
-                    document.getElementById('selector-modal').classList.remove('active');
-                    document.getElementById('pin-modal').classList.add('active');
-                    document.getElementById('pos-pin-input').focus();
+            if (currentFirebaseUser) {
+                // Bloqueo de seguridad: Si es el cajero, no puede entrar a ADMIN
+                if (module === 'ADMIN' && currentFirebaseUser.email === 'pos@newgate.com') {
+                    Toast.fire({ icon: 'error', title: 'Acceso denegado: Cuenta de Cajero' });
+                    return;
                 }
-            } else if (module === 'ADMIN') {
-                if (currentFirebaseUser) {
-                    enterModule('ADMIN');
-                } else {
-                    document.getElementById('selector-modal').classList.remove('active');
-                    document.getElementById('login-modal').classList.add('active');
-                    document.getElementById('admin-email-input').focus();
-                }
+                enterModule(module);
+            } else {
+                document.getElementById('selector-modal').classList.remove('active');
+                document.getElementById('login-modal').classList.add('active');
+                document.getElementById('login-modal').dataset.targetModule = module;
+                setTimeout(() => document.getElementById('admin-email-input').focus(), 100);
             }
         }
 
-        function goBackToSelector(modalId) {
-            document.getElementById(modalId).classList.remove('active');
+        function goBackToSelector() {
+            document.getElementById('login-modal').classList.remove('active');
             document.getElementById('selector-modal').classList.add('active');
-            document.getElementById('pos-pin-input').value = "";
-            document.getElementById('pin-error').classList.add('hidden');
+            document.getElementById('admin-email-input').value = "";
             document.getElementById('admin-pass-input').value = "";
             document.getElementById('login-error').classList.add('hidden');
         }
 
-        async function validatePIN() {
-            const pin = document.getElementById('pos-pin-input').value.trim();
-            if(!pin) return;
-            
-            const hashedInput = await hashPIN(pin);
-            const validHash = config.posPin || '01BQZKqdp2CV3QV5nUEsqSg1ygegLmqRygj067951BQZKqdp2CV3QV5nUEsqSg1ygegLmqRygj'; 
-
-            if (hashedInput === validHash) {
-                sessionStorage.setItem('posMode', 'true');
-                document.getElementById('pin-modal').classList.remove('active');
-                document.getElementById('pos-pin-input').value = "";
-                document.getElementById('pin-error').classList.add('hidden');
-                enterModule('POS');
-                Toast.fire({ icon: 'success', title: 'POS Autorizado' });
-            } else {
-                document.getElementById('pin-error').classList.remove('hidden');
-            }
-        }
-
-        function validateAdmin() {
+        function validateLogin() {
             const email = document.getElementById('admin-email-input').value.trim(); 
             const pass = document.getElementById('admin-pass-input').value;
             if(!email || !pass) return;
-            auth.signInWithEmailAndPassword(email, pass).then(() => { 
+
+            const target = document.getElementById('login-modal').dataset.targetModule || 'ADMIN';
+
+            auth.signInWithEmailAndPassword(email, pass).then((cred) => { 
                 document.getElementById('login-error').classList.add('hidden'); 
                 document.getElementById('admin-pass-input').value = ""; 
                 document.getElementById('login-modal').classList.remove('active');
-                enterModule('ADMIN');
-                Toast.fire({ icon: 'success', title: 'Administrador Autorizado' }); 
+                
+                // Si la cuenta POS intenta entrar como admin desde el login:
+                if (target === 'ADMIN' && cred.user.email === 'pos@newgate.com') {
+                    Toast.fire({ icon: 'warning', title: 'Cajero detectado. Entrando a POS.' });
+                    enterModule('POS');
+                } else {
+                    enterModule(target);
+                    Toast.fire({ icon: 'success', title: 'Acceso Autorizado' }); 
+                }
             }).catch(() => { 
                 document.getElementById('login-error').classList.remove('hidden'); 
             });
@@ -504,7 +467,6 @@
         }
 
         function exitModule() {
-            sessionStorage.removeItem('posMode');
             if (currentFirebaseUser) auth.signOut();
             
             activeModule = null;
@@ -525,8 +487,7 @@
                 renderPedidosList();
                 renderFacturasList(); 
             }, (error) => {
-                // MODIFICACIÓN SEGURA: Manejo del error silencioso para prevenir pantalla de carga infinita
-                console.error("?? Error crítico en Firestore (Pedidos):", error.code, error.message);
+                console.error("🔥 Error crítico en Firestore (Pedidos):", error.code, error.message);
                 
                 const listPedidos = document.getElementById('admin-pedidos-list');
                 const listFacturas = document.getElementById('admin-facturas-list');
@@ -545,6 +506,33 @@
                 
                 Toast.fire({ icon: 'error', title: 'Permisos denegados en Firebase' });
             });
+        }
+
+        // FUNCIONALIDAD NUEVA: Compartir por WhatsApp
+        function compartirPorWhatsApp(docId, tipo) {
+            const pedido = pedidosList.find(p => p.id === docId);
+            if (!pedido) return;
+
+            let texto = "";
+            if (tipo === 'pedido') {
+                texto = `🔥 *NUEVO PEDIDO: ${pedido.idPedido || 'S/N'}*\n\n👤 *Cliente:* ${pedido.cliente}\n\n🛍️ *PRODUCTOS:*\n`;
+                (pedido.items || []).forEach((item, index) => {
+                    const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
+                    texto += `${index + 1}. [x${item.cantidad}] ${item.titulo} - Talla: ${item.talla} | L${(precioNum * item.cantidad).toFixed(2)}\n`;
+                });
+                texto += `\n💵 *TOTAL: L${(pedido.total || 0).toFixed(2)}*\n📌 *Estado:* PENDIENTE`;
+            } else if (tipo === 'factura') {
+                const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') ? new Date(pedido.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
+                texto = `✅ *FACTURA DE COMPRA: ${pedido.idPedido || 'S/N'}*\n\n👤 *Cliente:* ${pedido.cliente}\n📅 *Fecha:* ${dateStr}\n\n🛍️ *DETALLE:*\n`;
+                (pedido.items || []).forEach((item, index) => {
+                    const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
+                    texto += `- [x${item.cantidad}] ${item.titulo} (Talla: ${item.talla}) | L${(precioNum * item.cantidad).toFixed(2)}\n`;
+                });
+                texto += `\n💵 *TOTAL PAGADO: L${(pedido.total || 0).toFixed(2)}*\n\n¡Gracias por preferir NEW GATE! 🚀`;
+            }
+
+            const urlWa = `https://wa.me/?text=${encodeURIComponent(texto)}`;
+            window.open(urlWa, '_blank');
         }
 
         function renderPedidosList() {
@@ -590,8 +578,9 @@
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
                         <p class="text-2xl text-white font-serif font-bold w-full text-right sm:text-left mb-2 sm:mb-0">L${(pedido.total || 0).toFixed(2)}</p>
                         <div class="flex gap-2 w-full sm:w-auto">
-                            <button onclick="cancelarPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded shadow-xl" title="Cancelar sin rebajar inventario"><i class="fas fa-times"></i> Cancelar</button>
-                            <button onclick="despacharPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2 rounded shadow-xl" title="Despachar y guardar factura"><i class="fas fa-check-double"></i> Despachar</button>
+                            <button onclick="compartirPorWhatsApp('${pedido.id}', 'pedido')" class="flex-1 sm:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all rounded shadow-xl" title="Compartir WhatsApp"><i class="fab fa-whatsapp text-sm md:text-base"></i></button>
+                            <button onclick="cancelarPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded shadow-xl" title="Cancelar sin rebajar inventario"><i class="fas fa-times"></i></button>
+                            <button onclick="despacharPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-primary/20 text-primary border border-primary/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary hover:text-dark transition-all flex items-center justify-center gap-2 rounded shadow-xl" title="Despachar y guardar factura"><i class="fas fa-check-double"></i> Despachar</button>
                         </div>
                     </div>
                 </div>`
@@ -621,6 +610,7 @@
                         <p class="text-gray-500 text-[9px] mt-1"><i class="fas fa-calendar-check text-green-500/50 w-4"></i> Despachado: ${dateStr}</p>
                     </div>
                     <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                        <button onclick="compartirPorWhatsApp('${pedido.id}', 'factura')" class="flex-1 md:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-green-600 hover:text-white transition-all rounded shadow-xl" title="Compartir WhatsApp"><i class="fab fa-whatsapp text-sm md:text-base"></i></button>
                         <button onclick="imprimirFactura('${pedido.id}')" class="flex-1 md:flex-none bg-blue-900/30 text-blue-400 border border-blue-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all rounded shadow-xl"><i class="fas fa-print"></i> Imprimir</button>
                         <button onclick="eliminarFactura('${pedido.id}')" class="flex-1 md:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-red-600 hover:text-white transition-all rounded shadow-xl" title="Eliminar del historial permanente"><i class="fas fa-trash"></i> Eliminar</button>
                     </div>
@@ -646,7 +636,6 @@
                             const prodInStock = inventario.find(p => p.id === item.id);
                             if(prodInStock) {
                                 const prodRef = db.collection("productos").doc(item.id);
-                                // MODIFICACIÓN SEGURA: Uso de FieldValue.increment para prevenir "Race Conditions" y conflictos de stock
                                 batch.update(prodRef, { stock: firebase.firestore.FieldValue.increment(-item.cantidad) });
                             }
                         });
@@ -878,15 +867,8 @@
                 instagram: document.getElementById('config-instagram').value 
             };
 
-            const newPin = document.getElementById('config-pos-pin').value.trim();
-            if (newPin) {
-                if (newPin.length < 4) return Toast.fire({ icon: 'warning', title: 'El PIN debe tener al menos 4 dígitos' });
-                updates.posPin = await hashPIN(newPin);
-            }
-
             db.collection("config").doc("global").set(updates, { merge: true }).then(()=> {
                 Toast.fire({ icon:'success', title:'Seguridad y Redes Guardadas' });
-                document.getElementById('config-pos-pin').value = ""; 
             }); 
 
             const p = document.getElementById('config-password').value; 
