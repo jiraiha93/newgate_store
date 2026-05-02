@@ -22,7 +22,6 @@
     </script>
     
     <meta charset="UTF-8">
-    <!-- OPTIMIZACIÓN: Se agregó maximum-scale=1.0 para evitar el zoom indeseado en móviles -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>NEW GATE | Streetwear Exclusivo</title>
     <meta name="description" content="New Gate no es una marca, es un destino. Diseñamos para la tripulación que prefiere el asfalto.">
@@ -76,11 +75,9 @@
         .swal2-container { z-index: 9999 !important; }
         .img-transition { transition: opacity 0.4s ease-in-out; }
         
-        /* Mobile Menu */
         #mobile-menu { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
         #mobile-menu.active { transform: translateX(0); }
         
-        /* Badge UI */
         .status-badge { position: absolute; top: 12px; left: 12px; padding: 4px 10px; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; z-index: 10; border-radius: 2px; }
     </style>
 </head>
@@ -103,7 +100,6 @@
                 </span>
             </nav>
             
-            <!-- MENÚ MÓVIL MEJORADO -->
             <div class="md:hidden flex items-center gap-5 text-primary text-xl">
                 <button onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="relative">
                     <i class="fas fa-shopping-bag"></i>
@@ -116,7 +112,6 @@
         </div>
     </header>
 
-    <!-- SIDEBAR MENÚ MÓVIL -->
     <div id="mobile-menu" class="fixed inset-0 bg-darker/95 backdrop-blur-xl z-[200] flex flex-col pt-24 px-8 border-l border-white/10 md:hidden">
         <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-white text-3xl hover:text-primary"><i class="fas fa-times"></i></button>
         <div class="flex flex-col gap-8 text-center mt-10">
@@ -127,7 +122,6 @@
         </div>
     </div>
 
-    <!-- MODAL MIS PEDIDOS CLIENTE -->
     <div id="mis-pedidos-modal" class="modal-overlay" onclick="cerrarMisPedidos(event)">
         <div class="modal-content p-6 animate-in fade-in zoom-in duration-300 max-w-lg" onclick="event.stopPropagation()">
             <button onclick="cerrarMisPedidos()" class="absolute top-4 right-4 text-white hover:text-primary text-xl z-30 transition-colors w-8 h-8 flex items-center justify-center"><i class="fas fa-times"></i></button>
@@ -140,10 +134,7 @@
         </div>
     </div>
 
-    <!-- MODAL PRODUCTO -->
     <div id="product-modal" class="modal-overlay" onclick="closeModal(event)">
-        
-        <!-- BOTON DE CERRAR FLOTANTE: Se movió aquí afuera para evitar que tape otros botones (z-[300]) -->
         <button onclick="closeModal()" class="absolute top-4 right-4 md:top-6 md:right-6 text-white hover:text-primary text-2xl z-[300] transition-colors bg-darker/90 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center shadow-2xl cursor-pointer"><i class="fas fa-times"></i></button>
 
         <div class="modal-content animate-in fade-in zoom-in duration-300" onclick="event.stopPropagation()">
@@ -199,7 +190,6 @@
                         <button id="btn-add-cart" onclick="agregarAlPedido()" class="w-full sm:w-auto bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all text-center flex items-center justify-center gap-2">
                             <i class="fas fa-cart-plus"></i> Añadir al Pedido
                         </button>
-                        <!-- Mensaje alternativo si está agotado o preventa -->
                         <div id="modal-disabled-msg" class="hidden w-full sm:w-auto bg-darker border border-white/10 text-gray-500 px-10 py-4 font-bold uppercase text-[10px] tracking-widest text-center cursor-not-allowed"></div>
                     </div>
                 </div>
@@ -207,7 +197,6 @@
         </div>
     </div>
 
-    <!-- SECCIÓN INICIO -->
     <div id="inicio" class="section-fade active pt-20">
         <section id="hero-display" class="h-[85vh] flex items-end justify-center text-center relative overflow-hidden hero-bg">
             <div class="absolute inset-0 hero-overlay z-0"></div>
@@ -237,7 +226,6 @@
             </div>
         </section>
 
-        <!-- CARRITO Y CHECKOUT -->
         <section id="contacto" class="py-24 bg-darker border-t border-white/5">
             <div class="max-w-4xl mx-auto px-6">
                 <div class="text-center mb-16">
@@ -258,13 +246,11 @@
                     <div class="lg:col-span-3 space-y-6 bg-dark p-8 border border-white/5 shadow-2xl">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Nombre Completo</label>
-                            <!-- OPTIMIZACIÓN: text-[16px] evita zoom en móviles -->
                             <input type="text" id="nombre" placeholder="Ej: Juan Pérez" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors">
                         </div>
                         
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Mensaje Adicional</label>
-                            <!-- OPTIMIZACIÓN: text-[16px] evita zoom en móviles -->
                             <textarea id="mensaje" rows="4" maxlength="150" placeholder="Ej: ¿Tienen envío a domicilio? (Máx. 150 caracteres)" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors resize-none"></textarea>
                             <p class="text-right text-[9px] text-gray-600 mt-1 uppercase tracking-wider">Máx 150 caracteres</p>
                         </div>
@@ -325,10 +311,8 @@
             applyConfig(); escucharFirebase(); escucharHero(); escucharConfigGlobal(); renderCarrito();
         }
 
-        // MANEJO MENÚ MÓVIL
         function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('active'); }
 
-        // MANEJO HISTORIAL DE PEDIDOS CLIENTE (LocalStorage)
         function abrirMisPedidos() {
             renderMisPedidos();
             document.getElementById('mis-pedidos-modal').classList.add('active');
@@ -383,11 +367,10 @@
             db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 
-                // ORDENAMIENTO: Preventa siempre de primero
                 inventario.sort((a, b) => {
                     if (a.isPresale && !b.isPresale) return -1;
                     if (!a.isPresale && b.isPresale) return 1;
-                    return 0; // Mantiene el orden por defecto (fecha) para el resto
+                    return 0; 
                 });
 
                 renderGallery();
@@ -428,22 +411,19 @@
             grid.innerHTML = inventario.map(prod => {
                 const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
                 
-                // Banderas de estado
                 let badgeHTML = '';
-                let overlayHTML = '';
                 
+                // CAMBIO 3: Solo mostrar el badge de la esquina superior cuando está agotado (se eliminó el overlayHTML central)
                 if (prod.isPresale) {
                     badgeHTML = `<div class="status-badge bg-blue-600 text-white shadow-lg"><i class="fas fa-clock mr-1"></i> Próximamente</div>`;
                 } else if (prod.stock !== undefined && prod.stock <= 0) {
                     badgeHTML = `<div class="status-badge bg-red-600 text-white shadow-lg">Agotado</div>`;
-                    overlayHTML = `<div class="absolute inset-0 bg-darker/60 flex items-center justify-center z-10 pointer-events-none"><span class="bg-red-600/90 text-white font-bold px-4 py-2 uppercase tracking-widest text-xs rotate-[-15deg] shadow-2xl border border-white/20">Sold Out</span></div>`;
                 }
 
                 return `
                 <div class="gallery-item group cursor-pointer animate-in fade-in duration-500" data-category="${prod.categoria || 'general'}">
                     <div class="relative aspect-[3/4] overflow-hidden bg-darker border border-white/5 shadow-2xl">
                         ${badgeHTML}
-                        ${overlayHTML}
                         <img src="${coverImg}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
                         <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                         
@@ -500,7 +480,6 @@
             document.getElementById('modal-price').innerText = p.precio;
             document.getElementById('modal-cat').innerText = p.categoria || 'General';
             
-            // Evaluar estado para botones
             const btnAddCart = document.getElementById('btn-add-cart');
             const msgDisabled = document.getElementById('modal-disabled-msg');
             const qtyContainer = document.getElementById('modal-quantity-container');
@@ -587,7 +566,7 @@
 
         function agregarAlPedido() {
             const p = window.lastViewedProduct;
-            if (p.isPresale || (p.stock !== undefined && p.stock <= 0)) return; // Doble validación
+            if (p.isPresale || (p.stock !== undefined && p.stock <= 0)) return;
 
             let tallaElegida = "Única";
             if (p.hasMeasures && p.tallas && p.tallas.length > 0) {
@@ -645,7 +624,6 @@
             const originalText = btnText.innerText;
             btnText.innerText = "Abriendo WhatsApp...";
             
-            // Generar ID único corto para el pedido (Admin y Cliente)
             const orderId = `NG-${Math.floor(1000 + Math.random() * 9000)}`;
             let total = 0;
             
@@ -660,28 +638,23 @@
             msg += `\n💵 *TOTAL: L${total.toFixed(2)}*\n`;
             if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
 
-            // GUARDAR EN BASE DE DATOS PARA EL ADMIN
             const pedidoData = {
                 idPedido: orderId, cliente: n, mensaje: m, items: carrito, total: total,
                 estado: 'pendiente', createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 
-            // 1. Guardar en Firebase en segundo plano (Evitamos que un retraso de internet bloquee WhatsApp)
             db.collection("pedidos").add(pedidoData).catch(error => {
-                console.error("Error al guardar en Firebase, pero se envió el WA", error);
+                console.error("Error al guardar en Firebase", error);
             });
             
-            // 2. Guardamos en LocalStorage para el Historial del Cliente
             const historialLocal = JSON.parse(localStorage.getItem('ng_pedidos') || '[]');
             historialLocal.push({ idPedido: orderId, fecha: new Date().toISOString(), items: carrito, total: total });
             localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
 
-            // 3. Preparar limpieza de UI
             Toast.fire({ icon: 'success', title: 'Pedido Procesado' });
             carrito = []; renderCarrito(); document.getElementById('mensaje').value = '';
             btnText.innerText = originalText;
 
-            // 4. Redirigir a WhatsApp (Usar window.location.href evita el bloqueo de pop-ups en celulares)
             const urlWa = `https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`;
             window.location.href = urlWa;
         }
