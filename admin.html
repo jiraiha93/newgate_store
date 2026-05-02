@@ -22,7 +22,7 @@
     const db = firebase.firestore();
     const auth = firebase.auth();
     const storage = firebase.storage(); 
-    console.log("🔥 Firebase conectado: Panel Administrador Múltiple");
+    console.log("?? Firebase conectado: Panel Administrador Múltiple");
     </script>
     
     <meta charset="UTF-8">
@@ -211,7 +211,6 @@
                             <div class="flex flex-col sm:flex-row gap-4 bg-darker p-4 border border-white/5 rounded">
                                 <div class="flex-1">
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="No visible en tienda, controla el estado 'Agotado'">Stock / Cantidad</label>
-                                    <!-- UX: Eliminados valores por defecto y placeholders innecesarios -->
                                     <input type="number" id="new-stock" min="0" class="w-full bg-dark border border-white/10 px-4 py-2 text-sm focus:border-primary outline-none text-white transition-colors">
                                 </div>
                                 <div class="flex items-center justify-between sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
@@ -393,7 +392,6 @@
         let activeModule = null; // 'POS' o 'ADMIN'
         let listenersInitialized = { pos: false, admin: false };
 
-        // Función segura de Hash para validación de PIN POS (No se guarda en texto plano)
         async function hashPIN(pin) {
             const msgBuffer = new TextEncoder().encode(pin);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -402,15 +400,12 @@
         }
 
         function init() {
-            // Observador global de Auth para Administrador
             auth.onAuthStateChanged((user) => {
                 currentFirebaseUser = user;
             });
-            // Escuchar config global para poder validar PINs inmediatamente
             escucharConfigGlobal();
             renderMedidasForm();
             
-            // Forzar UI a estado base: mostrar selector, limpiar inputs
             document.getElementById('selector-modal').classList.add('active');
             document.getElementById('pin-modal').classList.remove('active');
             document.getElementById('login-modal').classList.remove('active');
@@ -445,14 +440,12 @@
             document.getElementById('login-error').classList.add('hidden');
         }
 
-        // VALIDAR PIN POS (Valida Hash del PIN vs la DB)
         async function validatePIN() {
             const pin = document.getElementById('pos-pin-input').value.trim();
             if(!pin) return;
             
             const hashedInput = await hashPIN(pin);
-            // Default: Hash de "1234" si no hay configurado
-            const validHash = config.posPin || '03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4'; 
+            const validHash = config.posPin || '01BQZKqdp2CV3QV5nUEsqSg1ygegLmqRygj067951BQZKqdp2CV3QV5nUEsqSg1ygegLmqRygj'; 
 
             if (hashedInput === validHash) {
                 sessionStorage.setItem('posMode', 'true');
@@ -466,7 +459,6 @@
             }
         }
 
-        // VALIDAR ADMIN GLOBAL
         function validateAdmin() {
             const email = document.getElementById('admin-email-input').value.trim(); 
             const pass = document.getElementById('admin-pass-input').value;
@@ -482,7 +474,6 @@
             });
         }
 
-        // INGRESO AL MÓDULO CORRESPONDIENTE
         function enterModule(module) {
             activeModule = module;
             document.getElementById('admin').style.display = 'block'; 
@@ -513,7 +504,6 @@
         }
 
         function exitModule() {
-            // Destruir todas las sesiones activas en el dispositivo
             sessionStorage.removeItem('posMode');
             if (currentFirebaseUser) auth.signOut();
             
@@ -535,7 +525,25 @@
                 renderPedidosList();
                 renderFacturasList(); 
             }, (error) => {
-                console.error("Error al obtener pedidos:", error);
+                // MODIFICACIÓN SEGURA: Manejo del error silencioso para prevenir pantalla de carga infinita
+                console.error("?? Error crítico en Firestore (Pedidos):", error.code, error.message);
+                
+                const listPedidos = document.getElementById('admin-pedidos-list');
+                const listFacturas = document.getElementById('admin-facturas-list');
+                
+                const errorUI = `
+                    <div class="text-center py-12 border border-red-500/30 bg-red-500/5 rounded-lg shadow-xl mx-2">
+                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
+                        <h4 class="text-white font-bold uppercase tracking-widest text-xs mb-2">Error de Permisos o Conexión</h4>
+                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-4 font-mono bg-black/30 inline-block px-3 py-1 rounded">${error.code}</p>
+                        <p class="text-[9px] text-gray-500 italic px-6">Revisa las reglas de seguridad de Firestore.<br>La colección requiere permisos de lectura.</p>
+                    </div>
+                `;
+
+                if(listPedidos) listPedidos.innerHTML = errorUI;
+                if(listFacturas) listFacturas.innerHTML = errorUI;
+                
+                Toast.fire({ icon: 'error', title: 'Permisos denegados en Firebase' });
             });
         }
 
@@ -633,15 +641,13 @@
             .then((result) => {
                 if (result.isConfirmed) {
                     const batch = db.batch();
-                    // Rebaja de inventario solo si el producto sigue existiendo (Si un admin no lo borró mientras tanto)
                     if (inventario.length > 0) {
                         (pedido.items || []).forEach(item => {
                             const prodInStock = inventario.find(p => p.id === item.id);
                             if(prodInStock) {
                                 const prodRef = db.collection("productos").doc(item.id);
-                                let newStock = (prodInStock.stock || 0) - item.cantidad;
-                                if(newStock < 0) newStock = 0; 
-                                batch.update(prodRef, { stock: newStock });
+                                // MODIFICACIÓN SEGURA: Uso de FieldValue.increment para prevenir "Race Conditions" y conflictos de stock
+                                batch.update(prodRef, { stock: firebase.firestore.FieldValue.increment(-item.cantidad) });
                             }
                         });
                     }
@@ -649,8 +655,9 @@
                     const orderRef = db.collection("pedidos").doc(docId);
                     batch.update(orderRef, { estado: 'despachado', despachadoAt: firebase.firestore.FieldValue.serverTimestamp() });
 
-                    batch.commit().then(() => Toast.fire({ icon: 'success', title: 'Despachado con éxito' }))
-                    .catch(error => DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message }));
+                    batch.commit()
+                    .then(() => Toast.fire({ icon: 'success', title: 'Despachado con éxito' }))
+                    .catch(error => DarkAlert.fire({ icon: 'error', title: 'Error al procesar', text: error.message }));
                 }
             });
         }
@@ -879,7 +886,7 @@
 
             db.collection("config").doc("global").set(updates, { merge: true }).then(()=> {
                 Toast.fire({ icon:'success', title:'Seguridad y Redes Guardadas' });
-                document.getElementById('config-pos-pin').value = ""; // Limpiar el input para seguridad
+                document.getElementById('config-pos-pin').value = ""; 
             }); 
 
             const p = document.getElementById('config-password').value; 
