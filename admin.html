@@ -477,10 +477,37 @@
         }
 
         function removeImage(index) { selectedBase64Imgs.splice(index, 1); renderThumbnails(); }
+        
+        function moveImageLeft(index) {
+            if (index <= 0) return;
+            const temp = selectedBase64Imgs[index];
+            selectedBase64Imgs[index] = selectedBase64Imgs[index - 1];
+            selectedBase64Imgs[index - 1] = temp;
+            renderThumbnails();
+        }
+
+        function moveImageRight(index) {
+            if (index >= selectedBase64Imgs.length - 1) return;
+            const temp = selectedBase64Imgs[index];
+            selectedBase64Imgs[index] = selectedBase64Imgs[index + 1];
+            selectedBase64Imgs[index + 1] = temp;
+            renderThumbnails();
+        }
+
         function renderThumbnails() {
             const c = document.getElementById('thumbnails-container');
             if (selectedBase64Imgs.length === 0) return c.innerHTML = `<p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6">Aún no hay imágenes seleccionadas</p>`;
-            c.innerHTML = selectedBase64Imgs.map((imgSrc, index) => `<div class="img-thumb-container"><img src="${imgSrc}"><div class="img-thumb-remove" onclick="removeImage(${index})"><i class="fas fa-times"></i></div></div>`).join('');
+            
+            c.innerHTML = selectedBase64Imgs.map((imgSrc, index) => `
+            <div class="img-thumb-container group relative">
+                <img src="${imgSrc}">
+                ${index === 0 ? '<div class="absolute bottom-0 left-0 right-0 bg-primary text-dark text-[8px] font-bold text-center uppercase tracking-widest">Portada</div>' : ''}
+                <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    ${index > 0 ? `<button type="button" onclick="moveImageLeft(${index})" class="text-white hover:text-primary transition-colors"><i class="fas fa-chevron-left text-sm"></i></button>` : `<span class="w-3"></span>`}
+                    <button type="button" onclick="removeImage(${index})" class="text-red-500 hover:text-red-400 transition-colors"><i class="fas fa-trash text-sm"></i></button>
+                    ${index < selectedBase64Imgs.length - 1 ? `<button type="button" onclick="moveImageRight(${index})" class="text-white hover:text-primary transition-colors"><i class="fas fa-chevron-right text-sm"></i></button>` : `<span class="w-3"></span>`}
+                </div>
+            </div>`).join('');
         }
         
         function toggleMeasuresVisibility() { document.getElementById('measures-config-panel').style.display = document.getElementById('toggle-measures').checked ? 'block' : 'none'; }
