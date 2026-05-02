@@ -141,7 +141,7 @@
                 </div>
             </div>
 
-            <!-- TAB: HISTORIAL Y FACTURAS -->
+            <!-- NUEVA TAB: HISTORIAL Y FACTURAS -->
             <div id="tab-facturas" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
@@ -216,8 +216,7 @@
                                 
                                 <div class="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-4 mt-2">
                                     <div class="flex-1 flex gap-2 items-center">
-                                        <!-- Aplicando class notranslate para evitar cambios por Google Translate -->
-                                        <input type="text" id="new-size-input" placeholder="Talla (Ej. XXL)" class="notranslate bg-dark border border-white/10 px-3 py-2 text-[10px] text-white uppercase outline-none focus:border-primary w-full">
+                                        <input type="text" id="new-size-input" placeholder="Talla (Ej. XXL)" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white uppercase outline-none focus:border-primary w-full">
                                         <button type="button" onclick="addNewSizeToForm()" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 text-[10px] uppercase font-bold hover:bg-primary hover:text-dark transition-all rounded whitespace-nowrap"><i class="fas fa-plus"></i> Talla</button>
                                     </div>
                                     <div class="flex-1 flex gap-2 items-center">
@@ -303,18 +302,19 @@
 
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
                     <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
-                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Mensaje y Previsualización de Enlaces</h3>
-                        <div>
-                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Texto para WhatsApp / Redes</label>
-                            <input type="text" id="config-share-text" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none mb-4" placeholder="Ej: ¡Mira este drop exclusivo!">
-                            
-                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Previsualización del enlace (Descripción)</label>
-                            <textarea id="config-meta-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-20" placeholder="Ej: Streetwear exclusivo..."></textarea>
-                            <p class="text-[8px] text-gray-500 mt-1 italic">Descripción visible al pegar el link en buscadores o redes sociales.</p>
-                        </div>
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Textos de la Marca</h3>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Eslogan en Tienda</label><input type="text" id="config-slogan" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título "Nosotros"</label><input type="text" id="config-about-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Descripción "Nosotros"</label><textarea id="config-about-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-32"></textarea></div>
+                    </div>
+                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad y Redes Sociales</h3>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Contraseña</label><input type="password" id="config-password" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none" placeholder="Nueva clave (Mín. 6 caracteres)"><p class="text-[8px] text-gray-500 mt-1 italic">Déjalo en blanco si no deseas cambiarla.</p></div>
+                        <hr class="border-white/5">
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp (Ej: 50499998888)</label><input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                        <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label><input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
                     </div>
                 </div>
-
                 <div><button onclick="saveGlobalConfig()" class="w-full bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-2xl shadow-primary/20 rounded">Guardar Ajustes Globales</button></div>
             </div>
         </div>
@@ -324,13 +324,7 @@
         const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10 !py-2 !px-4 !w-auto shadow-2xl', title: '!text-[11px] !font-bold tracking-widest uppercase' } });
         const DarkAlert = Swal.mixin({ background: '#0f0f0f', color: '#fff', confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626', customClass: { popup: 'border border-white/10', confirmButton: 'text-dark font-bold uppercase text-xs px-6 py-2 rounded', cancelButton: 'font-bold uppercase text-xs px-6 py-2 rounded' } });
 
-        // AGREGADOS NUEVOS VALORES DEFAULT
-        const DEFAULT_CONFIG = { 
-            slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], 
-            heroTitle: "", heroSubtitle: "", heroImage: "",
-            invoiceHeader: "STREETWEAR EXCLUSIVO", invoiceFooter: "¡Gracias por preferir el asfalto!\nIG: @newgate",
-            shareText: "¡Mira este drop exclusivo!", metaDesc: "NEW GATE | Streetwear Exclusivo"
-        };
+        const DEFAULT_CONFIG = { slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], heroTitle: "", heroSubtitle: "", heroImage: "" };
         const DEFAULT_MEASURES = { "S": { pecho: "00", largo: "00", ancho: "00" }, "M": { pecho: "00", largo: "00", ancho: "00" }, "L": { pecho: "00", largo: "00", ancho: "00" }, "XL": { pecho: "00", largo: "00", ancho: "00" } };
 
         let inventario = []; let pedidosList = []; let config = { ...DEFAULT_CONFIG };
@@ -363,7 +357,7 @@
             db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 pedidosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 renderPedidosList();
-                renderFacturasList();
+                renderFacturasList(); // Renderiza la nueva pestaña
             }, (error) => {
                 console.error("Error al obtener pedidos:", error);
                 Toast.fire({ icon: 'error', title: 'Error al cargar pedidos' });
@@ -374,6 +368,7 @@
             const list = document.getElementById('admin-pedidos-list');
             const badge = document.getElementById('badge-pedidos');
             
+            // FILTRAR SOLO PEDIDOS NO DESPACHADOS
             const pedidosPendientes = pedidosList.filter(p => p.estado !== 'despachado');
 
             if(pedidosPendientes.length > 0) {
@@ -409,7 +404,7 @@
                                     <div class="w-10 h-10 bg-dark rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-white text-[10px] font-bold uppercase truncate">${i.titulo}</p>
-                                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white notranslate">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p>
+                                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p>
                                     </div>
                                 </div>
                             `).join('')}
@@ -431,8 +426,11 @@
             `}).join('');
         }
 
+        // RENDERIZAR PESTAÑA FACTURAS
         function renderFacturasList() {
             const list = document.getElementById('admin-facturas-list');
+            
+            // FILTRAR SOLO PEDIDOS DESPACHADOS
             const facturas = pedidosList.filter(p => p.estado === 'despachado');
 
             if(facturas.length === 0) {
@@ -468,6 +466,7 @@
             `}).join('');
         }
 
+        // ELIMINAR PEDIDO NUEVO SIN REBAJAR INVENTARIO
         function cancelarPedido(docId) {
             DarkAlert.fire({
                 title: '¿Cancelar Pedido?', 
@@ -485,6 +484,7 @@
             });
         }
 
+        // DESPACHAR PEDIDO: REBAJA INVENTARIO Y CAMBIA ESTADO A 'DESPACHADO'
         function despacharPedido(docId) {
             const pedido = pedidosList.find(p => p.id === docId);
             if(!pedido) return;
@@ -498,6 +498,7 @@
                 if (result.isConfirmed) {
                     const batch = db.batch();
                     
+                    // 1. Rebajar el inventario
                     (pedido.items || []).forEach(item => {
                         const prodInStock = inventario.find(p => p.id === item.id);
                         if(prodInStock) {
@@ -508,6 +509,7 @@
                         }
                     });
 
+                    // 2. ACTUALIZAR ESTADO DEL PEDIDO (NO BORRARLO)
                     const orderRef = db.collection("pedidos").doc(docId);
                     batch.update(orderRef, { 
                         estado: 'despachado',
@@ -523,6 +525,7 @@
             });
         }
 
+        // ELIMINAR FACTURA PERMANENTEMENTE
         function eliminarFactura(docId) {
             DarkAlert.fire({
                 title: '¿Borrar Factura?', 
@@ -538,6 +541,7 @@
             });
         }
 
+        // IMPRIMIR FACTURA (FORMATO POS TICKET O A4)
         function imprimirFactura(docId) {
             const f = pedidosList.find(p => p.id === docId);
             if(!f) return;
@@ -548,20 +552,16 @@
                 const pNum = parseFloat(i.precio.replace(/[^0-9.-]+/g,"")) || 0;
                 return `
                 <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;">Talla: <span class="notranslate">${i.talla}</span></small></td>
+                    <td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;">Talla: ${i.talla}</small></td>
                     <td style="text-align: center; font-size: 12px;">${i.cantidad}</td>
                     <td style="text-align: right; font-size: 12px;">L${(pNum * i.cantidad).toFixed(2)}</td>
                 </tr>`;
             }).join('');
 
-            // APLICACIÓN DE TEXTOS DE CONFIGURACIÓN
-            const headerText = config.invoiceHeader || DEFAULT_CONFIG.invoiceHeader;
-            const footerText = (config.invoiceFooter || DEFAULT_CONFIG.invoiceFooter).replace(/\n/g, '<br>');
-
             const ticketHtml = `
                 <div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;">
                     <h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2>
-                    <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${headerText}</p>
+                    <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">STREETWEAR EXCLUSIVO</p>
                     
                     <hr style="border: 1px dashed #000; margin: 15px 0;">
                     
@@ -588,10 +588,11 @@
                     
                     <h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: L${(f.total || 0).toFixed(2)}</h3>
                     
-                    <p style="text-align: center; margin-top: 30px; font-size: 11px;">${footerText}</p>
+                    <p style="text-align: center; margin-top: 30px; font-size: 11px;">¡Gracias por preferir el asfalto!<br>IG: @newgate</p>
                 </div>
             `;
             
+            // Inyectar en el div oculto e invocar la ventana de impresión del navegador
             const printDiv = document.getElementById('printable-invoice');
             printDiv.innerHTML = ticketHtml;
             window.print();
@@ -664,6 +665,7 @@
         
         function toggleMeasuresVisibility() { document.getElementById('measures-config-panel').style.display = document.getElementById('toggle-measures').checked ? 'block' : 'none'; }
 
+        // MANEJO ROBUSTO DE COLUMNAS Y TALLAS DINÁMICAS
         function addNewSizeToForm() {
             const input = document.getElementById('new-size-input');
             const val = input.value.trim().toUpperCase();
@@ -738,8 +740,7 @@
                 return `<div class="flex items-center gap-2 mb-2">
                     <div class="w-12">
                         <input type="checkbox" id="t-${safeT}" value="${t}" checked class="hidden">
-                        <!-- class notranslate aplicada para proteger M -> Metro -->
-                        <label for="t-${safeT}" class="notranslate block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1" title="${t}">${t}</label>
+                        <label for="t-${safeT}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1" title="${t}">${t}</label>
                     </div>
                     <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">
                         ${inputsHTML}
@@ -884,6 +885,7 @@
             
             list.innerHTML = filt.map(prod => {
                 const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
+                const total = prod.imagenes ? prod.imagenes.length : 1;
                 
                 let statusInfo = `<span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria || 'Gen'}</span>`;
                 if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Próximamente</span>`;
@@ -915,35 +917,8 @@
         function compressHeroImage(input) { if (!input.files || !input.files[0]) return; const reader = new FileReader(); reader.readAsDataURL(input.files[0]); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); let w = img.width > 1200 ? 1200 : img.width; canvas.width = w; canvas.height = img.height * (w / img.width); canvas.getContext('2d').drawImage(img, 0, 0, w, canvas.height); selectedHeroImg = canvas.toDataURL('image/jpeg', 0.8); document.getElementById('hero-preview').src = selectedHeroImg; document.getElementById('hero-preview').classList.remove('hidden'); document.getElementById('hero-preview-container').classList.add('bg-darker/80'); } } }
         async function saveHeroConfig() { const btn = document.getElementById('btn-save-hero'); btn.innerText = "Subiendo..."; btn.disabled = true; try { let img = config.heroImage || ""; if (selectedHeroImg) img = await uploadImageToStorage(selectedHeroImg, `config/hero_bg_${Date.now()}.jpg`); await db.collection("config").doc("hero").set({ heroTitle: document.getElementById('config-hero-title').value, heroSubtitle: document.getElementById('config-hero-subtitle').value, heroImage: img }, { merge: true }); btn.innerText = "¡Actualizado!"; setTimeout(() => { btn.innerText = "Actualizar Textos y Foto Hero"; btn.disabled = false; }, 2000); } catch (e) { btn.disabled = false; } }
 
-        function renderConfig() { 
-            document.getElementById('config-slogan').value = config.slogan || ""; 
-            document.getElementById('config-about-title').value = config.aboutTitle || ""; 
-            document.getElementById('config-about-desc').value = config.aboutDesc || ""; 
-            document.getElementById('config-whatsapp').value = config.whatsapp || ""; 
-            document.getElementById('config-instagram').value = config.instagram || ""; 
-            // Textos nuevos:
-            document.getElementById('config-invoice-header').value = config.invoiceHeader || DEFAULT_CONFIG.invoiceHeader;
-            document.getElementById('config-invoice-footer').value = config.invoiceFooter || DEFAULT_CONFIG.invoiceFooter;
-            document.getElementById('config-share-text').value = config.shareText || DEFAULT_CONFIG.shareText;
-            document.getElementById('config-meta-desc').value = config.metaDesc || DEFAULT_CONFIG.metaDesc;
-        }
-
-        function saveGlobalConfig() { 
-            db.collection("config").doc("global").set({ 
-                slogan: document.getElementById('config-slogan').value, 
-                aboutTitle: document.getElementById('config-about-title').value, 
-                aboutDesc: document.getElementById('config-about-desc').value, 
-                whatsapp: document.getElementById('config-whatsapp').value, 
-                instagram: document.getElementById('config-instagram').value,
-                invoiceHeader: document.getElementById('config-invoice-header').value,
-                invoiceFooter: document.getElementById('config-invoice-footer').value,
-                shareText: document.getElementById('config-share-text').value,
-                metaDesc: document.getElementById('config-meta-desc').value
-            }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Guardado' })); 
-            
-            const p = document.getElementById('config-password').value; 
-            if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> document.getElementById('config-password').value = ""); 
-        }
+        function renderConfig() { document.getElementById('config-slogan').value = config.slogan || ""; document.getElementById('config-about-title').value = config.aboutTitle || ""; document.getElementById('config-about-desc').value = config.aboutDesc || ""; document.getElementById('config-whatsapp').value = config.whatsapp || ""; document.getElementById('config-instagram').value = config.instagram || ""; }
+        function saveGlobalConfig() { db.collection("config").doc("global").set({ slogan: document.getElementById('config-slogan').value, aboutTitle: document.getElementById('config-about-title').value, aboutDesc: document.getElementById('config-about-desc').value, whatsapp: document.getElementById('config-whatsapp').value, instagram: document.getElementById('config-instagram').value }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Guardado' })); const p = document.getElementById('config-password').value; if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> document.getElementById('config-password').value = ""); }
 
         function renderHeroConfig() {
             document.getElementById('config-hero-title').value = config.heroTitle || "";
