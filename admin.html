@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="es" class="scroll-smooth">
 <head>
-    <!-- FIREBASE (conexión base) -->
+    <!-- FIREBASE (conexión base + auth + storage) -->
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
 
     <script>
     const firebaseConfig = {
@@ -18,689 +20,939 @@
 
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    console.log("🔥 Firebase conectado: Vista Cliente");
+    const auth = firebase.auth();
+    const storage = firebase.storage(); 
+    console.log("🔥 Firebase conectado: Panel Administrador + Storage + Facturación");
     </script>
     
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>NEW GATE | Streetwear Exclusivo</title>
-    <meta name="description" content="New Gate no es una marca, es un destino. Diseñamos para la tripulación que prefiere el asfalto.">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | NEW GATE</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: { primary: '#d4af37', dark: '#0a0a0a', darker: '#050505' },
-                    fontFamily: { sans: ['"Inter"', 'sans-serif'], serif: ['"Permanent Marker"', 'serif'], graffiti: ['"Permanent Marker"', 'cursive'] }
+                    fontFamily: { sans: ['"Inter"', 'sans-serif'], serif: ['"Playfair Display"', 'serif'], graffiti: ['"Permanent Marker"', 'cursive'] }
                 }
             }
         }
     </script>
-
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Permanent+Marker&display=swap');
         
         .section-fade { display: none; opacity: 0; transition: opacity 0.4s ease-in-out; }
         .section-fade.active { display: block; opacity: 1; }
 
-        .modal-overlay {
-            display: none; position: fixed; inset: 0;
-            background: rgba(0, 0, 0, 0.95); z-index: 200;
-            backdrop-filter: blur(12px); align-items: center; justify-content: center; padding: 20px;
-        }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(5, 5, 5, 0.98); z-index: 200; align-items: center; justify-content: center; padding: 20px; }
         .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: #0f0f0f; border: 1px solid rgba(212, 175, 55, 0.2);
-            max-width: 1200px; width: 100%; max-height: 90vh; overflow-y: auto; position: relative;
-        }
+        .modal-content { background: #0f0f0f; border: 1px solid rgba(212, 175, 55, 0.2); max-width: 400px; width: 100%; position: relative; }
 
-        .hero-bg { background-size: cover; background-position: center; background-repeat: no-repeat; }
-        .hero-overlay { background: linear-gradient(to bottom, rgba(10, 10, 10, 0.1) 0%, rgba(10, 10, 10, 0.7) 60%, rgba(10, 10, 10, 1) 100%); }
-        .hero-text-shadow { text-shadow: 0px 4px 20px rgba(0,0,0,0.9); }
-
-        .loader {
-            border: 3px solid rgba(212, 175, 55, 0.3); border-radius: 50%;
-            border-top: 3px solid #d4af37; width: 20px; height: 20px;
-            animation: spin 1s linear infinite; display: none;
-        }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        input[type="checkbox"]:checked + label { background-color: #d4af37; color: #0a0a0a; border-color: #d4af37; }
+        .editing-mode { border: 2px solid #d4af37 !important; background: rgba(212, 175, 55, 0.05) !important; }
+        .measure-input { width: 100%; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); padding: 6px; text-align: center; font-size: 11px; color: white; outline: none; }
+        .measure-input:focus { border-color: #d4af37; }
+        .tab-btn.active { border-bottom: 2px solid #d4af37; color: #d4af37; }
         
-        .dot { height: 6px; width: 6px; background-color: rgba(255,255,255,0.3); border-radius: 50%; display: inline-block; transition: background-color 0.3s ease; }
-        .dot.active { background-color: #d4af37; width: 12px; border-radius: 4px; }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #333; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: #d4af37; }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        .switch-blue input:checked + .slider { background-color: #2563eb; }
+
+        .loader { border: 3px solid rgba(212, 175, 55, 0.3); border-radius: 50%; border-top: 3px solid #d4af37; width: 20px; height: 20px; animation: spin 1s linear infinite; display: none; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .img-thumb-container { position: relative; width: 80px; height: 80px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.1); }
+        .img-thumb-container img { width: 100%; height: 100%; object-fit: cover; }
+        .img-thumb-remove { position: absolute; top: 2px; right: 2px; background: rgba(220, 38, 38, 0.9); color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; }
         
         .swal2-container { z-index: 9999 !important; }
-        .img-transition { transition: opacity 0.4s ease-in-out; }
-        
-        #mobile-menu { transform: translateX(100%); transition: transform 0.3s ease-in-out; }
-        #mobile-menu.active { transform: translateX(0); }
-        
-        .status-badge { position: absolute; top: 12px; left: 12px; padding: 4px 10px; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; z-index: 10; border-radius: 2px; }
+
+        /* ESTILOS EXCLUSIVOS PARA IMPRESIÓN DE FACTURAS */
+        #printable-invoice { display: none; }
+        @media print {
+            body > *:not(#printable-invoice) { display: none !important; }
+            #printable-invoice { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; }
+            body { background: white !important; color: black !important; margin: 0; padding: 0; }
+        }
     </style>
 </head>
-<body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark">
+<body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark min-h-screen flex flex-col">
 
-    <header class="fixed w-full z-[100] bg-darker/90 backdrop-blur-md border-b border-white/5">
+    <!-- CONTENEDOR OCULTO PARA IMPRESIÓN (RECIBO TIPO TICKET POS) -->
+    <div id="printable-invoice"></div>
+
+    <header class="w-full z-[100] bg-darker border-b border-white/5">
         <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="font-graffiti text-3xl text-white tracking-wider cursor-pointer hover:text-primary transition-colors" onclick="showSection('inicio')">
-                NEW GATE<span class="text-primary">.</span>
-            </div>
-            
-            <nav class="hidden md:flex space-x-8 items-center">
-                <span onclick="showSection('inicio')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Tienda</span>
-                <span onclick="showSection('nosotros')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Nosotros</span>
-                <span onclick="abrirMisPedidos()" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-400 hover:text-primary font-bold transition-colors">
-                    <i class="fas fa-history"></i> Mis Pedidos
-                </span>
-                <span onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-primary hover:text-white font-bold transition-colors border border-primary/20 px-3 py-1.5 rounded">
-                    <i class="fas fa-shopping-bag"></i> Mi Pedido (<span id="cart-count">0</span>)
-                </span>
+            <div class="font-graffiti text-3xl text-white tracking-wider">ADMIN<span class="text-primary">.</span></div>
+            <nav class="flex items-center">
+                <a href="index.html" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-500 hover:text-white transition-colors border border-white/10 px-4 py-2 rounded"><i class="fas fa-store"></i> Ir a Tienda</a>
             </nav>
-            
-            <div class="md:hidden flex items-center gap-5 text-primary text-xl">
-                <button onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="relative">
-                    <i class="fas fa-shopping-bag"></i>
-                    <span id="cart-count-mobile" class="absolute -top-2 -right-2 bg-white text-dark text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">0</span>
-                </button>
-                <button onclick="toggleMobileMenu()" class="text-white hover:text-primary transition-colors">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
         </div>
     </header>
 
-    <div id="mobile-menu" class="fixed inset-0 bg-darker/95 backdrop-blur-xl z-[200] flex flex-col pt-24 px-8 border-l border-white/10 md:hidden">
-        <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-white text-3xl hover:text-primary"><i class="fas fa-times"></i></button>
-        <div class="flex flex-col gap-8 text-center mt-10">
-            <span onclick="toggleMobileMenu(); showSection('inicio')" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-white hover:text-primary font-bold">Tienda</span>
-            <span onclick="toggleMobileMenu(); showSection('nosotros')" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-white hover:text-primary font-bold">Nosotros</span>
-            <span onclick="toggleMobileMenu(); abrirMisPedidos()" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-gray-400 hover:text-primary font-bold"><i class="fas fa-history"></i> Mis Pedidos</span>
-            <span onclick="toggleMobileMenu(); document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-primary font-bold"><i class="fas fa-shopping-bag"></i> Ir a Pagar</span>
-        </div>
-    </div>
-
-    <div id="mis-pedidos-modal" class="modal-overlay" onclick="cerrarMisPedidos(event)">
-        <div class="modal-content p-6 animate-in fade-in zoom-in duration-300 max-w-lg" onclick="event.stopPropagation()">
-            <button onclick="cerrarMisPedidos()" class="absolute top-4 right-4 text-white hover:text-primary text-xl z-30 transition-colors w-8 h-8 flex items-center justify-center"><i class="fas fa-times"></i></button>
-            <h2 class="font-serif text-2xl text-white italic mb-2 border-b border-white/10 pb-4"><i class="fas fa-receipt text-primary"></i> Historial de Pedidos</h2>
-            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4">Tus últimos pedidos realizados desde este dispositivo</p>
-            <div id="lista-mis-pedidos" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
-                <!-- Se llenan por JS -->
-            </div>
-            <button onclick="limpiarMisPedidos()" class="w-full mt-6 bg-red-900/30 text-red-400 border border-red-500/30 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all rounded">Borrar Historial</button>
-        </div>
-    </div>
-
-    <div id="product-modal" class="modal-overlay" onclick="closeModal(event)">
-        <button onclick="closeModal()" class="absolute top-4 right-4 md:top-6 md:right-6 text-white hover:text-primary text-2xl z-[300] transition-colors bg-darker/90 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center shadow-2xl cursor-pointer"><i class="fas fa-times"></i></button>
-
-        <div class="modal-content animate-in fade-in zoom-in duration-300" onclick="event.stopPropagation()">
-            <div class="grid grid-cols-1 lg:grid-cols-2">
-                <div id="modal-img-container" class="h-[500px] lg:h-[600px] bg-darker flex flex-col items-center justify-center relative group select-none" ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)">
-                    <button id="btn-prev-img" onclick="changeImage(-1)" class="absolute left-4 z-20 text-white bg-darker/60 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center hover:text-primary transition-all opacity-0 group-hover:opacity-100 hidden shadow-xl"><i class="fas fa-chevron-left text-xl"></i></button>
-                    <img id="modal-img" src="" alt="Producto" class="max-w-full max-h-full object-contain absolute inset-0 m-auto img-transition">
-                    <div id="modal-img-loader" class="absolute inset-0 flex items-center justify-center bg-darker/50 z-10 hidden"><div class="loader !block"></div></div>
-                    <button id="btn-next-img" onclick="changeImage(1)" class="absolute right-4 z-20 text-white bg-darker/60 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center hover:text-primary transition-all opacity-0 group-hover:opacity-100 hidden shadow-xl"><i class="fas fa-chevron-right text-xl"></i></button>
-                    <div id="carousel-dots" class="absolute bottom-4 flex justify-center w-full space-x-2 z-20 bg-darker/30 py-2 backdrop-blur-sm rounded-full mx-auto w-max px-4"></div>
-                </div>
-
-                <div class="p-8 lg:p-10 flex flex-col justify-center">
-                    <div class="flex justify-between items-start mb-2">
-                        <p id="modal-cat" class="text-primary text-[10px] uppercase tracking-[0.4em] font-bold"></p>
-                        
-                        <!-- BOTONES DE COMPARTIR ACTUALIZADOS -->
-                        <div class="flex gap-2">
-                            <button onclick="shareProductWA()" title="Enviar por WhatsApp" class="text-green-500 hover:text-green-400 transition-colors text-sm border border-white/5 rounded-full w-8 h-8 flex items-center justify-center bg-white/5"><i class="fab fa-whatsapp"></i></button>
-                            <button onclick="shareProduct()" title="Compartir enlace" class="text-gray-500 hover:text-primary transition-colors text-sm border border-white/5 rounded-full w-8 h-8 flex items-center justify-center"><i class="fas fa-share-alt"></i></button>
-                        </div>
-                    </div>
-                    
-                    <h2 id="modal-title" class="font-serif text-4xl text-white italic mb-1"></h2>
-                    <div class="flex items-center gap-3 mb-4">
-                        <p id="modal-sku-display" class="text-gray-600 text-[10px] uppercase tracking-widest font-bold"></p>
-                        <span id="modal-status-badge" class="px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded hidden"></span>
-                    </div>
-                    
-                    <p id="modal-desc" class="text-gray-400 text-sm leading-relaxed mb-6"></p>
-                    
-                    <div id="modal-measures-container" class="mb-6 hidden">
-                        <h4 class="text-white text-[10px] uppercase tracking-widest mb-4 border-b border-white/10 pb-2 flex items-center gap-2 font-bold">
-                            <i class="fas fa-ruler text-primary"></i> Guía de Medidas (cm)
-                        </h4>
-                        <div class="overflow-x-auto w-full pb-2 scrollbar-hide">
-                            <table class="w-full text-[10px] text-gray-500 uppercase text-left min-w-max">
-                                <thead><tr class="text-gray-300 border-b border-white/5" id="modal-measures-head"></tr></thead>
-                                <tbody id="modal-measures-body" class="divide-y divide-white/5"></tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div id="modal-talla-select-container" class="mb-6 hidden">
-                        <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Selecciona tu talla</label>
-                        <!-- class notranslate aplicada para proteger M -> Metro -->
-                        <select id="modal-talla" class="notranslate w-full bg-darker border border-white/10 px-4 py-3 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors cursor-pointer"></select>
-                    </div>
-
-                    <div id="modal-quantity-container" class="flex items-center gap-4 mb-8">
-                        <label class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Cantidad:</label>
-                        <div class="flex items-center bg-darker border border-white/10 rounded">
-                            <button onclick="updateQuantity(-1)" class="w-10 h-10 text-white hover:text-primary"><i class="fas fa-minus text-xs"></i></button>
-                            <span id="modal-quantity" class="text-white text-sm font-bold w-8 text-center select-none">1</span>
-                            <button onclick="updateQuantity(1)" class="w-10 h-10 text-white hover:text-primary"><i class="fas fa-plus text-xs"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4 border-t border-white/5">
-                        <span id="modal-price" class="text-3xl font-serif text-white"></span>
-                        <button id="btn-add-cart" onclick="agregarAlPedido()" class="w-full sm:w-auto bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all text-center flex items-center justify-center gap-2">
-                            <i class="fas fa-cart-plus"></i> Añadir al Pedido
-                        </button>
-                        <div id="modal-disabled-msg" class="hidden w-full sm:w-auto bg-darker border border-white/10 text-gray-500 px-10 py-4 font-bold uppercase text-[10px] tracking-widest text-center cursor-not-allowed"></div>
-                    </div>
-                </div>
+    <div id="login-modal" class="modal-overlay active">
+        <div class="modal-content p-8 text-center shadow-2xl">
+            <h2 class="font-serif text-2xl text-white italic mb-6">Acceso Restringido</h2>
+            <div class="space-y-4">
+                <input type="email" id="admin-email-input" placeholder="Correo electrónico" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center">
+                <input type="password" id="admin-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center" onkeyup="if(event.key === 'Enter') validateAdmin()">
+                <button onclick="validateAdmin()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Entrar</button>
+                <p id="login-error" class="text-red-500 text-[10px] uppercase font-bold hidden animate-pulse">Credenciales Incorrectas</p>
             </div>
         </div>
     </div>
 
-    <div id="inicio" class="section-fade active pt-20">
-        <section id="hero-display" class="h-[85vh] flex items-end justify-center text-center relative overflow-hidden hero-bg">
-            <div class="absolute inset-0 hero-overlay z-0"></div>
-            <div class="relative z-10 px-6 max-w-4xl pb-20">
-                <h1 id="display-hero-title" class="font-serif text-5xl md:text-8xl text-white italic mb-4 hero-text-shadow leading-tight"></h1>
-                <p id="display-hero-subtitle" class="text-primary uppercase tracking-[0.5em] text-xs md:text-sm font-bold hero-text-shadow"></p>
-                <div class="mt-10 flex justify-center gap-4">
-                    <button onclick="document.getElementById('productos').scrollIntoView({behavior: 'smooth'})" class="bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all shadow-2xl shadow-primary/20">Explorar Drop</button>
-                </div>
-            </div>
-        </section>
-
-        <section id="productos" class="py-24 max-w-7xl mx-auto px-6">
-            <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-6">
-                <div>
-                    <h2 class="font-serif text-4xl text-white italic">Catálogo</h2>
-                    <p class="text-gray-500 uppercase tracking-widest text-xs mt-2" id="display-shop-slogan"></p>
-                </div>
-                <div class="flex flex-wrap gap-6 text-xs uppercase tracking-widest text-gray-500" id="filter-container"></div>
-            </div>
+    <div id="admin" class="section-fade py-12 bg-darker flex-1">
+        <div class="max-w-6xl mx-auto px-6">
             
-            <!-- GRID ACTUALIZADO PARA MOSTRAR MÁS PRODUCTOS MÁS PEQUEÑOS -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 transition-opacity duration-300" id="gallery-grid">
-                <div class="col-span-full text-center py-20 flex flex-col items-center justify-center">
-                     <div class="loader !border-t-primary !border-white/10 !w-8 !h-8 mb-4 !block"></div>
-                     <p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Cargando colección exclusiva...</p>
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-12 gap-4">
+                <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide pb-2">
+                    <button onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-bell"></i> Nuevos Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
+                    <!-- NUEVA PESTAÑA DE FACTURAS -->
+                    <button onclick="showAdminTab('facturas', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-file-invoice"></i> Historial Facturas</button>
+                    <button onclick="showAdminTab('inventario', event)" class="tab-btn active py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-box"></i> Inventario</button>
+                    <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-cog"></i> Ajustes</button>
+                </div>
+                <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
+            </div>
+
+            <!-- TAB NUEVOS PEDIDOS -->
+            <div id="tab-pedidos" class="admin-tab hidden">
+                <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
+                            <i class="fas fa-clipboard-list"></i> Pedidos Entrantes
+                        </h3>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Al despachar, se mueven a Facturas.</p>
+                    </div>
+                    <div id="admin-pedidos-list" class="space-y-4">
+                        <div class="text-center py-10"><div class="loader !block border-t-primary w-8 h-8 mx-auto"></div></div>
+                    </div>
                 </div>
             </div>
-        </section>
 
-        <section id="contacto" class="py-24 bg-darker border-t border-white/5">
-            <div class="max-w-4xl mx-auto px-6">
-                <div class="text-center mb-16">
-                    <h2 class="font-serif text-4xl text-white italic">Finaliza tu Pedido</h2>
-                    <p class="text-gray-500 uppercase tracking-widest text-xs mt-2 italic font-bold">Confirmaremos disponibilidad vía WhatsApp</p>
+            <!-- TAB: HISTORIAL Y FACTURAS -->
+            <div id="tab-facturas" class="admin-tab hidden">
+                <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-white uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
+                            <i class="fas fa-archive text-primary"></i> Facturación e Historial
+                        </h3>
+                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Imprime tickets o elimina registros antiguos.</p>
+                    </div>
+                    <div id="admin-facturas-list" class="space-y-4">
+                        <div class="text-center py-10"><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Cargando facturas...</p></div>
+                    </div>
                 </div>
+            </div>
+
+            <!-- TAB INVENTARIO -->
+            <div id="tab-inventario" class="admin-tab">
+                <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
+                    <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
+                        <i class="fas fa-box-open"></i> Añadir Nuevo Producto
+                    </h3>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            
+                            <div class="flex flex-col sm:flex-row gap-4 bg-darker p-4 border border-white/5 rounded">
+                                <div class="flex-1">
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="No visible en tienda, controla el estado 'Agotado'">Stock / Cantidad</label>
+                                    <input type="number" id="new-stock" placeholder="Ej: 10" value="10" min="0" class="w-full bg-dark border border-white/10 px-4 py-2 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div class="flex items-center justify-between sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
+                                    <span class="text-[9px] uppercase tracking-widest text-blue-400 font-bold">Modo Preventa</span>
+                                    <label class="switch switch-blue">
+                                        <input type="checkbox" id="toggle-presale">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Nombre de Producto</label>
+                                    <input type="text" id="new-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Código SKU</label>
+                                    <input type="text" id="new-sku" placeholder="Ej: NG-001" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white font-mono uppercase transition-colors">
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio (Ej: L650.00)</label>
+                                    <input type="text" id="new-price" placeholder="L650.00" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Categoría</label>
+                                    <select id="new-cat" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-gray-300 transition-colors cursor-pointer"></select>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between bg-darker p-4 border border-white/5 rounded">
+                                <span class="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Activar Guía de Tallas</span>
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle-measures" checked onchange="toggleMeasuresVisibility()">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+
+                            <div id="measures-config-panel" class="bg-darker p-5 border border-white/10 rounded transition-all">
+                                
+                                <div id="medidas-inputs-container" class="space-y-3 mb-4"></div>
+                                
+                                <div class="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-4 mt-2">
+                                    <div class="flex-1 flex gap-2 items-center">
+                                        <!-- Aplicando class notranslate para evitar cambios por Google Translate -->
+                                        <input type="text" id="new-size-input" placeholder="Talla (Ej. XXL)" class="notranslate bg-dark border border-white/10 px-3 py-2 text-[10px] text-white uppercase outline-none focus:border-primary w-full">
+                                        <button type="button" onclick="addNewSizeToForm()" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 text-[10px] uppercase font-bold hover:bg-primary hover:text-dark transition-all rounded whitespace-nowrap"><i class="fas fa-plus"></i> Talla</button>
+                                    </div>
+                                    <div class="flex-1 flex gap-2 items-center">
+                                        <input type="text" id="new-column-input" placeholder="Columna (Ej. Manga)" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white capitalize outline-none focus:border-primary w-full">
+                                        <button type="button" onclick="addNewColumnToForm()" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 text-[10px] uppercase font-bold hover:bg-primary hover:text-dark transition-all rounded whitespace-nowrap"><i class="fas fa-plus"></i> Columna</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Descripción corta</label>
+                                <textarea id="new-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none h-20 text-white transition-colors"></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col gap-4 h-full">
+                            <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[120px]" onclick="document.getElementById('new-img').click()">
+                                <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" multiple onchange="compressAndAddImages(this)">
+                                <div class="text-center">
+                                    <i class="fas fa-images text-3xl text-gray-700 mb-2 transition-transform hover:scale-110"></i>
+                                    <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Añadir Fotos (JPG/PNG)</p>
+                                    <p class="text-[8px] text-gray-600 mt-1 italic">Recomendado: Formato Vertical 3:4</p>
+                                </div>
+                                <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-10"><div class="loader !block"></div></div>
+                            </div>
+                            
+                            <div id="thumbnails-container" class="flex flex-wrap gap-3 bg-darker p-4 rounded-lg border border-white/5 min-h-[110px]">
+                                <p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6" id="no-img-text">Aún no hay imágenes seleccionadas</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex gap-4 mt-8">
+                        <button id="btn-submit-admin" onclick="addProduct()" class="flex-1 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-white transition-all flex justify-center items-center gap-2 shadow-lg">
+                            <span id="btn-submit-text">Guardar Producto en la Nube</span>
+                            <div id="btn-submit-loader" class="loader !border-t-dark !border-dark/30"></div>
+                        </button>
+                        <button id="btn-cancel-edit" onclick="cancelEdit()" class="hidden bg-red-600 text-white px-8 py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-red-500 transition-all">Cancelar</button>
+                    </div>
+                </div>
+
+                <div class="bg-dark p-8 border border-white/5 rounded-lg mb-16 shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-4 italic flex items-center gap-2"><i class="fas fa-tags"></i> Gestión de Categorías</h3>
+                    <div class="flex flex-col md:flex-row gap-4 mb-6">
+                        <input type="text" id="new-category-name" placeholder="Nueva categoría (Ej. Jeans)" class="flex-1 bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white">
+                        <button onclick="addNewCategory()" class="bg-darker border border-primary/40 text-primary px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-dark transition-all"><i class="fas fa-plus"></i> Guardar</button>
+                    </div>
+                    <div id="categories-manager-list" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <div class="mb-6 border-b border-white/5 pb-4">
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="text-[10px] uppercase text-gray-500 tracking-widest font-bold">Inventario en la Nube</h4>
+                        <span id="inventory-count" class="text-primary text-[10px] font-bold">0 Productos</span>
+                    </div>
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                        <input type="text" id="search-inventory" placeholder="Buscar por nombre, SKU o categoría..." class="w-full bg-darker border border-white/10 pl-10 pr-4 py-3 text-sm focus:border-primary outline-none text-white rounded" oninput="renderAdminList()">
+                    </div>
+                </div>
+                <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </div>
+
+            <!-- TAB AJUSTES GLOBALES -->
+            <div id="tab-config" class="admin-tab hidden space-y-10">
                 
-                <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    <div class="lg:col-span-2 bg-dark p-6 border border-white/5 shadow-2xl h-fit">
-                        <h3 class="text-primary uppercase tracking-widest text-xs font-bold mb-4 border-b border-white/10 pb-4"><i class="fas fa-shopping-bag"></i> Tu Selección</h3>
-                        <div id="carrito-list" class="space-y-3 max-h-[350px] overflow-y-auto pr-2"></div>
-                        <div class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
-                            <span class="text-white text-[10px] font-bold uppercase tracking-widest">Total Estimado:</span>
-                            <span id="cart-total" class="text-primary text-2xl font-serif font-bold">L0.00</span>
+                <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2"><i class="fas fa-image"></i> Personalizar Sección Hero Web</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                        <div class="space-y-6">
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título Hero</label><input type="text" id="config-hero-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Subtítulo Hero</label><input type="text" id="config-hero-subtitle" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none"></div>
+                            <button onclick="saveHeroConfig()" id="btn-save-hero" class="w-full mt-4 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-xl">Actualizar Textos y Foto Hero</button>
                         </div>
-                    </div>
-
-                    <div class="lg:col-span-3 space-y-6 bg-dark p-8 border border-white/5 shadow-2xl">
-                        <div>
-                            <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Nombre Completo</label>
-                            <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors">
+                        <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[250px]" onclick="document.getElementById('new-hero-img').click()">
+                            <input type="file" id="new-hero-img" class="hidden" accept="image/*" onchange="compressHeroImage(this)">
+                            <div id="hero-preview-container" class="text-center z-10 relative bg-darker/60 p-4 rounded-lg backdrop-blur-sm mt-8"><i class="fas fa-camera text-4xl text-gray-300 mb-2"></i><p class="text-[10px] text-gray-300 uppercase tracking-widest font-bold">Cambiar Fondo</p></div>
+                            <img id="hero-preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-lg opacity-60" src="">
+                            <div id="hero-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-20"><div class="loader !block"></div></div>
                         </div>
-                        
-                        <div>
-                            <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Mensaje Adicional</label>
-                            <textarea id="mensaje" rows="4" maxlength="150" placeholder="Ej: ¿Tienen envío a domicilio? (Máx. 150 caracteres)" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors resize-none"></textarea>
-                            <p class="text-right text-[9px] text-gray-600 mt-1 uppercase tracking-wider">Máx 150 caracteres</p>
-                        </div>
-
-                        <button onclick="procesarEnvioPedido()" class="w-full py-5 bg-primary text-dark font-bold uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-primary/10 flex items-center justify-center gap-3">
-                            <i class="fab fa-whatsapp text-xl"></i> <span id="btn-wa-text">Enviar Pedido a Tienda</span>
-                        </button>
                     </div>
                 </div>
-            </div>
-        </section>
-    </div>
 
-    <div id="nosotros" class="section-fade pt-32 bg-darker min-h-screen">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            <h1 class="font-graffiti text-5xl text-white mb-8 italic" id="display-about-title"></h1>
-            <p class="text-gray-400 leading-relaxed text-lg mb-12 italic font-serif" id="display-about-desc"></p>
-            <div class="w-24 h-1 bg-primary mx-auto mb-12"></div>
-            
-            <div class="flex justify-center gap-10">
-                <a href="#" id="link-instagram" target="_blank" class="text-2xl text-gray-600 hover:text-primary transition-colors hover:scale-110 transform"><i class="fab fa-instagram"></i></a>
-                <a href="#" id="link-facebook" target="_blank" class="text-2xl text-gray-600 hover:text-primary transition-colors hover:scale-110 transform"><i class="fab fa-facebook"></i></a>
-                <a href="#" id="link-whatsapp" target="_blank" class="text-2xl text-gray-600 hover:text-primary transition-colors hover:scale-110 transform"><i class="fab fa-whatsapp"></i></a>
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div class="bg-dark p-8 border border-white/5 space-y-6 shadow-2xl rounded-lg">
+                        <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Mensaje y Previsualización de Enlaces</h3>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Texto para WhatsApp / Redes</label>
+                            <input type="text" id="config-share-text" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none mb-4" placeholder="Ej: ¡Mira este drop exclusivo!">
+                            
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Previsualización del enlace (Descripción)</label>
+                            <textarea id="config-meta-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-20" placeholder="Ej: Streetwear exclusivo..."></textarea>
+                            <p class="text-[8px] text-gray-500 mt-1 italic">Descripción visible al pegar el link en buscadores o redes sociales.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div><button onclick="saveGlobalConfig()" class="w-full bg-primary text-dark py-5 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-2xl shadow-primary/20 rounded">Guardar Ajustes Globales</button></div>
             </div>
         </div>
     </div>
-
-    <footer class="py-12 bg-dark text-center border-t border-white/5 mt-auto">
-        <p class="text-gray-700 text-[10px] uppercase tracking-[0.3em] font-bold">© <span id="current-year"></span> NEW GATE STREETWEAR | HONDURAS</p>
-    </footer>
 
     <script>
-        document.getElementById('current-year').innerText = new Date().getFullYear();
+        const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10 !py-2 !px-4 !w-auto shadow-2xl', title: '!text-[11px] !font-bold tracking-widest uppercase' } });
+        const DarkAlert = Swal.mixin({ background: '#0f0f0f', color: '#fff', confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626', customClass: { popup: 'border border-white/10', confirmButton: 'text-dark font-bold uppercase text-xs px-6 py-2 rounded', cancelButton: 'font-bold uppercase text-xs px-6 py-2 rounded' } });
 
-        const Toast = Swal.mixin({
-            toast: true, position: 'top', showConfirmButton: false, timer: 3000,
-            background: '#0f0f0f', color: '#fff', iconColor: '#d4af37',
-            customClass: { popup: 'border border-white/10 rounded-lg shadow-2xl !py-2 !px-4 !w-auto', title: '!text-[11px] !font-bold tracking-widest uppercase' }
-        });
-
-        // NUEVAS VARIABLES CONFIG DEFAULT
-        const DEFAULT_CONFIG = {
-            slogan: "Nuestras piezas exclusivas",
-            aboutTitle: "Legacy Over Size", aboutDesc: "New Gate no es una marca, es un destino.",
-            whatsapp: "50400000000", instagram: "#", facebook: "#", categories: ["urban", "anime"],
-            heroTitle: "ESTILO SIN LÍMITES", heroSubtitle: "STREETWEAR EXCLUSIVO NEW GATE", heroImage: "",
-            shareText: "¡Mira este drop exclusivo!"
+        // AGREGADOS NUEVOS VALORES DEFAULT
+        const DEFAULT_CONFIG = { 
+            slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], 
+            heroTitle: "", heroSubtitle: "", heroImage: "",
+            invoiceHeader: "STREETWEAR EXCLUSIVO", invoiceFooter: "¡Gracias por preferir el asfalto!\nIG: @newgate",
+            shareText: "¡Mira este drop exclusivo!", metaDesc: "NEW GATE | Streetwear Exclusivo"
         };
+        const DEFAULT_MEASURES = { "S": { pecho: "00", largo: "00", ancho: "00" }, "M": { pecho: "00", largo: "00", ancho: "00" }, "L": { pecho: "00", largo: "00", ancho: "00" }, "XL": { pecho: "00", largo: "00", ancho: "00" } };
 
-        let inventario = [];
-        let config = { ...DEFAULT_CONFIG };
-        let carrito = [];
-        let currentModalImages = [];
-        let currentImageIndex = 0;
-        let hasCheckedUrlParams = false; 
-        let productQuantity = 1;
-        let touchStartX = 0; let touchEndX = 0;
+        let inventario = []; let pedidosList = []; let config = { ...DEFAULT_CONFIG };
+        let selectedBase64Imgs = []; let selectedHeroImg = ""; let editId = null;
+        
+        let currentFormSizes = ["S", "M", "L", "XL"];
+        let currentFormColumns = ["Pecho", "Largo", "Ancho"];
 
         function init() {
-            applyConfig(); escucharFirebase(); escucharHero(); escucharConfigGlobal(); renderCarrito();
+            auth.onAuthStateChanged((user) => {
+                if (user) {
+                    document.getElementById('login-modal').classList.remove('active'); document.getElementById('admin').style.display = 'block'; setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
+                    renderMedidasForm(); escucharConfigGlobal(); escucharFirebase(); escucharPedidos();
+                } else {
+                    document.getElementById('admin').classList.remove('active'); document.getElementById('admin').style.display = 'none'; document.getElementById('login-modal').classList.add('active');
+                }
+            });
         }
 
-        function toggleMobileMenu() { document.getElementById('mobile-menu').classList.toggle('active'); }
-
-        function abrirMisPedidos() {
-            renderMisPedidos();
-            document.getElementById('mis-pedidos-modal').classList.add('active');
+        function validateAdmin() {
+            const email = document.getElementById('admin-email-input').value.trim(); const pass = document.getElementById('admin-pass-input').value;
+            if(!email || !pass) return;
+            auth.signInWithEmailAndPassword(email, pass).then(() => { document.getElementById('login-error').classList.add('hidden'); document.getElementById('admin-pass-input').value = ""; Toast.fire({ icon: 'success', title: 'Panel activado' }); })
+            .catch(() => { document.getElementById('login-error').classList.remove('hidden'); });
         }
-        function cerrarMisPedidos(e) { if(e) e.stopPropagation(); document.getElementById('mis-pedidos-modal').classList.remove('active'); }
-        
-        function renderMisPedidos() {
-            const lista = document.getElementById('lista-mis-pedidos');
-            const historial = JSON.parse(localStorage.getItem('ng_pedidos') || '[]');
+        function logoutAdmin() { auth.signOut(); }
+
+        // --- SISTEMA DE PEDIDOS Y FACTURAS ---
+        function escucharPedidos() {
+            db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
+                pedidosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                renderPedidosList();
+                renderFacturasList();
+            }, (error) => {
+                console.error("Error al obtener pedidos:", error);
+                Toast.fire({ icon: 'error', title: 'Error al cargar pedidos' });
+            });
+        }
+
+        function renderPedidosList() {
+            const list = document.getElementById('admin-pedidos-list');
+            const badge = document.getElementById('badge-pedidos');
             
-            if(historial.length === 0) {
-                lista.innerHTML = `<div class="text-center py-8"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">No tienes pedidos recientes</p></div>`;
+            const pedidosPendientes = pedidosList.filter(p => p.estado !== 'despachado');
+
+            if(pedidosPendientes.length > 0) {
+                badge.classList.remove('hidden'); badge.innerText = pedidosPendientes.length;
+            } else {
+                badge.classList.add('hidden');
+            }
+
+            if(pedidosPendientes.length === 0) {
+                list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay pedidos nuevos</p></div>`;
                 return;
             }
 
-            lista.innerHTML = historial.reverse().map(pedido => `
-                <div class="bg-darker border border-white/10 p-4 rounded-lg mb-3">
-                    <div class="flex justify-between items-center mb-3 border-b border-white/5 pb-2">
-                        <span class="text-primary text-[10px] font-bold uppercase tracking-widest">Pedido: ${pedido.idPedido}</span>
-                        <span class="text-gray-500 text-[9px]">${new Date(pedido.fecha).toLocaleDateString()}</span>
-                    </div>
-                    <div class="space-y-3 mb-3">
-                        ${pedido.items.map(item => `
-                            <div class="flex items-center gap-3 bg-dark border border-white/5 p-2 rounded">
-                                <div class="w-10 h-10 bg-darker rounded border border-white/10 overflow-hidden shrink-0"><img src="${item.img}" class="w-full h-full object-cover"></div>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-white text-[10px] font-bold uppercase truncate">${item.titulo}</p>
-                                    <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white notranslate">${item.talla}</span> | Cant: <span class="text-primary">x${item.cantidad}</span></p>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                    <div class="text-right border-t border-white/5 pt-3"><span class="text-primary font-bold text-sm">Total: L${pedido.total.toFixed(2)}</span></div>
-                </div>
-            `).join('');
-        }
-        
-        function limpiarMisPedidos() {
-            localStorage.removeItem('ng_pedidos');
-            renderMisPedidos();
-            Toast.fire({icon: 'info', title: 'Historial borrado'});
-        }
-
-        function escucharConfigGlobal() {
-            db.collection("config").doc("global").onSnapshot((doc) => {
-                if (doc.exists) { config = { ...config, ...doc.data() }; applyConfig(); renderFilters(); } 
-                else { applyConfig(); renderFilters(); }
-            });
-        }
-
-        function escucharFirebase() {
-            db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
-                inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                
-                inventario.sort((a, b) => {
-                    if (a.isPresale && !b.isPresale) return -1;
-                    if (!a.isPresale && b.isPresale) return 1;
-                    return 0; 
-                });
-
-                renderGallery();
-                
-                if (!hasCheckedUrlParams && inventario.length > 0) {
-                    const params = new URLSearchParams(window.location.search);
-                    const prodId = params.get('producto');
-                    if (prodId) {
-                        const productExists = inventario.find(p => p.id === prodId);
-                        if (productExists) setTimeout(() => openModalById(prodId), 400); 
-                        else window.history.pushState({}, '', window.location.pathname);
-                    }
-                    hasCheckedUrlParams = true;
-                }
-            }, (error) => console.error("Error Firebase:", error));
-        }
-
-        function escucharHero() {
-            db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; applyConfig(); } });
-        }
-
-        function showSection(id) {
-            document.querySelectorAll('.section-fade').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; });
-            const target = document.getElementById(id);
-            if(target) { target.style.display = 'block'; setTimeout(() => target.classList.add('active'), 50); }
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        }
-
-        function renderGallery() {
-            const grid = document.getElementById('gallery-grid');
-            if(!grid) return;
-            
-            if(inventario.length === 0) {
-                 grid.innerHTML = '<div class="col-span-full text-center py-20"><p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Catálogo vacío</p></div>';
-                 return;
-            }
-            
-            // SE ADAPTAN FUENTES Y PADDING PARA MEJORAR EL RESPONSIVE EN CARDS MÁS PEQUEÑAS
-            grid.innerHTML = inventario.map(prod => {
-                const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
-                let badgeHTML = '';
-                
-                if (prod.isPresale) {
-                    badgeHTML = `<div class="status-badge bg-blue-600 text-white shadow-lg"><i class="fas fa-clock mr-1"></i> Próximamente</div>`;
-                } else if (prod.stock !== undefined && prod.stock <= 0) {
-                    badgeHTML = `<div class="status-badge bg-red-600 text-white shadow-lg">Agotado</div>`;
-                }
+            list.innerHTML = pedidosPendientes.map(pedido => {
+                const dateStr = (pedido.createdAt && typeof pedido.createdAt.toDate === 'function') 
+                    ? new Date(pedido.createdAt.toDate()).toLocaleDateString() 
+                    : 'Nuevo / Pendiente';
 
                 return `
-                <div class="gallery-item group cursor-pointer animate-in fade-in duration-500" data-category="${prod.categoria || 'general'}">
-                    <div class="relative aspect-[3/4] overflow-hidden bg-darker border border-white/5 shadow-2xl">
-                        ${badgeHTML}
-                        <img src="${coverImg}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105">
-                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                <div class="bg-darker border border-white/5 p-6 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-xl relative overflow-hidden">
+                    <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500/50"></div>
+                    <div class="flex-1 w-full">
+                        <div class="flex justify-between items-center border-b border-white/5 pb-2 mb-3">
+                            <h4 class="text-primary text-sm font-bold uppercase tracking-widest">PEDIDO: ${pedido.idPedido || 'S/N'}</h4>
+                            <span class="text-[10px] text-gray-500 font-bold"><i class="fas fa-clock text-red-500 mr-1"></i> ${dateStr}</span>
+                        </div>
+                        <p class="text-white text-xs mb-1 uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
+                        ${pedido.mensaje ? `<p class="text-gray-400 text-[10px] italic mb-3 bg-white/5 p-2 rounded border-l-2 border-primary">" ${pedido.mensaje} "</p>` : ''}
                         
-                        <div class="absolute bottom-4 left-4 right-4 translate-y-12 group-hover:translate-y-0 transition-transform duration-500 ease-out z-20">
-                            <button onclick="openModalById('${prod.id}')" class="w-full bg-white text-dark py-2 md:py-3 font-bold uppercase text-[9px] md:text-[10px] tracking-widest hover:bg-primary transition-colors shadow-lg">Ver Detalles</button>
+                        <div class="bg-black/30 p-3 rounded space-y-2 mt-3">
+                            ${(pedido.items || []).map(i => `
+                                <div class="flex items-center gap-3 bg-darker border border-white/5 p-2 rounded">
+                                    <div class="w-10 h-10 bg-dark rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover"></div>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-white text-[10px] font-bold uppercase truncate">${i.titulo}</p>
+                                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white notranslate">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p>
+                                    </div>
+                                </div>
+                            `).join('')}
                         </div>
                     </div>
-                    <div class="mt-4 flex justify-between items-start">
-                        <div class="overflow-hidden">
-                            <h3 class="text-white font-medium uppercase tracking-widest text-xs md:text-sm truncate pr-2">${prod.titulo}</h3>
-                            <p class="text-gray-500 text-[8px] md:text-[9px] uppercase font-bold mt-1">${prod.categoria || 'General'}</p>
+                    
+                    <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
+                        <p class="text-2xl text-white font-serif font-bold w-full text-right sm:text-left mb-2 sm:mb-0">L${(pedido.total || 0).toFixed(2)}</p>
+                        <div class="flex gap-2 w-full sm:w-auto">
+                            <button onclick="cancelarPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded shadow-xl" title="Cancelar sin rebajar inventario">
+                                <i class="fas fa-times"></i> Cancelar
+                            </button>
+                            <button onclick="despacharPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all flex items-center justify-center gap-2 rounded shadow-xl" title="Despachar y guardar factura">
+                                <i class="fas fa-check-double"></i> Despachar
+                            </button>
                         </div>
-                        <span class="text-primary font-bold whitespace-nowrap text-xs md:text-base">${prod.precio}</span>
                     </div>
                 </div>
             `}).join('');
-            
-            renderFilters();
         }
 
-        function renderFilters() {
-            const filters = document.getElementById('filter-container');
-            if(!filters) return;
-            const catsToUse = config.categories || [];
-            filters.innerHTML = `
-                <button onclick="filterGallery('all', event)" class="filter-btn text-primary border-b border-primary pb-1 transition-all font-bold">Todos</button>
-                ${catsToUse.map(cat => `<button onclick="filterGallery('${cat}', event)" class="filter-btn hover:text-white pb-1 transition-all uppercase font-bold text-gray-500">${cat}</button>`).join('')}
-            `;
-        }
+        function renderFacturasList() {
+            const list = document.getElementById('admin-facturas-list');
+            const facturas = pedidosList.filter(p => p.estado === 'despachado');
 
-        function filterGallery(cat, e) {
-            document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('text-primary', 'border-primary', 'font-bold'); b.classList.add('text-gray-500'); });
-            e.target.classList.remove('text-gray-500'); e.target.classList.add('text-primary', 'border-primary', 'font-bold');
-            const grid = document.getElementById('gallery-grid');
-            grid.style.opacity = '0';
-            setTimeout(() => {
-                document.querySelectorAll('.gallery-item').forEach(item => { item.style.display = (cat === 'all' || item.dataset.category === cat) ? 'block' : 'none'; });
-                grid.style.opacity = '1';
-            }, 300);
-        }
-
-        function openModalById(id) {
-            const p = inventario.find(x => x.id === id);
-            if(!p) return;
-            window.lastViewedProduct = p; window.history.pushState({ productId: id }, '', `?producto=${id}`);
-
-            productQuantity = 1; document.getElementById('modal-quantity').innerText = productQuantity;
-            currentModalImages = p.imagenes && p.imagenes.length > 0 ? p.imagenes : [p.imagen]; currentImageIndex = 0;
-            updateCarouselView();
-
-            document.getElementById('modal-title').innerText = p.titulo;
-            document.getElementById('modal-sku-display').innerText = p.sku ? `SKU: ${p.sku}` : '';
-            document.getElementById('modal-desc').innerText = p.descripcion;
-            document.getElementById('modal-price').innerText = p.precio;
-            document.getElementById('modal-cat').innerText = p.categoria || 'General';
-            
-            const btnAddCart = document.getElementById('btn-add-cart');
-            const msgDisabled = document.getElementById('modal-disabled-msg');
-            const qtyContainer = document.getElementById('modal-quantity-container');
-            const badge = document.getElementById('modal-status-badge');
-            
-            badge.classList.remove('hidden', 'bg-blue-600', 'bg-red-600', 'text-white');
-            
-            if (p.isPresale) {
-                badge.classList.add('bg-blue-600', 'text-white'); badge.innerText = "Próximamente";
-                btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden');
-                msgDisabled.innerText = "Disponible Próximamente";
-            } else if (p.stock !== undefined && p.stock <= 0) {
-                badge.classList.add('bg-red-600', 'text-white'); badge.innerText = "Agotado";
-                btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden');
-                msgDisabled.innerText = "Producto Agotado";
-            } else {
-                badge.classList.add('hidden');
-                btnAddCart.classList.remove('hidden'); msgDisabled.classList.add('hidden'); qtyContainer.classList.remove('hidden');
+            if(facturas.length === 0) {
+                list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-archive text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay facturas registradas</p></div>`;
+                return;
             }
+
+            list.innerHTML = facturas.map(pedido => {
+                const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') 
+                    ? new Date(pedido.despachadoAt.toDate()).toLocaleString() 
+                    : 'Fecha desconocida';
+
+                return `
+                <div class="bg-darker border border-white/5 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl opacity-80 hover:opacity-100 transition-opacity">
+                    <div class="flex-1 w-full">
+                        <div class="flex justify-between items-center mb-1">
+                            <h4 class="text-white text-sm font-bold uppercase tracking-widest"><i class="fas fa-file-alt text-gray-600 mr-2"></i>FACTURA: ${pedido.idPedido || 'S/N'}</h4>
+                            <p class="text-primary font-serif font-bold">L${(pedido.total || 0).toFixed(2)}</p>
+                        </div>
+                        <p class="text-gray-400 text-[10px] uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
+                        <p class="text-gray-500 text-[9px] mt-1"><i class="fas fa-calendar-check text-green-500/50 w-4"></i> Despachado: ${dateStr}</p>
+                    </div>
+                    
+                    <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
+                        <button onclick="imprimirFactura('${pedido.id}')" class="flex-1 md:flex-none bg-blue-900/30 text-blue-400 border border-blue-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all rounded shadow-xl">
+                            <i class="fas fa-print"></i> Imprimir
+                        </button>
+                        <button onclick="eliminarFactura('${pedido.id}')" class="flex-1 md:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-red-600 hover:text-white transition-all rounded shadow-xl" title="Eliminar del historial permanente">
+                            <i class="fas fa-trash"></i> Eliminar
+                        </button>
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function cancelarPedido(docId) {
+            DarkAlert.fire({
+                title: '¿Cancelar Pedido?', 
+                text: "El pedido se eliminará por completo.", 
+                icon: 'warning',
+                showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Sí, Cancelar', cancelButtonText: 'Atrás'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    db.collection("pedidos").doc(docId).delete().then(() => {
+                        Toast.fire({ icon: 'info', title: 'Pedido cancelado' });
+                    }).catch(error => {
+                        DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message });
+                    });
+                }
+            });
+        }
+
+        function despacharPedido(docId) {
+            const pedido = pedidosList.find(p => p.id === docId);
+            if(!pedido) return;
+
+            DarkAlert.fire({
+                title: '¿Despachar Pedido?', 
+                text: "Esto rebajará el inventario y moverá el pedido a Facturas.", 
+                icon: 'question',
+                showCancelButton: true, confirmButtonText: '<i class="fas fa-check-double"></i> Despachar', cancelButtonText: 'Atrás'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    const batch = db.batch();
+                    
+                    (pedido.items || []).forEach(item => {
+                        const prodInStock = inventario.find(p => p.id === item.id);
+                        if(prodInStock) {
+                            const prodRef = db.collection("productos").doc(item.id);
+                            let newStock = (prodInStock.stock || 0) - item.cantidad;
+                            if(newStock < 0) newStock = 0; 
+                            batch.update(prodRef, { stock: newStock });
+                        }
+                    });
+
+                    const orderRef = db.collection("pedidos").doc(docId);
+                    batch.update(orderRef, { 
+                        estado: 'despachado',
+                        despachadoAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    batch.commit().then(() => {
+                        Toast.fire({ icon: 'success', title: 'Despachado con éxito' });
+                    }).catch(error => {
+                        DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message });
+                    });
+                }
+            });
+        }
+
+        function eliminarFactura(docId) {
+            DarkAlert.fire({
+                title: '¿Borrar Factura?', 
+                text: "Esta acción no se puede deshacer y borrará el registro del historial.", 
+                icon: 'warning',
+                showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Eliminar Permanentemente', cancelButtonText: 'Atrás'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    db.collection("pedidos").doc(docId).delete().then(() => {
+                        Toast.fire({ icon: 'info', title: 'Factura eliminada' });
+                    });
+                }
+            });
+        }
+
+        function imprimirFactura(docId) {
+            const f = pedidosList.find(p => p.id === docId);
+            if(!f) return;
             
-            const measuresContainer = document.getElementById('modal-measures-container');
-            const tallaSelectContainer = document.getElementById('modal-talla-select-container');
+            const dateStr = (f.despachadoAt && f.despachadoAt.toDate) ? new Date(f.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
             
-            if(p.hasMeasures && p.tallas && p.tallas.length > 0) {
-                measuresContainer.classList.remove('hidden');
-                
-                const cols = p.columnas && p.columnas.length > 0 ? p.columnas : ['Pecho', 'Largo', 'Ancho'];
-                
-                document.getElementById('modal-measures-head').innerHTML = `<th class="py-2 pr-2 w-16">Talla</th>` + cols.map(c => `<th class="py-2 px-1 text-center whitespace-nowrap">${c}</th>`).join('');
-                
-                // Aplicación clase notranslate para evitar problemas M -> Metro
-                document.getElementById('modal-measures-body').innerHTML = p.tallas.map(t => {
-                    const m = p.medidas && p.medidas[t] ? p.medidas[t] : {};
-                    const tds = cols.map(c => {
-                        const val = m[c] !== undefined ? m[c] : (m[c.toLowerCase()] !== undefined ? m[c.toLowerCase()] : '-');
-                        return `<td class="py-3 px-1 text-center text-gray-400 font-bold whitespace-nowrap">${val}</td>`;
-                    }).join('');
-                    return `<tr class="hover:bg-white/5 transition-colors"><td class="notranslate py-3 pr-2 text-primary font-bold whitespace-nowrap">${t}</td>${tds}</tr>`;
+            const itemsHtml = (f.items || []).map(i => {
+                const pNum = parseFloat(i.precio.replace(/[^0-9.-]+/g,"")) || 0;
+                return `
+                <tr style="border-bottom: 1px solid #ddd;">
+                    <td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;">Talla: <span class="notranslate">${i.talla}</span></small></td>
+                    <td style="text-align: center; font-size: 12px;">${i.cantidad}</td>
+                    <td style="text-align: right; font-size: 12px;">L${(pNum * i.cantidad).toFixed(2)}</td>
+                </tr>`;
+            }).join('');
+
+            // APLICACIÓN DE TEXTOS DE CONFIGURACIÓN
+            const headerText = config.invoiceHeader || DEFAULT_CONFIG.invoiceHeader;
+            const footerText = (config.invoiceFooter || DEFAULT_CONFIG.invoiceFooter).replace(/\n/g, '<br>');
+
+            const ticketHtml = `
+                <div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;">
+                    <h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2>
+                    <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${headerText}</p>
+                    
+                    <hr style="border: 1px dashed #000; margin: 15px 0;">
+                    
+                    <p style="font-size: 13px; margin: 5px 0;"><strong>FACTURA:</strong> ${f.idPedido}</p>
+                    <p style="font-size: 13px; margin: 5px 0;"><strong>CLIENTE:</strong> ${f.cliente}</p>
+                    <p style="font-size: 13px; margin: 5px 0;"><strong>FECHA:</strong> ${dateStr}</p>
+                    
+                    <hr style="border: 1px dashed #000; margin: 15px 0;">
+                    
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #000;">
+                                <th style="text-align: left; padding-bottom: 5px; font-size: 12px;">DESC.</th>
+                                <th style="text-align: center; padding-bottom: 5px; font-size: 12px;">CANT</th>
+                                <th style="text-align: right; padding-bottom: 5px; font-size: 12px;">SUB</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${itemsHtml}
+                        </tbody>
+                    </table>
+                    
+                    <hr style="border: 1px dashed #000; margin: 15px 0;">
+                    
+                    <h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: L${(f.total || 0).toFixed(2)}</h3>
+                    
+                    <p style="text-align: center; margin-top: 30px; font-size: 11px;">${footerText}</p>
+                </div>
+            `;
+            
+            const printDiv = document.getElementById('printable-invoice');
+            printDiv.innerHTML = ticketHtml;
+            window.print();
+        }
+
+        // --- SISTEMA INVENTARIO Y UI ADMIN ---
+        function escucharFirebase() { db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); }); }
+        function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
+        function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderHeroConfig(); } }); }
+
+        function showAdminTab(tab, event) {
+            document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`tab-${tab}`).classList.remove('hidden'); if(event) event.currentTarget.classList.add('active');
+        }
+
+        function compressAndAddImages(input) {
+            if (!input.files || input.files.length === 0) return;
+            document.getElementById('img-loading').classList.remove('hidden');
+            let filesProcessed = 0; const totalFiles = input.files.length;
+
+            Array.from(input.files).forEach(file => {
+                const reader = new FileReader(); reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image(); img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
+                        if (w > h) { if (w > 800) { h *= 800 / w; w = 800; } } else { if (h > 1000) { w *= 1000 / h; h = 1000; } }
+                        canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+                        selectedBase64Imgs.push(canvas.toDataURL('image/jpeg', 0.8)); filesProcessed++;
+                        if (filesProcessed === totalFiles) { renderThumbnails(); document.getElementById('img-loading').classList.add('hidden'); }
+                    }
+                };
+            });
+            input.value = ""; 
+        }
+
+        function removeImage(index) { selectedBase64Imgs.splice(index, 1); renderThumbnails(); }
+        
+        function moveImageLeft(index) {
+            if (index <= 0) return;
+            const temp = selectedBase64Imgs[index];
+            selectedBase64Imgs[index] = selectedBase64Imgs[index - 1];
+            selectedBase64Imgs[index - 1] = temp;
+            renderThumbnails();
+        }
+
+        function moveImageRight(index) {
+            if (index >= selectedBase64Imgs.length - 1) return;
+            const temp = selectedBase64Imgs[index];
+            selectedBase64Imgs[index] = selectedBase64Imgs[index + 1];
+            selectedBase64Imgs[index + 1] = temp;
+            renderThumbnails();
+        }
+
+        function renderThumbnails() {
+            const c = document.getElementById('thumbnails-container');
+            if (selectedBase64Imgs.length === 0) return c.innerHTML = `<p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6">Aún no hay imágenes seleccionadas</p>`;
+            
+            c.innerHTML = selectedBase64Imgs.map((imgSrc, index) => `
+            <div class="img-thumb-container group relative">
+                <img src="${imgSrc}">
+                ${index === 0 ? '<div class="absolute bottom-0 left-0 right-0 bg-primary text-dark text-[8px] font-bold text-center uppercase tracking-widest">Portada</div>' : ''}
+                <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                    ${index > 0 ? `<button type="button" onclick="moveImageLeft(${index})" class="text-white hover:text-primary transition-colors"><i class="fas fa-chevron-left text-sm"></i></button>` : `<span class="w-3"></span>`}
+                    <button type="button" onclick="removeImage(${index})" class="text-red-500 hover:text-red-400 transition-colors"><i class="fas fa-trash text-sm"></i></button>
+                    ${index < selectedBase64Imgs.length - 1 ? `<button type="button" onclick="moveImageRight(${index})" class="text-white hover:text-primary transition-colors"><i class="fas fa-chevron-right text-sm"></i></button>` : `<span class="w-3"></span>`}
+                </div>
+            </div>`).join('');
+        }
+        
+        function toggleMeasuresVisibility() { document.getElementById('measures-config-panel').style.display = document.getElementById('toggle-measures').checked ? 'block' : 'none'; }
+
+        function addNewSizeToForm() {
+            const input = document.getElementById('new-size-input');
+            const val = input.value.trim().toUpperCase();
+            if(!val) return;
+            if(!currentFormSizes.includes(val)) {
+                currentFormSizes.push(val);
+                renderMedidasForm();
+            } else { Toast.fire({ icon: 'info', title: 'La talla ya existe' }); }
+            input.value = "";
+        }
+
+        function removeSizeFromForm(size) {
+            currentFormSizes = currentFormSizes.filter(s => s !== size);
+            renderMedidasForm();
+        }
+
+        function addNewColumnToForm() {
+            const input = document.getElementById('new-column-input');
+            const val = input.value.trim();
+            const formattedVal = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
+            if(!formattedVal) return;
+            if(!currentFormColumns.includes(formattedVal)) {
+                currentFormColumns.push(formattedVal);
+                renderMedidasForm();
+            } else { Toast.fire({ icon: 'info', title: 'La columna ya existe' }); }
+            input.value = "";
+        }
+
+        function removeColumnFromForm(col) {
+            if(currentFormColumns.length <= 1) return Toast.fire({ icon: 'warning', title: 'Mínimo 1 columna requerida' });
+            currentFormColumns = currentFormColumns.filter(c => c !== col);
+            renderMedidasForm();
+        }
+
+        function renderMedidasForm() {
+            const currentValues = {};
+            currentFormSizes.forEach(s => {
+                const safeS = s.replace(/[^a-zA-Z0-9_-]/g, '');
+                currentValues[s] = {};
+                currentFormColumns.forEach(c => {
+                    const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
+                    const el = document.getElementById(`measure-${safeS}-${safeC}`);
+                    if (el) currentValues[s][c] = el.value;
+                });
+            });
+
+            let headerHTML = `<div class="flex items-center gap-2 mb-2 pr-8">
+                <div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div>
+                <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">`;
+            
+            currentFormColumns.forEach(c => {
+                headerHTML += `<div class="relative group text-center">
+                    <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold inline-block truncate w-full" title="${c}">${c}</p>
+                    <button onclick="removeColumnFromForm('${c}')" class="absolute -top-2 -right-2 text-red-500 hidden group-hover:flex bg-darker border border-white/10 rounded-full w-4 h-4 text-[8px] items-center justify-center cursor-pointer"><i class="fas fa-times"></i></button>
+                </div>`;
+            });
+            headerHTML += `</div></div>`;
+
+            let rowsHTML = currentFormSizes.map(t => {
+                const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
+                let inputsHTML = currentFormColumns.map(c => {
+                    const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
+                    let defaultVal = "00";
+                    if (currentValues[t] && currentValues[t][c] !== undefined) {
+                        defaultVal = currentValues[t][c];
+                    } else if (!editId && DEFAULT_MEASURES[t] && DEFAULT_MEASURES[t][c.toLowerCase()]) {
+                        defaultVal = DEFAULT_MEASURES[t][c.toLowerCase()];
+                    }
+                    return `<input type="text" id="measure-${safeT}-${safeC}" placeholder="${c.charAt(0)}" class="measure-input rounded w-full" value="${defaultVal}">`;
                 }).join('');
 
-                tallaSelectContainer.classList.remove('hidden');
-                document.getElementById('modal-talla').innerHTML = '<option value="" disabled selected>Elige una talla</option>' + p.tallas.map(t => `<option value="${t}">${t}</option>`).join('');
-                document.getElementById('modal-talla').classList.remove('border-red-500');
-            } else {
-                measuresContainer.classList.add('hidden'); tallaSelectContainer.classList.add('hidden');
-            }
-            
-            document.getElementById('product-modal').classList.add('active');
-        }
-
-        function updateQuantity(change) {
-            productQuantity += change;
-            if(productQuantity < 1) productQuantity = 1;
-            if(productQuantity > 20) productQuantity = 20;
-            document.getElementById('modal-quantity').innerText = productQuantity;
-        }
-
-        function handleTouchStart(e) { touchStartX = e.changedTouches[0].screenX; }
-        function handleTouchEnd(e) { touchEndX = e.changedTouches[0].screenX; handleSwipe(); }
-        function handleSwipe() {
-            if(currentModalImages.length <= 1) return;
-            const th = 50;
-            if (touchEndX < touchStartX - th) changeImage(1); 
-            if (touchEndX > touchStartX + th) changeImage(-1);
-        }
-
-        // COMPARTIR POR API WEB SHARE (General)
-        function shareProduct() {
-            const url = window.location.href;
-            const textToShare = config.shareText || DEFAULT_CONFIG.shareText;
-            if (navigator.share) {
-                navigator.share({ title: `NEW GATE: ${window.lastViewedProduct.titulo}`, text: textToShare, url: url }).catch(console.error);
-            } else {
-                navigator.clipboard.writeText(`${textToShare} ${url}`).then(() => Toast.fire({ icon: 'success', title: 'Enlace copiado' }));
-            }
-        }
-
-        // COMPARTIR DIRECTAMENTE A WHATSAPP
-        function shareProductWA() {
-            const url = window.location.href;
-            const textToShare = config.shareText || DEFAULT_CONFIG.shareText;
-            const waUrl = `https://wa.me/?text=${encodeURIComponent(textToShare + ' ' + url)}`;
-            window.open(waUrl, '_blank');
-        }
-
-        function closeModal(e) { window.history.pushState({}, '', window.location.pathname); document.getElementById('product-modal').classList.remove('active'); }
-        window.addEventListener('popstate', (event) => { const params = new URLSearchParams(window.location.search); const prodId = params.get('producto'); if(prodId) openModalById(prodId); else document.getElementById('product-modal').classList.remove('active'); });
-
-        function changeImage(dir) {
-            currentImageIndex += dir;
-            if (currentImageIndex >= currentModalImages.length) currentImageIndex = 0;
-            if (currentImageIndex < 0) currentImageIndex = currentModalImages.length - 1;
-            updateCarouselView();
-        }
-
-        function updateCarouselView() {
-            const imgElement = document.getElementById('modal-img');
-            const loader = document.getElementById('modal-img-loader');
-            imgElement.style.opacity = 0; loader.classList.remove('hidden');
-            const newImg = new Image(); newImg.src = currentModalImages[currentImageIndex];
-            newImg.onload = () => { imgElement.src = newImg.src; loader.classList.add('hidden'); imgElement.style.opacity = 1; };
-            const prevBtn = document.getElementById('btn-prev-img'), nextBtn = document.getElementById('btn-next-img'), dotsContainer = document.getElementById('carousel-dots');
-            if (currentModalImages.length > 1) {
-                prevBtn.classList.remove('hidden'); nextBtn.classList.remove('hidden');
-                dotsContainer.innerHTML = currentModalImages.map((_, idx) => `<span class="dot ${idx === currentImageIndex ? 'active' : ''}"></span>`).join('');
-            } else { prevBtn.classList.add('hidden'); nextBtn.classList.add('hidden'); dotsContainer.innerHTML = ''; }
-        }
-
-        function agregarAlPedido() {
-            const p = window.lastViewedProduct;
-            if (p.isPresale || (p.stock !== undefined && p.stock <= 0)) return;
-
-            let tallaElegida = "Única";
-            if (p.hasMeasures && p.tallas && p.tallas.length > 0) {
-                const select = document.getElementById('modal-talla');
-                if (!select.value) { select.classList.add('border-red-500'); setTimeout(() => select.classList.remove('border-red-500'), 1500); return Toast.fire({ icon: 'warning', title: 'Debes seleccionar una talla' }); }
-                tallaElegida = select.value;
-            }
-
-            const existingItemIndex = carrito.findIndex(item => item.id === p.id && item.talla === tallaElegida);
-            if (existingItemIndex !== -1) carrito[existingItemIndex].cantidad += productQuantity;
-            else carrito.push({ id: p.id, titulo: p.titulo, sku: p.sku || '', precio: p.precio, talla: tallaElegida, cantidad: productQuantity, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen });
-
-            const btn = document.getElementById('btn-add-cart'); const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-check"></i> ¡Añadido!`; btn.classList.add('bg-white');
-            renderCarrito(); Toast.fire({ icon: 'success', title: 'Añadido a tu pedido' });
-            setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('bg-white'); closeModal(); }, 1000);
-        }
-
-        function eliminarDelPedido(index) { carrito.splice(index, 1); renderCarrito(); Toast.fire({ icon: 'info', title: 'Artículo removido' }); }
-
-        function renderCarrito() {
-            const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
-            document.getElementById('cart-count').innerText = totalItems; document.getElementById('cart-count-mobile').innerText = totalItems;
-            const container = document.getElementById('carrito-list'); const totalContainer = document.getElementById('cart-total');
-            
-            if (carrito.length === 0) {
-                container.innerHTML = `<div class="text-center py-6 border border-dashed border-white/10 rounded"><i class="fas fa-shopping-bag text-2xl text-white/10 mb-2"></i><p class="text-gray-500 text-[10px] uppercase tracking-widest font-bold">Tu carrito está vacío</p></div>`;
-                totalContainer.innerText = "L0.00"; return;
-            }
-
-            let total = 0;
-            container.innerHTML = carrito.map((item, index) => {
-                const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
-                const subtotalItem = precioNum * item.cantidad; total += subtotalItem;
-                return `
-                <div class="flex items-center gap-4 bg-darker border border-white/5 p-3 rounded group relative">
-                    <div class="w-12 h-12 bg-dark rounded border border-white/10 overflow-hidden shrink-0 relative"><img src="${item.img}" class="w-full h-full object-cover"><div class="absolute bottom-0 right-0 bg-primary text-dark text-[8px] font-bold px-1 rounded-tl">x${item.cantidad}</div></div>
-                    <div class="flex-1 min-w-0"><p class="text-white text-[11px] font-bold uppercase truncate">${item.titulo}</p>
-                        <div class="flex justify-between items-center mt-0.5"><p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white font-bold notranslate">${item.talla}</span></p><p class="text-primary text-[10px] font-bold">L${subtotalItem.toFixed(2)}</p></div>
+                return `<div class="flex items-center gap-2 mb-2">
+                    <div class="w-12">
+                        <input type="checkbox" id="t-${safeT}" value="${t}" checked class="hidden">
+                        <!-- class notranslate aplicada para proteger M -> Metro -->
+                        <label for="t-${safeT}" class="notranslate block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1" title="${t}">${t}</label>
                     </div>
-                    <button onclick="eliminarDelPedido(${index})" class="text-red-500 bg-red-500/10 w-8 h-8 rounded shrink-0"><i class="fas fa-trash-alt"></i></button>
+                    <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">
+                        ${inputsHTML}
+                    </div>
+                    <button onclick="removeSizeFromForm('${t}')" class="w-6 text-red-500 hover:text-red-400 p-1 flex justify-center cursor-pointer"><i class="fas fa-trash text-xs"></i></button>
                 </div>`;
             }).join('');
-            totalContainer.innerText = `L${total.toFixed(2)}`;
+
+            document.getElementById('medidas-inputs-container').innerHTML = headerHTML + rowsHTML;
         }
 
-        function procesarEnvioPedido() {
-            const inputNombre = document.getElementById('cliente-nombre');
-            const n = inputNombre ? inputNombre.value.trim() : "";
-            const m = document.getElementById('mensaje').value.trim();
-            
-            if(!n) { Toast.fire({ icon: 'warning', title: 'Por favor, ingresa tu Nombre' }); return document.getElementById('cliente-nombre').focus(); }
-            if(carrito.length === 0) { Toast.fire({ icon: 'error', title: 'Tu carrito está vacío' }); return; }
-            
-            const btnText = document.getElementById('btn-wa-text');
-            const originalText = btnText.innerText;
-            btnText.innerText = "Abriendo WhatsApp...";
-            
-            const orderId = `NG-${Math.floor(1000 + Math.random() * 9000)}`;
-            let total = 0;
-            
-            let msg = `🔥 *NUEVO PEDIDO: ${orderId}* 🔥\n\n👤 *Cliente:* ${n}\n\n🛍️ *PRODUCTOS:*\n`;
-
-            carrito.forEach((item, index) => {
-                const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
-                const subtotalItem = precioNum * item.cantidad; total += subtotalItem;
-                msg += `${index + 1}. [x${item.cantidad}] ${item.titulo} \n   📏 Talla: *${item.talla}* | 💰 L${subtotalItem.toFixed(2)}\n`;
-            });
-
-            msg += `\n💵 *TOTAL: L${total.toFixed(2)}*\n`;
-            if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
-
-            const pedidoData = {
-                idPedido: orderId, cliente: n || 'Desconocido', mensaje: m, items: carrito, total: total,
-                estado: 'pendiente', createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            db.collection("pedidos").add(pedidoData).catch(error => {
-                console.error("Error al guardar en Firebase", error);
-            });
-            
-            const historialLocal = JSON.parse(localStorage.getItem('ng_pedidos') || '[]');
-            historialLocal.push({ idPedido: orderId, fecha: new Date().toISOString(), items: carrito, total: total });
-            localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
-
-            Toast.fire({ icon: 'success', title: 'Pedido Procesado' });
-            carrito = []; renderCarrito(); document.getElementById('mensaje').value = '';
-            btnText.innerText = originalText;
-
-            const urlWa = `https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`;
-            window.location.href = urlWa;
+        async function uploadImageToStorage(b64, path) {
+            if (!b64.startsWith('data:image')) return b64;
+            const res = await fetch(b64); const blob = await res.blob();
+            const ref = storage.ref().child(path); await ref.put(blob); return await ref.getDownloadURL();
         }
 
-        function applyConfig() {
-            document.getElementById('display-hero-title').innerText = config.heroTitle; document.getElementById('display-hero-subtitle').innerText = config.heroSubtitle;
-            document.getElementById('hero-display').style.backgroundImage = `url('${config.heroImage}')`;
-            document.getElementById('display-shop-slogan').innerText = config.slogan; document.getElementById('display-about-title').innerText = config.aboutTitle; document.getElementById('display-about-desc').innerText = config.aboutDesc;
-            const waLink = document.getElementById('link-whatsapp'); if(waLink) waLink.href = `https://wa.me/${config.whatsapp}`;
-            const igLink = document.getElementById('link-instagram'); if(igLink) { igLink.href = config.instagram !== "#" ? config.instagram : "#"; igLink.style.display = config.instagram === "#" || !config.instagram ? "none" : "inline-block"; }
-            const fbLink = document.getElementById('link-facebook'); if(fbLink) { fbLink.href = config.facebook !== "#" ? config.facebook : "#"; fbLink.style.display = config.facebook === "#" || !config.facebook ? "none" : "inline-block"; }
+        async function addProduct() {
+            const title = document.getElementById('new-title').value.trim();
+            const price = document.getElementById('new-price').value.trim();
+            if(!title || !price || selectedBase64Imgs.length === 0) return Toast.fire({ icon: 'warning', title: 'Faltan campos/fotos' });
+
+            document.getElementById('btn-submit-admin').disabled = true; document.getElementById('btn-submit-loader').style.display = "block";
+
+            try {
+                let docId = editId; let docRef = docId ? db.collection("productos").doc(docId) : db.collection("productos").doc(); docId = docRef.id;
+                const imageUrls = await Promise.all(selectedBase64Imgs.map((b64, idx) => uploadImageToStorage(b64, `productos/${docId}/img_${idx}_${Date.now()}.jpg`)));
+                
+                const hasMeasures = document.getElementById('toggle-measures').checked;
+                const tallas = []; const medidas = {};
+                
+                if(hasMeasures) { 
+                    currentFormSizes.forEach(t => { 
+                        const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
+                        const checkbox = document.getElementById(`t-${safeT}`);
+                        if(checkbox && checkbox.checked) { 
+                            tallas.push(t); 
+                            medidas[t] = {};
+                            currentFormColumns.forEach(c => {
+                                const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
+                                const inputEl = document.getElementById(`measure-${safeT}-${safeC}`);
+                                medidas[t][c] = inputEl ? inputEl.value : "00";
+                            });
+                        } 
+                    }); 
+                }
+
+                const productData = {
+                    sku: document.getElementById('new-sku').value.trim().toUpperCase() || "",
+                    categoria: document.getElementById('new-cat').value || 'general',
+                    titulo: title,
+                    descripcion: document.getElementById('new-desc').value.trim() || "",
+                    precio: price,
+                    stock: parseInt(document.getElementById('new-stock').value) || 0,
+                    isPresale: document.getElementById('toggle-presale').checked,
+                    hasMeasures, tallas, medidas, columnas: currentFormColumns,
+                    imagen: imageUrls[0] || "", imagenes: imageUrls || []         
+                };
+                if (!editId) productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+
+                await docRef.set(productData, { merge: true });
+                Toast.fire({ icon: 'success', title: 'Guardado exitoso' });
+                cancelEdit(); 
+            } catch (error) { DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message }); }
+            finally { document.getElementById('btn-submit-admin').disabled = false; document.getElementById('btn-submit-loader').style.display = "none"; }
+        }
+
+        function deleteProduct(id) {
+            DarkAlert.fire({ title: '¿Eliminar producto?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' })
+            .then((r) => { if (r.isConfirmed) db.collection("productos").doc(id).delete().then(() => Toast.fire({ icon: 'success', title: 'Eliminado' })); });
+        }
+
+        function startEdit(id) {
+            const p = inventario.find(x => x.id === id); if(!p) return;
+            editId = id; showAdminTab('inventario'); window.scrollTo({top: 0, behavior: 'smooth'});
+            document.getElementById('admin-form-container').classList.add('editing-mode');
+            document.getElementById('btn-cancel-edit').classList.remove('hidden');
+
+            document.getElementById('new-title').value = p.titulo || ""; document.getElementById('new-sku').value = p.sku || "";
+            document.getElementById('new-price').value = p.precio || ""; document.getElementById('new-desc').value = p.descripcion || "";
+            if (p.categoria) document.getElementById('new-cat').value = p.categoria;
+            
+            document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 10;
+            document.getElementById('toggle-presale').checked = !!p.isPresale;
+            
+            document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
+            selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []); renderThumbnails();
+            
+            currentFormSizes = ["S", "M", "L", "XL"];
+            currentFormColumns = p.columnas && p.columnas.length > 0 ? p.columnas : ["Pecho", "Largo", "Ancho"];
+
+            if(p.hasMeasures && p.tallas) { 
+                p.tallas.forEach(t => { if(!currentFormSizes.includes(t)) currentFormSizes.push(t); });
+            }
+            renderMedidasForm();
+            
+            if(p.hasMeasures && p.tallas) { 
+                currentFormSizes.forEach(t => { 
+                    const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
+                    const checkbox = document.getElementById(`t-${safeT}`);
+                    if(checkbox) {
+                        checkbox.checked = p.tallas.includes(t); 
+                        if(p.medidas && p.medidas[t]) { 
+                            currentFormColumns.forEach(c => {
+                                const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
+                                const el = document.getElementById(`measure-${safeT}-${safeC}`);
+                                const val = p.medidas[t][c] !== undefined ? p.medidas[t][c] : (p.medidas[t][c.toLowerCase()] !== undefined ? p.medidas[t][c.toLowerCase()] : "00");
+                                if(el) el.value = val;
+                            });
+                        } 
+                    }
+                }); 
+            }
+        }
+
+        function cancelEdit() {
+            editId = null; document.getElementById('admin-form-container').classList.remove('editing-mode');
+            document.getElementById('btn-cancel-edit').classList.add('hidden');
+            
+            document.getElementById('new-title').value = ""; document.getElementById('new-sku').value = "";
+            document.getElementById('new-price').value = ""; document.getElementById('new-desc').value = "";
+            document.getElementById('new-stock').value = "10"; document.getElementById('toggle-presale').checked = false;
+            document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
+            
+            selectedBase64Imgs = []; renderThumbnails(); 
+            currentFormSizes = ["S", "M", "L", "XL"]; 
+            currentFormColumns = ["Pecho", "Largo", "Ancho"]; 
+            renderMedidasForm();
+        }
+
+        function renderAdminList() {
+            const list = document.getElementById('admin-list'); const term = (document.getElementById('search-inventory').value || "").toLowerCase();
+            
+            const filt = inventario.filter(p => 
+                (p.titulo || "").toLowerCase().includes(term) || 
+                (p.sku || "").toLowerCase().includes(term) ||
+                (p.categoria || "").toLowerCase().includes(term)
+            );
+
+            document.getElementById('inventory-count').innerText = `${filt.length} Productos`;
+            if(filt.length === 0) return list.innerHTML = `<p class="col-span-full text-gray-500 text-xs italic text-center py-4">No se encontraron productos.</p>`;
+            
+            list.innerHTML = filt.map(prod => {
+                const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
+                
+                let statusInfo = `<span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria || 'Gen'}</span>`;
+                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Próximamente</span>`;
+                else if(prod.stock <= 0) statusInfo += `<span class="bg-red-600/20 text-red-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-ban"></i> Agotado</span>`;
+                else statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-check"></i> Stock: ${prod.stock}</span>`;
+
+                return `
+                <div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg hover:border-primary/30 transition-all shadow-lg">
+                    <div class="flex items-center gap-4 truncate">
+                        <div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden relative"><img src="${cover}" class="w-full h-full object-cover"></div>
+                        <div class="truncate">
+                            <p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo} <span class="text-gray-500 font-normal text-[10px]">#${prod.sku||''}</span></p>
+                            <div class="flex gap-1 mt-1 items-center flex-wrap">${statusInfo}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 flex-shrink-0 ml-2">
+                        <button onclick="startEdit('${prod.id}')" class="w-8 h-8 text-primary bg-primary/5 hover:bg-primary/20 rounded"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`
+            }).join('');
+        }
+
+        function renderCategoryInputs() { const sel = document.getElementById('new-cat'); if(sel && config.categories) sel.innerHTML = config.categories.map(c => `<option value="${c}">${c.toUpperCase()}</option>`).join(''); }
+        function renderCategoriesManager() { const list = document.getElementById('categories-manager-list'); if(list && config.categories) list.innerHTML = config.categories.map(c => `<div class="flex items-center gap-2 bg-darker border border-white/10 px-3 py-2 rounded"><span class="text-[10px] uppercase font-bold text-gray-300">${c}</span><button onclick="removeCategory('${c}')" class="text-white/20 hover:text-red-500"><i class="fas fa-times-circle"></i></button></div>`).join(''); }
+        function addNewCategory() { const input = document.getElementById('new-category-name'); const name = input.value.trim().toLowerCase(); if(!name || (config.categories||[]).includes(name)) return; db.collection("config").doc("global").set({ categories: [...(config.categories||[]), name] }, { merge: true }).then(() => input.value = ""); }
+        function removeCategory(cat) { if((config.categories||[]).length <= 1) return Toast.fire({ icon: 'warning', title: 'Mínimo una categoría' }); db.collection("config").doc("global").set({ categories: config.categories.filter(c => c !== cat) }, { merge: true }); }
+        
+        function compressHeroImage(input) { if (!input.files || !input.files[0]) return; const reader = new FileReader(); reader.readAsDataURL(input.files[0]); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); let w = img.width > 1200 ? 1200 : img.width; canvas.width = w; canvas.height = img.height * (w / img.width); canvas.getContext('2d').drawImage(img, 0, 0, w, canvas.height); selectedHeroImg = canvas.toDataURL('image/jpeg', 0.8); document.getElementById('hero-preview').src = selectedHeroImg; document.getElementById('hero-preview').classList.remove('hidden'); document.getElementById('hero-preview-container').classList.add('bg-darker/80'); } } }
+        async function saveHeroConfig() { const btn = document.getElementById('btn-save-hero'); btn.innerText = "Subiendo..."; btn.disabled = true; try { let img = config.heroImage || ""; if (selectedHeroImg) img = await uploadImageToStorage(selectedHeroImg, `config/hero_bg_${Date.now()}.jpg`); await db.collection("config").doc("hero").set({ heroTitle: document.getElementById('config-hero-title').value, heroSubtitle: document.getElementById('config-hero-subtitle').value, heroImage: img }, { merge: true }); btn.innerText = "¡Actualizado!"; setTimeout(() => { btn.innerText = "Actualizar Textos y Foto Hero"; btn.disabled = false; }, 2000); } catch (e) { btn.disabled = false; } }
+
+        function renderConfig() { 
+            document.getElementById('config-slogan').value = config.slogan || ""; 
+            document.getElementById('config-about-title').value = config.aboutTitle || ""; 
+            document.getElementById('config-about-desc').value = config.aboutDesc || ""; 
+            document.getElementById('config-whatsapp').value = config.whatsapp || ""; 
+            document.getElementById('config-instagram').value = config.instagram || ""; 
+            // Textos nuevos:
+            document.getElementById('config-invoice-header').value = config.invoiceHeader || DEFAULT_CONFIG.invoiceHeader;
+            document.getElementById('config-invoice-footer').value = config.invoiceFooter || DEFAULT_CONFIG.invoiceFooter;
+            document.getElementById('config-share-text').value = config.shareText || DEFAULT_CONFIG.shareText;
+            document.getElementById('config-meta-desc').value = config.metaDesc || DEFAULT_CONFIG.metaDesc;
+        }
+
+        function saveGlobalConfig() { 
+            db.collection("config").doc("global").set({ 
+                slogan: document.getElementById('config-slogan').value, 
+                aboutTitle: document.getElementById('config-about-title').value, 
+                aboutDesc: document.getElementById('config-about-desc').value, 
+                whatsapp: document.getElementById('config-whatsapp').value, 
+                instagram: document.getElementById('config-instagram').value,
+                invoiceHeader: document.getElementById('config-invoice-header').value,
+                invoiceFooter: document.getElementById('config-invoice-footer').value,
+                shareText: document.getElementById('config-share-text').value,
+                metaDesc: document.getElementById('config-meta-desc').value
+            }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Guardado' })); 
+            
+            const p = document.getElementById('config-password').value; 
+            if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> document.getElementById('config-password').value = ""); 
+        }
+
+        function renderHeroConfig() {
+            document.getElementById('config-hero-title').value = config.heroTitle || "";
+            document.getElementById('config-hero-subtitle').value = config.heroSubtitle || "";
+            if(config.heroImage) {
+                document.getElementById('hero-preview').src = config.heroImage;
+                document.getElementById('hero-preview').classList.remove('hidden');
+                document.getElementById('hero-preview-container').classList.add('bg-darker/80');
+            }
         }
 
         window.onload = init;
