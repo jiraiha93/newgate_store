@@ -380,7 +380,20 @@
         function init() {
             auth.onAuthStateChanged((user) => {
                 currentFirebaseUser = user;
+                
+                // [NUEVO - RECOMENDACIÓN UI] 
+                // Auto-login si la sesión carga un segundo después y el usuario está esperando en el modal
+                const loginModal = document.getElementById('login-modal');
+                if (user && loginModal.classList.contains('active')) {
+                     const target = loginModal.dataset.targetModule || 'ADMIN';
+                     if (target === 'ADMIN' && user.email === 'pos@newgate.com') {
+                         enterModule('POS');
+                     } else {
+                         enterModule(target);
+                     }
+                }
             });
+            
             escucharConfigGlobal();
             renderMedidasForm();
             
@@ -395,7 +408,7 @@
                     Toast.fire({ icon: 'error', title: 'Acceso denegado: Cuenta de Cajero' });
                     return;
                 }
-                enterModule(module);
+                enterModule(module); // <--- Aquí estaba el problema antes, enterModule no ocultaba el fondo negro.
             } else {
                 document.getElementById('selector-modal').classList.remove('active');
                 document.getElementById('login-modal').classList.add('active');
@@ -439,6 +452,11 @@
 
         function enterModule(module) {
             activeModule = module;
+            
+            // [SOLUCIÓN CRÍTICA]: Limpiar siempre los modales oscuros que bloquean la vista
+            document.getElementById('selector-modal').classList.remove('active');
+            document.getElementById('login-modal').classList.remove('active');
+
             document.getElementById('admin').style.display = 'block'; 
             setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
             
@@ -479,7 +497,7 @@
         }
 
 
-        // === LOGICA POS Y FACTURACIÓN ===
+        // === LÓGICA POS Y FACTURACIÓN ===
 
         function escucharPedidos() {
             db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
@@ -487,7 +505,7 @@
                 renderPedidosList();
                 renderFacturasList(); 
             }, (error) => {
-                console.error("🔥 Error crítico en Firestore (Pedidos):", error.code, error.message);
+                console.error("🔥 Error en Firestore (Pedidos):", error.code, error.message);
                 
                 const listPedidos = document.getElementById('admin-pedidos-list');
                 const listFacturas = document.getElementById('admin-facturas-list');
@@ -508,7 +526,6 @@
             });
         }
 
-        // FUNCIONALIDAD NUEVA: Compartir por WhatsApp
         function compartirPorWhatsApp(docId, tipo) {
             const pedido = pedidosList.find(p => p.id === docId);
             if (!pedido) return;
@@ -702,7 +719,7 @@
             window.print();
         }
 
-        // === LOGICA ADMIN GLOBAL E INVENTARIO ===
+        // === LÓGICA ADMIN GLOBAL E INVENTARIO ===
 
         function escucharFirebase() { db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); }); }
         function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
