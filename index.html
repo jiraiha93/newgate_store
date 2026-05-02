@@ -165,10 +165,12 @@
                         <h4 class="text-white text-[10px] uppercase tracking-widest mb-4 border-b border-white/10 pb-2 flex items-center gap-2 font-bold">
                             <i class="fas fa-ruler text-primary"></i> Guía de Medidas (cm)
                         </h4>
-                        <table class="w-full text-[10px] text-gray-500 uppercase text-left">
-                            <thead><tr class="text-gray-300 border-b border-white/5"><th class="py-2">Talla</th><th class="py-2 text-center">Pecho</th><th class="py-2 text-center">Largo</th><th class="py-2 text-center">Ancho</th></tr></thead>
-                            <tbody id="modal-measures-body" class="divide-y divide-white/5"></tbody>
-                        </table>
+                        <div class="overflow-x-auto w-full pb-2 scrollbar-hide">
+                            <table class="w-full text-[10px] text-gray-500 uppercase text-left min-w-max">
+                                <thead><tr class="text-gray-300 border-b border-white/5" id="modal-measures-head"></tr></thead>
+                                <tbody id="modal-measures-body" class="divide-y divide-white/5"></tbody>
+                            </table>
+                        </div>
                     </div>
 
                     <div id="modal-talla-select-container" class="mb-6 hidden">
@@ -246,7 +248,8 @@
                     <div class="lg:col-span-3 space-y-6 bg-dark p-8 border border-white/5 shadow-2xl">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Nombre Completo</label>
-                            <input type="text" id="nombre" placeholder="Ej: Juan Pérez" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors">
+                            <!-- MEJORA: Cambio de ID para evitar conflictos de auto-rellenado que causaban problemas al guardar el nombre -->
+                            <input type="text" id="cliente-nombre" placeholder="Ej: Juan Pérez" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors">
                         </div>
                         
                         <div>
@@ -410,10 +413,8 @@
             
             grid.innerHTML = inventario.map(prod => {
                 const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
-                
                 let badgeHTML = '';
                 
-                // CAMBIO 3: Solo mostrar el badge de la esquina superior cuando está agotado (se eliminó el overlayHTML central)
                 if (prod.isPresale) {
                     badgeHTML = `<div class="status-badge bg-blue-600 text-white shadow-lg"><i class="fas fa-clock mr-1"></i> Próximamente</div>`;
                 } else if (prod.stock !== undefined && prod.stock <= 0) {
@@ -503,12 +504,26 @@
             const measuresContainer = document.getElementById('modal-measures-container');
             const tallaSelectContainer = document.getElementById('modal-talla-select-container');
             
+            // RENDERIZADO DINÁMICO DE COLUMNAS DE MEDIDAS
             if(p.hasMeasures && p.tallas && p.tallas.length > 0) {
                 measuresContainer.classList.remove('hidden');
+                
+                const cols = p.columnas && p.columnas.length > 0 ? p.columnas : ['Pecho', 'Largo', 'Ancho'];
+                
+                // Generar cabeceras
+                document.getElementById('modal-measures-head').innerHTML = `<th class="py-2 pr-2 w-16">Talla</th>` + cols.map(c => `<th class="py-2 px-1 text-center whitespace-nowrap">${c}</th>`).join('');
+                
+                // Generar filas
                 document.getElementById('modal-measures-body').innerHTML = p.tallas.map(t => {
-                    const m = p.medidas && p.medidas[t] ? p.medidas[t] : {pecho:'-', largo:'-', ancho:'-'};
-                    return `<tr class="hover:bg-white/5 transition-colors"><td class="py-3 px-2 text-primary font-bold">${t}</td><td class="py-3 text-center text-gray-400 font-bold">${m.pecho}</td><td class="py-3 text-center text-gray-400 font-bold">${m.largo}</td><td class="py-3 text-center text-gray-400 font-bold">${m.ancho}</td></tr>`;
+                    const m = p.medidas && p.medidas[t] ? p.medidas[t] : {};
+                    const tds = cols.map(c => {
+                        // Compatibilidad hacia atrás (busca Columna exacta o versión en minúsculas)
+                        const val = m[c] !== undefined ? m[c] : (m[c.toLowerCase()] !== undefined ? m[c.toLowerCase()] : '-');
+                        return `<td class="py-3 px-1 text-center text-gray-400 font-bold whitespace-nowrap">${val}</td>`;
+                    }).join('');
+                    return `<tr class="hover:bg-white/5 transition-colors"><td class="py-3 pr-2 text-primary font-bold whitespace-nowrap">${t}</td>${tds}</tr>`;
                 }).join('');
+
                 tallaSelectContainer.classList.remove('hidden');
                 document.getElementById('modal-talla').innerHTML = '<option value="" disabled selected>Elige una talla</option>' + p.tallas.map(t => `<option value="${t}">${t}</option>`).join('');
                 document.getElementById('modal-talla').classList.remove('border-red-500');
@@ -614,10 +629,12 @@
         }
 
         function procesarEnvioPedido() {
-            const n = document.getElementById('nombre').value.trim();
+            // MEJORA: Cambio a ID único para prevenir sobreescritura externa
+            const inputNombre = document.getElementById('cliente-nombre');
+            const n = inputNombre ? inputNombre.value.trim() : "";
             const m = document.getElementById('mensaje').value.trim();
             
-            if(!n) { Toast.fire({ icon: 'warning', title: 'Por favor, ingresa tu Nombre' }); return document.getElementById('nombre').focus(); }
+            if(!n) { Toast.fire({ icon: 'warning', title: 'Por favor, ingresa tu Nombre' }); return document.getElementById('cliente-nombre').focus(); }
             if(carrito.length === 0) { Toast.fire({ icon: 'error', title: 'Tu carrito está vacío' }); return; }
             
             const btnText = document.getElementById('btn-wa-text');
@@ -638,8 +655,9 @@
             msg += `\n💵 *TOTAL: L${total.toFixed(2)}*\n`;
             if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
 
+            // SE ASEGURA DE GUARDAR EL NOMBRE EXTRAÍDO SEGURO
             const pedidoData = {
-                idPedido: orderId, cliente: n, mensaje: m, items: carrito, total: total,
+                idPedido: orderId, cliente: n || 'Desconocido', mensaje: m, items: carrito, total: total,
                 estado: 'pendiente', createdAt: firebase.firestore.FieldValue.serverTimestamp()
             };
 

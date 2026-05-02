@@ -108,7 +108,6 @@
                 <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide pb-2">
                     <button onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-receipt"></i> Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
                     <button onclick="showAdminTab('inventario', event)" class="tab-btn active py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-box"></i> Inventario</button>
-                    <!-- CAMBIO 5: Eliminada pestaña Hero de la navegación principal -->
                     <button onclick="showAdminTab('config', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors"><i class="fas fa-cog"></i> Ajustes</button>
                 </div>
                 <button onclick="logoutAdmin()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
@@ -183,21 +182,18 @@
                             </div>
 
                             <div id="measures-config-panel" class="bg-darker p-5 border border-white/10 rounded transition-all">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div>
-                                    <div class="flex-1 grid grid-cols-3 gap-2">
-                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Pecho</p>
-                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Largo</p>
-                                        <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Ancho</p>
-                                    </div>
-                                    <div class="w-6"></div> <!-- Espaciador para botón eliminar -->
-                                </div>
+                                
                                 <div id="medidas-inputs-container" class="space-y-3 mb-4"></div>
                                 
-                                <!-- CAMBIO 4: Agregar nuevas tallas dinámicamente -->
-                                <div class="flex gap-2 items-center border-t border-white/5 pt-4 mt-2">
-                                    <input type="text" id="new-size-input" placeholder="Nueva (Ej. XXL)" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white uppercase outline-none focus:border-primary w-full">
-                                    <button type="button" onclick="addNewSizeToForm()" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 text-[10px] uppercase font-bold hover:bg-primary hover:text-dark transition-all rounded whitespace-nowrap"><i class="fas fa-plus"></i> Añadir Talla</button>
+                                <div class="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-4 mt-2">
+                                    <div class="flex-1 flex gap-2 items-center">
+                                        <input type="text" id="new-size-input" placeholder="Talla (Ej. XXL)" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white uppercase outline-none focus:border-primary w-full">
+                                        <button type="button" onclick="addNewSizeToForm()" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 text-[10px] uppercase font-bold hover:bg-primary hover:text-dark transition-all rounded whitespace-nowrap"><i class="fas fa-plus"></i> Talla</button>
+                                    </div>
+                                    <div class="flex-1 flex gap-2 items-center">
+                                        <input type="text" id="new-column-input" placeholder="Columna (Ej. Manga)" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white capitalize outline-none focus:border-primary w-full">
+                                        <button type="button" onclick="addNewColumnToForm()" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 text-[10px] uppercase font-bold hover:bg-primary hover:text-dark transition-all rounded whitespace-nowrap"><i class="fas fa-plus"></i> Columna</button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -255,10 +251,8 @@
                 <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
-            <!-- TAB AJUSTES: AHORA INCLUYE HERO WEB -->
             <div id="tab-config" class="admin-tab hidden space-y-10">
                 
-                <!-- CAMBIO 5: Sección Hero integrada dentro de Ajustes -->
                 <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
                     <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2"><i class="fas fa-image"></i> Personalizar Sección Hero Web</h3>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -296,7 +290,6 @@
         </div>
     </div>
 
-    <!-- SCRIPTS ADMIN -->
     <script>
         const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10 !py-2 !px-4 !w-auto shadow-2xl', title: '!text-[11px] !font-bold tracking-widest uppercase' } });
         const DarkAlert = Swal.mixin({ background: '#0f0f0f', color: '#fff', confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626', customClass: { popup: 'border border-white/10', confirmButton: 'text-dark font-bold uppercase text-xs px-6 py-2 rounded', cancelButton: 'font-bold uppercase text-xs px-6 py-2 rounded' } });
@@ -307,8 +300,9 @@
         let inventario = []; let pedidosList = []; let config = { ...DEFAULT_CONFIG };
         let selectedBase64Imgs = []; let selectedHeroImg = ""; let editId = null;
         
-        // Estado dinámico para el formulario de tallas
+        // Estado completamente dinámico y control de interfaz
         let currentFormSizes = ["S", "M", "L", "XL"];
+        let currentFormColumns = ["Pecho", "Largo", "Ancho"];
 
         function init() {
             auth.onAuthStateChanged((user) => {
@@ -384,7 +378,6 @@
                         </div>
                     </div>
                     
-                    <!-- CAMBIO 1: Agregada funcionalidad para Borrar sin Despachar -->
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
                         <p class="text-2xl text-white font-serif font-bold w-full text-right sm:text-left mb-2 sm:mb-0">L${(pedido.total || 0).toFixed(2)}</p>
                         <div class="flex gap-2 w-full sm:w-auto">
@@ -400,11 +393,10 @@
             `}).join('');
         }
 
-        // CAMBIO 1: Función para Cancelar Pedido (Sin afectar stock)
         function cancelarPedido(docId) {
             DarkAlert.fire({
                 title: '¿Cancelar Pedido?', 
-                text: "El pedido se eliminará SIN REBAJAR el inventario. Ideal si el cliente se arrepintió.", 
+                text: "El pedido se eliminará SIN REBAJAR el inventario.", 
                 icon: 'warning',
                 showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Sí, Cancelar', cancelButtonText: 'Atrás'
             }).then((result) => {
@@ -493,7 +485,7 @@
         
         function toggleMeasuresVisibility() { document.getElementById('measures-config-panel').style.display = document.getElementById('toggle-measures').checked ? 'block' : 'none'; }
 
-        // CAMBIO 4: Lógica para Tallas Dinámicas
+        // MANEJO ROBUSTO DE COLUMNAS Y TALLAS DINÁMICAS
         function addNewSizeToForm() {
             const input = document.getElementById('new-size-input');
             const val = input.value.trim().toUpperCase();
@@ -501,9 +493,7 @@
             if(!currentFormSizes.includes(val)) {
                 currentFormSizes.push(val);
                 renderMedidasForm();
-            } else {
-                Toast.fire({ icon: 'info', title: 'La talla ya existe en la lista' });
-            }
+            } else { Toast.fire({ icon: 'info', title: 'La talla ya existe' }); }
             input.value = "";
         }
 
@@ -512,28 +502,77 @@
             renderMedidasForm();
         }
 
-        function renderMedidasForm() {
-            document.getElementById('medidas-inputs-container').innerHTML = currentFormSizes.map(t => {
-                const T = t.toUpperCase();
-                
-                // Conservar valores si ya existen en el DOM al re-renderizar, de lo contrario defaults
-                const pEl = document.getElementById(`${T.toLowerCase()}-pecho`);
-                const lEl = document.getElementById(`${T.toLowerCase()}-largo`);
-                const aEl = document.getElementById(`${T.toLowerCase()}-ancho`);
-                const pVal = pEl ? pEl.value : (DEFAULT_MEASURES[T] ? DEFAULT_MEASURES[T].pecho : "00");
-                const lVal = lEl ? lEl.value : (DEFAULT_MEASURES[T] ? DEFAULT_MEASURES[T].largo : "00");
-                const aVal = aEl ? aEl.value : (DEFAULT_MEASURES[T] ? DEFAULT_MEASURES[T].ancho : "00");
+        function addNewColumnToForm() {
+            const input = document.getElementById('new-column-input');
+            const val = input.value.trim();
+            const formattedVal = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase();
+            if(!formattedVal) return;
+            if(!currentFormColumns.includes(formattedVal)) {
+                currentFormColumns.push(formattedVal);
+                renderMedidasForm();
+            } else { Toast.fire({ icon: 'info', title: 'La columna ya existe' }); }
+            input.value = "";
+        }
 
-                return `<div class="flex items-center gap-2">
-                    <div class="w-12"><input type="checkbox" id="t-${T.toLowerCase()}" value="${T}" checked class="hidden"><label for="t-${T.toLowerCase()}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded">${T}</label></div>
-                    <div class="flex-1 grid grid-cols-3 gap-2">
-                        <input type="text" id="${T.toLowerCase()}-pecho" placeholder="P" class="measure-input rounded" value="${pVal}">
-                        <input type="text" id="${T.toLowerCase()}-largo" placeholder="L" class="measure-input rounded" value="${lVal}">
-                        <input type="text" id="${T.toLowerCase()}-ancho" placeholder="A" class="measure-input rounded" value="${aVal}">
+        function removeColumnFromForm(col) {
+            if(currentFormColumns.length <= 1) return Toast.fire({ icon: 'warning', title: 'Mínimo 1 columna requerida' });
+            currentFormColumns = currentFormColumns.filter(c => c !== col);
+            renderMedidasForm();
+        }
+
+        function renderMedidasForm() {
+            // Respaldamos los valores actuales antes de limpiar el DOM
+            const currentValues = {};
+            currentFormSizes.forEach(s => {
+                const safeS = s.replace(/[^a-zA-Z0-9_-]/g, '');
+                currentValues[s] = {};
+                currentFormColumns.forEach(c => {
+                    const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
+                    const el = document.getElementById(`measure-${safeS}-${safeC}`);
+                    if (el) currentValues[s][c] = el.value;
+                });
+            });
+
+            // Generamos Cabeceras Dinámicas
+            let headerHTML = `<div class="flex items-center gap-2 mb-2 pr-8">
+                <div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div>
+                <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">`;
+            
+            currentFormColumns.forEach(c => {
+                headerHTML += `<div class="relative group text-center">
+                    <p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold inline-block truncate w-full" title="${c}">${c}</p>
+                    <button onclick="removeColumnFromForm('${c}')" class="absolute -top-2 -right-2 text-red-500 hidden group-hover:flex bg-darker border border-white/10 rounded-full w-4 h-4 text-[8px] items-center justify-center cursor-pointer"><i class="fas fa-times"></i></button>
+                </div>`;
+            });
+            headerHTML += `</div></div>`;
+
+            // Generamos las filas combinando valores respaldados y las nuevas configuraciones
+            let rowsHTML = currentFormSizes.map(t => {
+                const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
+                let inputsHTML = currentFormColumns.map(c => {
+                    const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
+                    let defaultVal = "00";
+                    if (currentValues[t] && currentValues[t][c] !== undefined) {
+                        defaultVal = currentValues[t][c];
+                    } else if (!editId && DEFAULT_MEASURES[t] && DEFAULT_MEASURES[t][c.toLowerCase()]) {
+                        defaultVal = DEFAULT_MEASURES[t][c.toLowerCase()];
+                    }
+                    return `<input type="text" id="measure-${safeT}-${safeC}" placeholder="${c.charAt(0)}" class="measure-input rounded w-full" value="${defaultVal}">`;
+                }).join('');
+
+                return `<div class="flex items-center gap-2 mb-2">
+                    <div class="w-12">
+                        <input type="checkbox" id="t-${safeT}" value="${t}" checked class="hidden">
+                        <label for="t-${safeT}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1" title="${t}">${t}</label>
                     </div>
-                    <button onclick="removeSizeFromForm('${T}')" class="w-6 text-red-500 hover:text-red-400 p-1 flex justify-center"><i class="fas fa-trash text-xs"></i></button>
+                    <div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">
+                        ${inputsHTML}
+                    </div>
+                    <button onclick="removeSizeFromForm('${t}')" class="w-6 text-red-500 hover:text-red-400 p-1 flex justify-center cursor-pointer"><i class="fas fa-trash text-xs"></i></button>
                 </div>`;
             }).join('');
+
+            document.getElementById('medidas-inputs-container').innerHTML = headerHTML + rowsHTML;
         }
 
         async function uploadImageToStorage(b64, path) {
@@ -556,18 +595,18 @@
                 const hasMeasures = document.getElementById('toggle-measures').checked;
                 const tallas = []; const medidas = {};
                 
-                // CAMBIO 4: Leer tallas de forma dinámica basándose en currentFormSizes
                 if(hasMeasures) { 
                     currentFormSizes.forEach(t => { 
-                        const T = t.toUpperCase();
-                        const checkbox = document.getElementById(`t-${T.toLowerCase()}`);
+                        const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
+                        const checkbox = document.getElementById(`t-${safeT}`);
                         if(checkbox && checkbox.checked) { 
-                            tallas.push(T); 
-                            medidas[T] = { 
-                                pecho: document.getElementById(`${T.toLowerCase()}-pecho`).value, 
-                                largo: document.getElementById(`${T.toLowerCase()}-largo`).value, 
-                                ancho: document.getElementById(`${T.toLowerCase()}-ancho`).value 
-                            }; 
+                            tallas.push(t); 
+                            medidas[t] = {};
+                            currentFormColumns.forEach(c => {
+                                const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
+                                const inputEl = document.getElementById(`measure-${safeT}-${safeC}`);
+                                medidas[t][c] = inputEl ? inputEl.value : "00";
+                            });
                         } 
                     }); 
                 }
@@ -580,7 +619,7 @@
                     precio: price,
                     stock: parseInt(document.getElementById('new-stock').value) || 0,
                     isPresale: document.getElementById('toggle-presale').checked,
-                    hasMeasures, tallas, medidas,
+                    hasMeasures, tallas, medidas, columnas: currentFormColumns,
                     imagen: imageUrls[0] || "", imagenes: imageUrls || []         
                 };
                 if (!editId) productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -613,8 +652,10 @@
             document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
             selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []); renderThumbnails();
             
-            // CAMBIO 4: Preparar estado dinámico antes de renderizar
+            // Cargar estado dinámico de tallas y columnas previamente guardadas
             currentFormSizes = ["S", "M", "L", "XL"];
+            currentFormColumns = p.columnas && p.columnas.length > 0 ? p.columnas : ["Pecho", "Largo", "Ancho"];
+
             if(p.hasMeasures && p.tallas) { 
                 p.tallas.forEach(t => { if(!currentFormSizes.includes(t)) currentFormSizes.push(t); });
             }
@@ -622,14 +663,18 @@
             
             if(p.hasMeasures && p.tallas) { 
                 currentFormSizes.forEach(t => { 
-                    const T = t.toUpperCase();
-                    const checkbox = document.getElementById(`t-${T.toLowerCase()}`);
+                    const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
+                    const checkbox = document.getElementById(`t-${safeT}`);
                     if(checkbox) {
-                        checkbox.checked = p.tallas.includes(T); 
-                        if(p.medidas && p.medidas[T]) { 
-                            document.getElementById(`${T.toLowerCase()}-pecho`).value = p.medidas[T].pecho || ""; 
-                            document.getElementById(`${T.toLowerCase()}-largo`).value = p.medidas[T].largo || ""; 
-                            document.getElementById(`${T.toLowerCase()}-ancho`).value = p.medidas[T].ancho || ""; 
+                        checkbox.checked = p.tallas.includes(t); 
+                        if(p.medidas && p.medidas[t]) { 
+                            currentFormColumns.forEach(c => {
+                                const safeC = c.replace(/[^a-zA-Z0-9_-]/g, '');
+                                const el = document.getElementById(`measure-${safeT}-${safeC}`);
+                                // Mantiene la compatibilidad hacia atrás
+                                const val = p.medidas[t][c] !== undefined ? p.medidas[t][c] : (p.medidas[t][c.toLowerCase()] !== undefined ? p.medidas[t][c.toLowerCase()] : "00");
+                                if(el) el.value = val;
+                            });
                         } 
                     }
                 }); 
@@ -646,13 +691,14 @@
             document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
             
             selectedBase64Imgs = []; renderThumbnails(); 
-            currentFormSizes = ["S", "M", "L", "XL"]; renderMedidasForm(); // Reset a estado base
+            currentFormSizes = ["S", "M", "L", "XL"]; 
+            currentFormColumns = ["Pecho", "Largo", "Ancho"]; 
+            renderMedidasForm();
         }
 
         function renderAdminList() {
             const list = document.getElementById('admin-list'); const term = (document.getElementById('search-inventory').value || "").toLowerCase();
             
-            // CAMBIO 2: Filtro de búsqueda actualizado para incluir categoría
             const filt = inventario.filter(p => 
                 (p.titulo || "").toLowerCase().includes(term) || 
                 (p.sku || "").toLowerCase().includes(term) ||
