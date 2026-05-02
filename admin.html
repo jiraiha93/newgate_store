@@ -512,10 +512,11 @@
                 
                 const errorUI = `
                     <div class="text-center py-12 border border-red-500/30 bg-red-500/5 rounded-lg shadow-xl mx-2">
-                        <i class="fas fa-exclamation-triangle text-4xl text-red-500 mb-4"></i>
-                        <h4 class="text-white font-bold uppercase tracking-widest text-xs mb-2">Error de Permisos o Conexión</h4>
+                        <i class="fas fa-shield-alt text-4xl text-red-500 mb-4"></i>
+                        <h4 class="text-white font-bold uppercase tracking-widest text-xs mb-2">Bloqueo de Seguridad (Reglas de Firebase)</h4>
                         <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-4 font-mono bg-black/30 inline-block px-3 py-1 rounded">${error.code}</p>
-                        <p class="text-[9px] text-gray-500 italic px-6">Revisa las reglas de seguridad de Firestore.<br>La colección requiere permisos de lectura.</p>
+                        <p class="text-[11px] text-gray-300 px-6 mb-4">Debes publicar las <b>Reglas de Seguridad</b> en tu consola de Firebase.</p>
+                        <button onclick="window.location.reload()" class="bg-primary text-dark font-bold text-[10px] uppercase tracking-widest px-6 py-2 rounded shadow-lg hover:bg-white transition-colors">Ya las publiqué, Reintentar</button>
                     </div>
                 `;
 
@@ -721,7 +722,16 @@
 
         // === LÓGICA ADMIN GLOBAL E INVENTARIO ===
 
-        function escucharFirebase() { db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); }); }
+        function escucharFirebase() { 
+            db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { 
+                inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                renderAdminList(); 
+            }, (error) => {
+                console.error("🔥 Error leyendo productos:", error);
+                const list = document.getElementById('admin-list');
+                if(list) list.innerHTML = `<div class="col-span-full text-center py-12 border border-red-500/30 bg-red-500/5 rounded-lg"><i class="fas fa-shield-alt text-3xl text-red-500 mb-4"></i><h4 class="text-white font-bold text-xs uppercase tracking-widest">Error de Permisos</h4><p class="text-gray-400 text-[10px] mt-2">Revisa las reglas de Firestore.</p></div>`;
+            }); 
+        }
         function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
         function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderHeroConfig(); } }); }
 
