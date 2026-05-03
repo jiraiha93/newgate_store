@@ -136,6 +136,18 @@
         </div>
     </div>
 
+    <!-- LOCK SCREEN MODAL -->
+    <div id="lock-modal" class="modal-overlay z-[300]">
+        <div class="modal-content p-8 text-center shadow-2xl bg-darker">
+            <i class="fas fa-lock text-4xl text-primary mb-4"></i>
+            <h2 class="font-serif text-2xl text-white italic mb-2">Sesión Bloqueada</h2>
+            <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-6">Por inactividad. Ingresa tu contraseña.</p>
+            <input type="password" id="lock-pass-input" placeholder="Contraseña" class="w-full bg-darker border border-white/10 px-4 py-3 text-white outline-none focus:border-primary text-center mb-4" onkeyup="if(event.key === 'Enter') unlockPOS()">
+            <button onclick="unlockPOS()" class="w-full bg-primary text-dark py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all">Desbloquear</button>
+            <p id="lock-error" class="text-red-500 text-[10px] uppercase font-bold hidden mt-4 animate-pulse">Contraseña Incorrecta</p>
+        </div>
+    </div>
+
     <div id="admin" class="section-fade py-12 bg-darker flex-1">
         <div class="max-w-7xl mx-auto px-6">
             
@@ -153,7 +165,7 @@
                 <button onclick="exitModule()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
 
-            <!-- TAB NUEVA TERMINAL POS (Punto de Venta Dinámico) -->
+            <!-- TAB NUEVA TERMINAL POS -->
             <div id="tab-pos" class="admin-tab hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                     <!-- Catálogo e Inventario Rápido -->
@@ -185,7 +197,7 @@
                         <div class="mt-auto">
                             <div class="flex justify-between items-center mb-6">
                                 <span class="text-white text-xs uppercase tracking-widest font-bold">Total a Cobrar</span>
-                                <span id="pos-total-display" class="text-3xl text-primary font-serif font-bold">L0.00</span>
+                                <span id="pos-total-display" class="text-3xl text-primary font-serif font-bold">0.00</span>
                             </div>
                             <div class="flex flex-col gap-2">
                                 <button onclick="savePosOrder('pendiente')" class="w-full bg-darker border border-primary text-primary py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary hover:text-dark transition-all rounded shadow-lg">Guardar (Pendiente)</button>
@@ -263,11 +275,7 @@
                                 <div>
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio del producto</label>
                                     <div class="flex bg-darker border border-white/10 rounded focus-within:border-primary transition-colors overflow-hidden">
-                                        <select id="new-currency" class="bg-transparent text-primary px-3 outline-none border-r border-white/10 font-bold cursor-pointer text-sm w-16">
-                                            <option value="L">L</option>
-                                            <option value="$">$</option>
-                                            <option value="€">€</option>
-                                        </select>
+                                        <span id="form-currency-display" class="bg-transparent text-primary px-3 py-3 border-r border-white/10 font-bold text-sm">L</span>
                                         <input type="number" id="new-price" step="0.01" min="0" placeholder="0.00" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-white font-mono">
                                     </div>
                                 </div>
@@ -356,6 +364,33 @@
             <!-- TAB AJUSTES GLOBALES -->
             <div id="tab-config" class="admin-tab hidden space-y-10">
                 
+                <!-- Ajustes del Sistema y Moneda -->
+                <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
+                    <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2"><i class="fas fa-sliders-h"></i> Configuración del Sistema</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Moneda Principal</label>
+                            <select id="config-currency" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded cursor-pointer">
+                                <option value="L">Lempiras (L)</option>
+                                <option value="$">Dólares ($)</option>
+                                <option value="€">Euros (€)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Bloqueo Automático POS (Inactividad)</label>
+                            <select id="config-pos-timeout" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded cursor-pointer">
+                                <option value="0">Desactivado</option>
+                                <option value="5">5 minutos</option>
+                                <option value="10">10 minutos</option>
+                                <option value="15">15 minutos</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <button onclick="saveSystemConfig()" class="w-full bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-white transition-all shadow-xl rounded">Guardar Preferencias del Sistema</button>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
                     <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2"><i class="fas fa-image"></i> Personalizar Sección Hero Web</h3>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
@@ -435,7 +470,7 @@
         const Toast = Swal.mixin({ toast: true, position: 'top', showConfirmButton: false, timer: 3000, background: '#0f0f0f', color: '#fff', iconColor: '#d4af37', customClass: { popup: 'border border-white/10 !py-2 !px-4 !w-auto shadow-2xl', title: '!text-[11px] !font-bold tracking-widest uppercase' } });
         const DarkAlert = Swal.mixin({ background: '#0f0f0f', color: '#fff', confirmButtonColor: '#d4af37', cancelButtonColor: '#dc2626', customClass: { popup: 'border border-white/10', confirmButton: 'text-dark font-bold uppercase text-xs px-6 py-2 rounded', cancelButton: 'font-bold uppercase text-xs px-6 py-2 rounded' } });
 
-        const DEFAULT_CONFIG = { slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], heroTitle: "", heroSubtitle: "", heroImage: "", invoiceHeader: "", invoiceFooter: "", shareText: "" };
+        const DEFAULT_CONFIG = { slogan: "", aboutTitle: "", aboutDesc: "", whatsapp: "", instagram: "#", facebook: "#", categories: ["urban"], heroTitle: "", heroSubtitle: "", heroImage: "", invoiceHeader: "", invoiceFooter: "", shareText: "", currency: "L", posTimeout: "0" };
         const DEFAULT_MEASURES = { "S": { pecho: "", largo: "", ancho: "" }, "M": { pecho: "", largo: "", ancho: "" }, "L": { pecho: "", largo: "", ancho: "" }, "XL": { pecho: "", largo: "", ancho: "" } };
 
         let inventario = []; let pedidosList = []; let config = { ...DEFAULT_CONFIG };
@@ -449,6 +484,49 @@
         let currentFirebaseUser = null;
         let activeModule = null; 
         let listenersInitialized = { pos: false, admin: false };
+
+        // Idle Timer logic
+        let idleTime = 0;
+        let idleInterval;
+
+        function formatPrice(priceStr) {
+            if (!priceStr) return "";
+            const c = config.currency || 'L';
+            return priceStr.replace(/^[^0-9]+/, c);
+        }
+
+        function resetIdleTimer() { idleTime = 0; }
+        
+        function startIdleTimer() {
+            if(idleInterval) clearInterval(idleInterval);
+            idleInterval = setInterval(() => {
+                idleTime++;
+                const timeoutLimit = parseInt(config.posTimeout || 0); 
+                if (timeoutLimit > 0 && activeModule === 'POS' && idleTime >= timeoutLimit) {
+                    lockPOS();
+                }
+            }, 60000); 
+        }
+
+        window.addEventListener('mousemove', resetIdleTimer);
+        window.addEventListener('keypress', resetIdleTimer);
+        window.addEventListener('touchstart', resetIdleTimer);
+
+        function lockPOS() {
+            document.getElementById('lock-modal').classList.add('active');
+            document.getElementById('lock-pass-input').value = "";
+            document.getElementById('lock-error').classList.add('hidden');
+        }
+
+        function unlockPOS() {
+            const pass = document.getElementById('lock-pass-input').value;
+            auth.signInWithEmailAndPassword(currentFirebaseUser.email, pass).then(() => {
+                document.getElementById('lock-modal').classList.remove('active');
+                resetIdleTimer();
+            }).catch(() => {
+                document.getElementById('lock-error').classList.remove('hidden');
+            });
+        }
 
         function init() {
             auth.onAuthStateChanged((user) => {
@@ -511,6 +589,9 @@
             if (!listenersInitialized.admin) { escucharFirebase(); escucharHero(); listenersInitialized.admin = true; }
             if (!listenersInitialized.pos) { escucharPedidos(); listenersInitialized.pos = true; }
 
+            resetIdleTimer();
+            startIdleTimer();
+
             if (module === 'POS') {
                 title.innerHTML = 'POS<span class="text-primary">.</span>';
                 btnPos.style.display = 'flex'; btnPedidos.style.display = 'flex'; btnFacturas.style.display = 'flex';
@@ -519,7 +600,6 @@
             } else if (module === 'ADMIN') {
                 title.innerHTML = 'ADMIN<span class="text-primary">.</span>';
                 btnPos.style.display = 'none'; 
-                // Se ocultan Pedidos y Facturas del Administrador global según lo requerido
                 btnPedidos.style.display = 'none'; 
                 btnFacturas.style.display = 'none';
                 btnInventario.style.display = 'flex'; btnConfig.style.display = 'flex';
@@ -530,6 +610,7 @@
         function exitModule() {
             if (currentFirebaseUser) auth.signOut();
             activeModule = null;
+            if(idleInterval) clearInterval(idleInterval);
             document.getElementById('admin').classList.remove('active'); 
             setTimeout(() => { document.getElementById('admin').style.display = 'none'; document.getElementById('selector-modal').classList.add('active'); }, 400);
             Toast.fire({ icon: 'info', title: 'Sesión Finalizada' });
@@ -545,7 +626,6 @@
             
             grid.innerHTML = filt.map(p => {
                 const img = p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen;
-                const priceNum = parseFloat((p.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
                 const isOut = p.stock !== undefined && p.stock <= 0;
                 
                 return `
@@ -555,7 +635,7 @@
                     </div>
                     <div class="p-2">
                         <p class="text-[9px] uppercase font-bold text-white truncate">${p.titulo}</p>
-                        <p class="text-primary font-bold text-[10px]">L${priceNum.toFixed(2)}</p>
+                        <p class="text-primary font-bold text-[10px]">${formatPrice(p.precio)}</p>
                     </div>
                 </div>`;
             }).join('');
@@ -576,10 +656,9 @@
         }
 
         function addToPosCart(p, talla) {
-            const priceNum = parseFloat((p.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
             const idx = posCart.findIndex(i => i.id === p.id && i.talla === talla);
             if(idx !== -1) posCart[idx].cantidad++;
-            else posCart.push({ id: p.id, titulo: p.titulo, precio: `L${priceNum.toFixed(2)}`, talla: talla, cantidad: 1, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen });
+            else posCart.push({ id: p.id, titulo: p.titulo, precio: formatPrice(p.precio), talla: talla, cantidad: 1, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen });
             renderPosCart();
         }
 
@@ -596,7 +675,7 @@
 
         function renderPosCart() {
             const list = document.getElementById('pos-cart-list'); const displayTotal = document.getElementById('pos-total-display');
-            if(posCart.length === 0) { list.innerHTML = `<div class="text-center py-10 text-gray-600 text-[10px] uppercase font-bold">Carrito vacío</div>`; displayTotal.innerText = "L0.00"; return; }
+            if(posCart.length === 0) { list.innerHTML = `<div class="text-center py-10 text-gray-600 text-[10px] uppercase font-bold">Carrito vacío</div>`; displayTotal.innerText = `${config.currency||'L'}0.00`; return; }
             
             let total = 0;
             list.innerHTML = posCart.map((item, index) => {
@@ -607,7 +686,7 @@
                     <div class="w-10 h-10 bg-dark rounded overflow-hidden shrink-0"><img src="${item.img}" class="w-full h-full object-cover"></div>
                     <div class="flex-1 min-w-0">
                         <p class="text-white text-[10px] font-bold uppercase truncate">${item.titulo}</p>
-                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${item.talla}</span> | <span class="text-primary font-bold">L${sub.toFixed(2)}</span></p>
+                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${item.talla}</span> | <span class="text-primary font-bold">${config.currency||'L'}${sub.toFixed(2)}</span></p>
                     </div>
                     <div class="flex items-center gap-1 bg-dark px-1 py-0.5 rounded border border-white/10">
                         <button onclick="updatePosQty(${index}, -1)" class="w-6 h-6 text-white hover:text-primary"><i class="fas fa-minus text-[8px]"></i></button>
@@ -616,7 +695,7 @@
                     </div>
                 </div>`;
             }).join('');
-            displayTotal.innerText = `L${total.toFixed(2)}`;
+            displayTotal.innerText = `${config.currency||'L'}${total.toFixed(2)}`;
         }
 
         function savePosOrder(targetStatus) {
@@ -703,15 +782,15 @@
             const pedido = pedidosList.find(p => p.id === docId); if (!pedido) return;
             if (tipo === 'pedido') {
                 let texto = `🔥 *PEDIDO: ${pedido.idPedido || 'S/N'}*\n\n👤 *Cliente:* ${pedido.cliente}\n\n🛍️ *PRODUCTOS:*\n`;
-                (pedido.items || []).forEach((item, index) => { const precioNum = parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0; texto += `${index + 1}. [x${item.cantidad}] ${item.titulo} - Talla: ${item.talla} | L${(precioNum * item.cantidad).toFixed(2)}\n`; });
-                texto += `\n💵 *TOTAL: L${(pedido.total || 0).toFixed(2)}*\n📌 *Estado:* PENDIENTE`;
+                (pedido.items || []).forEach((item, index) => { const precioNum = parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0; texto += `${index + 1}. [x${item.cantidad}] ${item.titulo} - Talla: ${item.talla} | ${config.currency||'L'}${(precioNum * item.cantidad).toFixed(2)}\n`; });
+                texto += `\n💵 *TOTAL: ${config.currency||'L'}${(pedido.total || 0).toFixed(2)}*\n📌 *Estado:* PENDIENTE`;
                 window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
             } else if (tipo === 'factura') {
                 Toast.fire({ icon: 'info', title: 'Generando imagen de factura...' });
                 const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') ? new Date(pedido.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
                 const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO'; const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
-                const itemsHtml = (pedido.items || []).map(i => `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px; color: #000;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td><td style="text-align: center; font-size: 12px; color: #000;">${i.cantidad}</td><td style="text-align: right; font-size: 12px; color: #000;">L${((parseFloat((i.precio||"0").replace(/[^0-9.-]+/g,""))||0) * i.cantidad).toFixed(2)}</td></tr>`).join('');
-                const ticketHtml = `<div id="temp-invoice-capture" style="background: white; color: black; font-family: 'Courier New', Courier, monospace; width: 350px; padding: 20px; box-sizing: border-box; position: absolute; left: -9999px; top: -9999px; z-index: -1;"><h2 style="text-align: center; margin-bottom: 5px; font-size: 24px; color: #000;">NEW GATE</h2><p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FACTURA:</strong> ${pedido.idPedido || 'S/N'}</p><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>CLIENTE:</strong> ${pedido.cliente}</p><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FECHA:</strong> ${dateStr}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #000;"><th style="text-align: left; padding-bottom: 5px; font-size: 12px; color: #000;">DESC.</th><th style="text-align: center; padding-bottom: 5px; font-size: 12px; color: #000;">CANT</th><th style="text-align: right; padding-bottom: 5px; font-size: 12px; color: #000;">SUB</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr style="border: 1px dashed #000; margin: 15px 0;"><h3 style="text-align: right; font-size: 18px; margin: 0; color: #000;">TOTAL: L${(pedido.total || 0).toFixed(2)}</h3><p style="text-align: center; margin-top: 30px; font-size: 11px; color: #000;">${invFooter}</p></div>`;
+                const itemsHtml = (pedido.items || []).map(i => `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px; color: #000;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td><td style="text-align: center; font-size: 12px; color: #000;">${i.cantidad}</td><td style="text-align: right; font-size: 12px; color: #000;">${config.currency||'L'}${((parseFloat((i.precio||"0").replace(/[^0-9.-]+/g,""))||0) * i.cantidad).toFixed(2)}</td></tr>`).join('');
+                const ticketHtml = `<div id="temp-invoice-capture" style="background: white; color: black; font-family: 'Courier New', Courier, monospace; width: 350px; padding: 20px; box-sizing: border-box; position: absolute; left: -9999px; top: -9999px; z-index: -1;"><h2 style="text-align: center; margin-bottom: 5px; font-size: 24px; color: #000;">NEW GATE</h2><p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FACTURA:</strong> ${pedido.idPedido || 'S/N'}</p><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>CLIENTE:</strong> ${pedido.cliente}</p><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FECHA:</strong> ${dateStr}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #000;"><th style="text-align: left; padding-bottom: 5px; font-size: 12px; color: #000;">DESC.</th><th style="text-align: center; padding-bottom: 5px; font-size: 12px; color: #000;">CANT</th><th style="text-align: right; padding-bottom: 5px; font-size: 12px; color: #000;">SUB</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr style="border: 1px dashed #000; margin: 15px 0;"><h3 style="text-align: right; font-size: 18px; margin: 0; color: #000;">TOTAL: ${config.currency||'L'}${(pedido.total || 0).toFixed(2)}</h3><p style="text-align: center; margin-top: 30px; font-size: 11px; color: #000;">${invFooter}</p></div>`;
                 document.body.insertAdjacentHTML('beforeend', ticketHtml);
                 const captureDiv = document.getElementById('temp-invoice-capture');
                 try {
@@ -750,7 +829,7 @@
                     </div>
                     
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
-                        <p class="text-2xl text-white font-serif font-bold w-full text-right sm:text-left mb-2 sm:mb-0">L${(pedido.total || 0).toFixed(2)}</p>
+                        <p class="text-2xl text-white font-serif font-bold w-full text-right sm:text-left mb-2 sm:mb-0">${config.currency||'L'}${(pedido.total || 0).toFixed(2)}</p>
                         <div class="flex flex-wrap justify-end gap-2 w-full sm:w-auto">
                             <button onclick="compartirPorWhatsApp('${pedido.id}', 'pedido')" class="bg-green-900/30 text-green-400 border border-green-500/30 px-3 py-2 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all rounded" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
                             <button onclick="loadOrderIntoPos('${pedido.id}')" class="bg-blue-900/30 text-blue-400 border border-blue-500/30 px-3 py-2 font-bold uppercase text-[10px] tracking-widest hover:bg-blue-500 hover:text-white transition-all rounded" title="Editar en POS"><i class="fas fa-edit"></i></button>
@@ -771,7 +850,7 @@
                 return `
                 <div class="bg-darker border border-white/5 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl opacity-80 hover:opacity-100 transition-opacity">
                     <div class="flex-1 w-full">
-                        <div class="flex justify-between items-center mb-1"><h4 class="text-white text-sm font-bold uppercase tracking-widest"><i class="fas fa-file-alt text-gray-600 mr-2"></i>FACTURA: ${pedido.idPedido || 'S/N'}</h4><p class="text-primary font-serif font-bold">L${(pedido.total || 0).toFixed(2)}</p></div>
+                        <div class="flex justify-between items-center mb-1"><h4 class="text-white text-sm font-bold uppercase tracking-widest"><i class="fas fa-file-alt text-gray-600 mr-2"></i>FACTURA: ${pedido.idPedido || 'S/N'}</h4><p class="text-primary font-serif font-bold">${config.currency||'L'}${(pedido.total || 0).toFixed(2)}</p></div>
                         <p class="text-gray-400 text-[10px] uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
                         <p class="text-gray-500 text-[9px] mt-1"><i class="fas fa-calendar-check text-green-500/50 w-4"></i> Despachado: ${dateStr}</p>
                     </div>
@@ -811,9 +890,9 @@
             const f = pedidosList.find(p => p.id === docId); if(!f) return;
             const dateStr = (f.despachadoAt && f.despachadoAt.toDate) ? new Date(f.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
             const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO'; const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
-            const itemsHtml = (f.items || []).map(i => `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td><td style="text-align: center; font-size: 12px;">${i.cantidad}</td><td style="text-align: right; font-size: 12px;">L${((parseFloat((i.precio||"0").replace(/[^0-9.-]+/g,""))||0) * i.cantidad).toFixed(2)}</td></tr>`).join('');
+            const itemsHtml = (f.items || []).map(i => `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td><td style="text-align: center; font-size: 12px;">${i.cantidad}</td><td style="text-align: right; font-size: 12px;">${config.currency||'L'}${((parseFloat((i.precio||"0").replace(/[^0-9.-]+/g,""))||0) * i.cantidad).toFixed(2)}</td></tr>`).join('');
             const printDiv = document.getElementById('printable-invoice');
-            printDiv.innerHTML = `<div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;"><h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2><p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><p style="font-size: 13px; margin: 5px 0;"><strong>FACTURA:</strong> ${f.idPedido}</p><p style="font-size: 13px; margin: 5px 0;"><strong>CLIENTE:</strong> ${f.cliente}</p><p style="font-size: 13px; margin: 5px 0;"><strong>FECHA:</strong> ${dateStr}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #000;"><th style="text-align: left; padding-bottom: 5px; font-size: 12px;">DESC.</th><th style="text-align: center; padding-bottom: 5px; font-size: 12px;">CANT</th><th style="text-align: right; padding-bottom: 5px; font-size: 12px;">SUB</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr style="border: 1px dashed #000; margin: 15px 0;"><h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: L${(f.total || 0).toFixed(2)}</h3><p style="text-align: center; margin-top: 30px; font-size: 11px;">${invFooter}</p></div>`;
+            printDiv.innerHTML = `<div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;"><h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2><p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><p style="font-size: 13px; margin: 5px 0;"><strong>FACTURA:</strong> ${f.idPedido}</p><p style="font-size: 13px; margin: 5px 0;"><strong>CLIENTE:</strong> ${f.cliente}</p><p style="font-size: 13px; margin: 5px 0;"><strong>FECHA:</strong> ${dateStr}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #000;"><th style="text-align: left; padding-bottom: 5px; font-size: 12px;">DESC.</th><th style="text-align: center; padding-bottom: 5px; font-size: 12px;">CANT</th><th style="text-align: right; padding-bottom: 5px; font-size: 12px;">SUB</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr style="border: 1px dashed #000; margin: 15px 0;"><h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: ${config.currency||'L'}${(f.total || 0).toFixed(2)}</h3><p style="text-align: center; margin-top: 30px; font-size: 11px;">${invFooter}</p></div>`;
             window.print();
         }
 
@@ -822,7 +901,7 @@
                 inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); renderPosInventory();
             }, (error) => console.error("Error leyendo productos:", error)); 
         }
-        function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
+        function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); document.getElementById('form-currency-display').innerText = config.currency || 'L'; } }); }
         function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderHeroConfig(); } }); }
 
         function showAdminTab(tab, event) {
@@ -868,12 +947,11 @@
         async function addProduct() {
             const title = document.getElementById('new-title').value.trim(); 
             const priceVal = parseFloat(document.getElementById('new-price').value);
-            const currency = document.getElementById('new-currency').value;
+            const globalCurrency = config.currency || 'L';
             
             if(!title || isNaN(priceVal) || priceVal < 0 || selectedBase64Imgs.length === 0) return Toast.fire({ icon: 'warning', title: 'Faltan campos o precio inválido' });
             
-            // Concatenación para mantener compatibilidad 
-            const finalPrice = `${currency}${priceVal.toFixed(2)}`;
+            const finalPrice = `${globalCurrency}${priceVal.toFixed(2)}`;
 
             document.getElementById('btn-submit-admin').disabled = true; document.getElementById('btn-submit-loader').style.display = "block";
             try {
@@ -898,13 +976,9 @@
             document.getElementById('new-desc').value = p.descripcion || ""; 
             if (p.categoria) document.getElementById('new-cat').value = p.categoria;
             
-            // Lógica de separación moneda/precio numérico
-            const pPrice = p.precio || "L0.00";
+            const pPrice = p.precio || "0";
             const match = pPrice.match(/^([^0-9.]+)?([0-9.]+)/);
-            if(match) {
-                document.getElementById('new-currency').value = match[1] || "L";
-                document.getElementById('new-price').value = parseFloat(match[2]);
-            } else { document.getElementById('new-price').value = 0; }
+            if(match) { document.getElementById('new-price').value = parseFloat(match[2]); } else { document.getElementById('new-price').value = 0; }
 
             document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0; document.getElementById('toggle-presale').checked = !!p.isPresale; document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
             selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []); renderThumbnails();
@@ -943,8 +1017,20 @@
         function compressHeroImage(input) { if (!input.files || !input.files[0]) return; const reader = new FileReader(); reader.readAsDataURL(input.files[0]); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); let w = img.width > 1200 ? 1200 : img.width; canvas.width = w; canvas.height = img.height * (w / img.width); canvas.getContext('2d').drawImage(img, 0, 0, w, canvas.height); selectedHeroImg = canvas.toDataURL('image/jpeg', 0.8); document.getElementById('hero-preview').src = selectedHeroImg; document.getElementById('hero-preview').classList.remove('hidden'); document.getElementById('hero-preview-container').classList.add('bg-darker/80'); } } }
         async function saveHeroConfig() { const btn = document.getElementById('btn-save-hero'); btn.innerText = "Subiendo..."; btn.disabled = true; try { let img = config.heroImage || ""; if (selectedHeroImg) img = await uploadImageToStorage(selectedHeroImg, `config/hero_bg_${Date.now()}.jpg`); await db.collection("config").doc("hero").set({ heroTitle: document.getElementById('config-hero-title').value, heroSubtitle: document.getElementById('config-hero-subtitle').value, heroImage: img }, { merge: true }); btn.innerText = "¡Actualizado!"; setTimeout(() => { btn.innerText = "Actualizar Textos y Foto Hero"; btn.disabled = false; }, 2000); } catch (e) { btn.disabled = false; } }
 
-        function renderConfig() { document.getElementById('config-slogan').value = config.slogan || ""; document.getElementById('config-about-title').value = config.aboutTitle || ""; document.getElementById('config-about-desc').value = config.aboutDesc || ""; document.getElementById('config-whatsapp').value = config.whatsapp || ""; document.getElementById('config-instagram').value = config.instagram || ""; document.getElementById('config-invoice-header').value = config.invoiceHeader || ""; document.getElementById('config-invoice-footer').value = config.invoiceFooter || ""; document.getElementById('config-share-text').value = config.shareText || ""; }
+        function renderConfig() { 
+            document.getElementById('config-slogan').value = config.slogan || ""; 
+            document.getElementById('config-about-title').value = config.aboutTitle || ""; 
+            document.getElementById('config-about-desc').value = config.aboutDesc || ""; 
+            document.getElementById('config-whatsapp').value = config.whatsapp || ""; 
+            document.getElementById('config-instagram').value = config.instagram || ""; 
+            document.getElementById('config-invoice-header').value = config.invoiceHeader || ""; 
+            document.getElementById('config-invoice-footer').value = config.invoiceFooter || ""; 
+            document.getElementById('config-share-text').value = config.shareText || ""; 
+            document.getElementById('config-currency').value = config.currency || "L";
+            document.getElementById('config-pos-timeout').value = config.posTimeout || "0";
+        }
         function saveBrandTexts() { db.collection("config").doc("global").set({ slogan: document.getElementById('config-slogan').value, aboutTitle: document.getElementById('config-about-title').value, aboutDesc: document.getElementById('config-about-desc').value, invoiceHeader: document.getElementById('config-invoice-header').value, invoiceFooter: document.getElementById('config-invoice-footer').value, shareText: document.getElementById('config-share-text').value }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Textos Guardados' })); }
+        function saveSystemConfig() { db.collection("config").doc("global").set({ currency: document.getElementById('config-currency').value, posTimeout: document.getElementById('config-pos-timeout').value }, { merge: true }).then(()=> { Toast.fire({ icon:'success', title:'Preferencias de Sistema Guardadas' }); resetIdleTimer(); }); }
         function saveSecuritySocials() { db.collection("config").doc("global").set({ whatsapp: document.getElementById('config-whatsapp').value, instagram: document.getElementById('config-instagram').value }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Datos Guardados' })); const p = document.getElementById('config-password').value; if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> { document.getElementById('config-password').value = ""; Toast.fire({ icon:'success', title:'Contraseña Cambiada' }); }).catch(e => DarkAlert.fire({ icon:'error', title:'Error', text: e.message })); }
 
         let secondaryApp = null;
