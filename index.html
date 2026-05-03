@@ -87,29 +87,32 @@
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark">
 
     <header class="fixed w-full z-[100] bg-darker/90 backdrop-blur-md border-b border-white/5">
-        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center">
-            <div class="font-graffiti text-3xl text-white tracking-wider cursor-pointer hover:text-primary transition-colors" onclick="showSection('inicio')">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex justify-between items-center gap-4">
+            <div class="font-graffiti text-2xl md:text-3xl text-white tracking-wider cursor-pointer hover:text-primary transition-colors shrink-0 whitespace-nowrap" onclick="showSection('inicio')">
                 NEW GATE<span class="text-primary">.</span>
             </div>
             
-            <nav class="hidden md:flex space-x-8 items-center">
-                <span onclick="showSection('inicio')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Tienda</span>
-                <span onclick="showSection('nosotros')" class="cursor-pointer text-xs uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Nosotros</span>
-                <span onclick="abrirMisPedidos()" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-gray-400 hover:text-primary font-bold transition-colors">
+            <!-- Barra de Búsqueda Estática Header (Desktop) -->
+            <div class="flex-1 max-w-md relative group hidden md:block ml-auto mr-8">
+                <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-primary transition-colors text-sm"></i>
+                <input type="text" id="live-search" oninput="handleSearch()" placeholder="Buscar productos..." class="w-full bg-black/50 border border-white/10 pl-10 pr-4 py-2 rounded-full text-white outline-none focus:border-primary transition-all text-[11px] uppercase tracking-widest">
+            </div>
+
+            <nav class="hidden md:flex space-x-6 items-center shrink-0">
+                <span onclick="showSection('inicio')" class="cursor-pointer text-[10px] uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Tienda</span>
+                <span onclick="showSection('nosotros')" class="cursor-pointer text-[10px] uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Nosotros</span>
+                <span onclick="abrirMisPedidos()" class="cursor-pointer text-[10px] uppercase tracking-[0.2em] text-gray-400 hover:text-primary font-bold transition-colors">
                     <i class="fas fa-history"></i> Mis Pedidos
                 </span>
-                <span onclick="abrirWishlist()" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-red-500 hover:text-red-400 font-bold transition-colors">
+                <span onclick="abrirWishlist()" class="cursor-pointer text-[10px] uppercase tracking-[0.2em] text-white hover:text-gray-300 font-bold transition-colors">
                     <i class="fas fa-heart"></i> Favoritos
                 </span>
-                <span onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="cursor-pointer text-xs uppercase tracking-[0.2em] text-primary hover:text-white font-bold transition-colors border border-primary/20 px-3 py-1.5 rounded">
+                <span onclick="document.getElementById('contacto').scrollIntoView({behavior: 'smooth'})" class="cursor-pointer text-[10px] uppercase tracking-[0.2em] text-primary hover:text-white font-bold transition-colors border border-primary/20 px-3 py-1.5 rounded">
                     <i class="fas fa-shopping-bag"></i> Mi Pedido (<span id="cart-count">0</span>)
                 </span>
             </nav>
             
             <div class="md:hidden flex items-center gap-5 text-primary text-xl">
-                <button onclick="abrirWishlist()" class="text-red-500 hover:text-red-400 transition-colors">
-                    <i class="fas fa-heart"></i>
-                </button>
                 <button onclick="toggleMobileMenu()" class="text-white hover:text-primary transition-colors">
                     <i class="fas fa-bars"></i>
                 </button>
@@ -128,9 +131,17 @@
 
     <div id="mobile-menu" class="fixed inset-0 bg-darker/95 backdrop-blur-xl z-[200] flex flex-col pt-24 px-8 border-l border-white/10 md:hidden">
         <button onclick="toggleMobileMenu()" class="absolute top-6 right-6 text-white text-3xl hover:text-primary"><i class="fas fa-times"></i></button>
-        <div class="flex flex-col gap-8 text-center mt-10">
+        
+        <!-- Búsqueda Integrada Menú Móvil -->
+        <div class="relative mt-4 mb-8">
+            <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+            <input type="text" id="mobile-live-search" oninput="document.getElementById('live-search').value=this.value; handleSearch();" placeholder="Buscar..." class="w-full bg-dark border border-white/10 pl-10 pr-4 py-3 rounded text-white outline-none focus:border-primary transition-all text-xs uppercase tracking-widest">
+        </div>
+
+        <div class="flex flex-col gap-8 text-center mt-4">
             <span onclick="toggleMobileMenu(); showSection('inicio')" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-white hover:text-primary font-bold">Tienda</span>
             <span onclick="toggleMobileMenu(); showSection('nosotros')" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-white hover:text-primary font-bold">Nosotros</span>
+            <span onclick="toggleMobileMenu(); abrirWishlist()" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-white hover:text-primary font-bold flex items-center justify-center gap-2"><i class="fas fa-heart"></i> Favoritos</span>
             <span onclick="toggleMobileMenu(); abrirMisPedidos()" class="cursor-pointer text-lg uppercase tracking-[0.3em] text-gray-400 hover:text-primary font-bold"><i class="fas fa-history"></i> Mis Pedidos</span>
         </div>
     </div>
@@ -150,7 +161,7 @@
     <div id="wishlist-modal" class="modal-overlay" onclick="cerrarWishlist(event)">
         <div class="modal-content p-6 animate-in fade-in zoom-in duration-300 max-w-lg" onclick="event.stopPropagation()">
             <button onclick="cerrarWishlist()" class="absolute top-4 right-4 text-white hover:text-primary text-xl z-30 transition-colors w-8 h-8 flex items-center justify-center"><i class="fas fa-times"></i></button>
-            <h2 class="font-serif text-2xl text-white italic mb-2 border-b border-white/10 pb-4"><i class="fas fa-heart text-red-500"></i> Favoritos</h2>
+            <h2 class="font-serif text-2xl text-white italic mb-2 border-b border-white/10 pb-4"><i class="fas fa-heart text-white"></i> Favoritos</h2>
             <p class="text-[10px] text-gray-500 uppercase tracking-widest mb-4">Artículos que has guardado para después</p>
             <div id="lista-wishlist" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2"></div>
         </div>
@@ -196,7 +207,7 @@
 
                     <div id="modal-talla-select-container" class="mb-6 hidden">
                         <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Selecciona tu talla</label>
-                        <select id="modal-talla" class="w-full bg-darker border border-white/10 px-4 py-3 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors cursor-pointer"></select>
+                        <select id="modal-talla" class="w-full bg-darker border border-white/10 px-4 py-3 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors cursor-pointer rounded"></select>
                     </div>
 
                     <div id="modal-quantity-container" class="flex items-center gap-4 mb-8">
@@ -210,10 +221,10 @@
 
                     <div class="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4 border-t border-white/5">
                         <span id="modal-price" class="text-3xl font-serif text-white"></span>
-                        <button id="btn-add-cart" onclick="agregarAlPedido()" class="w-full sm:w-auto bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all text-center flex items-center justify-center gap-2">
+                        <button id="btn-add-cart" onclick="agregarAlPedido()" class="w-full sm:w-auto bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all text-center flex items-center justify-center gap-2 rounded shadow-lg">
                             <i class="fas fa-cart-plus"></i> Añadir al Pedido
                         </button>
-                        <div id="modal-disabled-msg" class="hidden w-full sm:w-auto bg-darker border border-white/10 text-gray-500 px-10 py-4 font-bold uppercase text-[10px] tracking-widest text-center cursor-not-allowed"></div>
+                        <div id="modal-disabled-msg" class="hidden w-full sm:w-auto bg-darker border border-white/10 text-gray-500 px-10 py-4 font-bold uppercase text-[10px] tracking-widest text-center cursor-not-allowed rounded"></div>
                     </div>
                 </div>
             </div>
@@ -221,38 +232,51 @@
     </div>
 
     <div id="inicio" class="section-fade active pt-20">
-        <section id="hero-display" class="h-[85vh] flex items-end justify-center text-center relative overflow-hidden hero-bg">
+        <section id="hero-display" class="h-[75vh] flex items-end justify-center text-center relative overflow-hidden hero-bg">
             <div class="absolute inset-0 hero-overlay z-0"></div>
             <div class="relative z-10 px-6 max-w-4xl pb-20">
                 <h1 id="display-hero-title" class="font-serif text-5xl md:text-8xl text-white italic mb-4 hero-text-shadow leading-tight"></h1>
                 <p id="display-hero-subtitle" class="text-primary uppercase tracking-[0.5em] text-xs md:text-sm font-bold hero-text-shadow"></p>
                 
-                <!-- Búsqueda Integrada -->
-                <div class="mt-10 max-w-lg mx-auto relative group">
-                    <i class="fas fa-search absolute left-6 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-primary transition-colors"></i>
-                    <input type="text" id="live-search" oninput="handleSearch()" placeholder="Buscar por estilo o nombre..." class="w-full bg-black/50 backdrop-blur-md border border-white/20 pl-14 pr-6 py-4 rounded-full text-white outline-none focus:border-primary transition-all text-sm uppercase tracking-widest">
-                </div>
-                
-                <div class="mt-8 flex justify-center gap-4">
+                <div class="mt-12 flex justify-center gap-4">
                     <button onclick="document.getElementById('productos').scrollIntoView({behavior: 'smooth'})" class="text-white hover:text-primary transition-colors text-3xl animate-bounce"><i class="fas fa-chevron-down"></i></button>
                 </div>
             </div>
         </section>
 
+        <!-- CONTENEDOR CATÁLOGO Y SIDEBAR CATEGORÍAS -->
         <section id="productos" class="py-24 max-w-7xl mx-auto px-6">
-            <div class="flex flex-col mb-12 gap-6">
-                <div>
-                    <h2 class="font-serif text-4xl text-white italic">Catálogo</h2>
-                    <p class="text-gray-500 uppercase tracking-widest text-xs mt-2" id="display-shop-slogan"></p>
-                </div>
-                <!-- Categorías Carrusel Horizontal -->
-                <div class="flex overflow-x-auto gap-6 pb-4 scrollbar-hide snap-x" id="filter-container"></div>
+            <div class="mb-12">
+                <h2 class="font-serif text-4xl text-white italic">Catálogo</h2>
+                <p class="text-gray-500 uppercase tracking-widest text-xs mt-2" id="display-shop-slogan"></p>
             </div>
             
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 transition-opacity duration-300 min-h-[400px]" id="gallery-grid">
-                <div class="col-span-full text-center py-20 flex flex-col items-center justify-center">
-                     <div class="loader !border-t-primary !border-white/10 !w-8 !h-8 mb-4 !block"></div>
-                     <p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Cargando colección exclusiva...</p>
+            <div class="flex flex-col lg:flex-row gap-10 items-start relative">
+                
+                <!-- Sidebar Desktop (Categorías) -->
+                <aside class="hidden lg:block w-64 shrink-0 sticky top-28 bg-dark p-6 border border-white/5 rounded-lg shadow-xl">
+                    <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold mb-6 border-b border-white/10 pb-4"><i class="fas fa-list-ul mr-2"></i> Categorías</h3>
+                    <div id="desktop-filter-container" class="flex flex-col gap-2">
+                        <!-- Items de Categorías -->
+                    </div>
+                </aside>
+
+                <!-- Filtro Mobile / Select -->
+                <div class="w-full lg:hidden mb-6 relative">
+                    <select id="mobile-filter-container" onchange="filterGallery(this.value, null)" class="w-full bg-darker border border-white/10 text-white text-xs uppercase tracking-widest py-4 px-4 appearance-none outline-none focus:border-primary rounded cursor-pointer shadow-lg">
+                        <!-- Items de Categorías -->
+                    </select>
+                    <i class="fas fa-chevron-down absolute right-4 top-1/2 -translate-y-1/2 text-primary pointer-events-none text-xs"></i>
+                </div>
+                
+                <!-- Grid de Galería -->
+                <div class="flex-1 w-full">
+                    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 transition-opacity duration-300 min-h-[400px]" id="gallery-grid">
+                        <div class="col-span-full text-center py-20 flex flex-col items-center justify-center">
+                             <div class="loader !border-t-primary !border-white/10 !w-8 !h-8 mb-4 !block"></div>
+                             <p class="text-gray-600 uppercase tracking-widest text-[10px] font-bold">Cargando colección exclusiva...</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </section>
@@ -265,7 +289,7 @@
                 </div>
                 
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-8">
-                    <div class="lg:col-span-2 bg-dark p-6 border border-white/5 shadow-2xl h-fit">
+                    <div class="lg:col-span-2 bg-dark p-6 border border-white/5 shadow-2xl h-fit rounded-lg">
                         <h3 class="text-primary uppercase tracking-widest text-xs font-bold mb-4 border-b border-white/10 pb-4"><i class="fas fa-shopping-bag"></i> Tu Selección</h3>
                         <div id="carrito-list" class="space-y-3 max-h-[350px] overflow-y-auto pr-2"></div>
                         <div class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center">
@@ -274,19 +298,19 @@
                         </div>
                     </div>
 
-                    <div class="lg:col-span-3 space-y-6 bg-dark p-8 border border-white/5 shadow-2xl">
+                    <div class="lg:col-span-3 space-y-6 bg-dark p-8 border border-white/5 shadow-2xl rounded-lg">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Nombre Completo</label>
-                            <input type="text" id="cliente-nombre" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors">
+                            <input type="text" id="cliente-nombre" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors rounded">
                         </div>
                         
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 tracking-widest mb-2 block font-bold">Mensaje Adicional</label>
-                            <textarea id="mensaje" rows="4" maxlength="150" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors resize-none"></textarea>
+                            <textarea id="mensaje" rows="4" maxlength="150" class="w-full bg-darker border border-white/10 px-6 py-4 outline-none focus:border-primary text-white text-[16px] md:text-sm transition-colors resize-none rounded"></textarea>
                             <p class="text-right text-[9px] text-gray-600 mt-1 uppercase tracking-wider">Máx 150 caracteres</p>
                         </div>
 
-                        <button onclick="procesarEnvioPedido()" class="w-full py-5 bg-primary text-dark font-bold uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-primary/10 flex items-center justify-center gap-3">
+                        <button onclick="procesarEnvioPedido()" class="w-full py-5 bg-primary text-dark font-bold uppercase tracking-[0.2em] hover:bg-white transition-all shadow-xl shadow-primary/10 flex items-center justify-center gap-3 rounded">
                             <i class="fab fa-whatsapp text-xl"></i> <span id="btn-wa-text">Enviar Pedido a Tienda</span>
                         </button>
                     </div>
@@ -364,7 +388,7 @@
             if(idx > -1) { wishlist.splice(idx, 1); Toast.fire({icon: 'info', title: 'Removido de favoritos'}); }
             else { wishlist.push(id); Toast.fire({icon: 'success', title: 'Añadido a favoritos'}); }
             localStorage.setItem('ng_wishlist', JSON.stringify(wishlist));
-            renderGallery(); // Refresca iconos
+            renderGallery(); // Refresca iconos en grid
             if(document.getElementById('wishlist-modal').classList.contains('active')) renderWishlist();
         }
         function renderWishlist() {
@@ -376,7 +400,7 @@
                 return `<div class="flex items-center gap-3 bg-darker border border-white/10 p-2 rounded cursor-pointer hover:border-primary/50 transition-colors" onclick="cerrarWishlist(); openModalById('${p.id}')">
                     <div class="w-14 h-14 bg-dark rounded overflow-hidden shrink-0"><img src="${img}" class="w-full h-full object-cover"></div>
                     <div class="flex-1 min-w-0"><p class="text-white text-[11px] font-bold uppercase truncate">${p.titulo}</p><p class="text-primary font-bold text-[10px]">${p.precio}</p></div>
-                    <button onclick="toggleWishlist('${p.id}', event)" class="w-10 h-10 text-red-500 hover:bg-red-500/10 rounded-full flex items-center justify-center"><i class="fas fa-heart"></i></button>
+                    <button onclick="toggleWishlist('${p.id}', event)" class="w-10 h-10 text-white hover:bg-white/10 rounded-full flex items-center justify-center transition-colors"><i class="fas fa-heart"></i></button>
                 </div>`
             }).join('');
         }
@@ -397,7 +421,10 @@
         function showSection(id) { document.querySelectorAll('.section-fade').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; }); const target = document.getElementById(id); if(target) { target.style.display = 'block'; setTimeout(() => target.classList.add('active'), 50); } window.scrollTo({top: 0, behavior: 'smooth'}); }
 
         // BÚSQUEDA Y RENDERIZADO
-        function handleSearch() { renderGallery(); document.getElementById('productos').scrollIntoView({behavior: 'smooth'}); }
+        function handleSearch() {
+            // Ya no hace scroll automático, sólo actualiza la grilla dinámicamente.
+            renderGallery(); 
+        }
 
         function renderGallery() {
             const grid = document.getElementById('gallery-grid'); if(!grid) return;
@@ -413,33 +440,37 @@
                 else if (isOut) badgeHTML = `<div class="status-badge bg-red-600 text-white shadow-lg">Agotado</div>`;
 
                 const isFav = wishlist.includes(prod.id);
-                const btnFavHTML = `<button onclick="toggleWishlist('${prod.id}', event)" class="absolute top-2 right-2 w-8 h-8 md:w-10 md:h-10 rounded-full bg-darker/60 backdrop-blur-sm flex items-center justify-center border border-white/10 ${isFav ? 'text-red-500' : 'text-white hover:text-red-400'} transition-all z-20 shadow-xl opacity-0 group-hover:opacity-100"><i class="${isFav ? 'fas' : 'far'} fa-heart"></i></button>`;
+                // Si es favorito permanece visible y con fondo translúcido. Si no, solo se ve en hover.
+                const btnFavHTML = `<button onclick="toggleWishlist('${prod.id}', event)" class="absolute top-2 right-2 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all z-20 ${isFav ? 'bg-white/30 text-white backdrop-blur-sm opacity-100 shadow-lg' : 'bg-darker/40 text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 backdrop-blur-sm'}"><i class="${isFav ? 'fas' : 'far'} fa-heart text-[12px] md:text-[14px]"></i></button>`;
                 
-                const btnQuickAddHTML = (!prod.isPresale && !isOut) ? `<button onclick="quickAdd('${prod.id}', event)" class="w-10 h-10 md:w-12 md:h-12 bg-primary text-dark rounded-full flex items-center justify-center hover:scale-110 transition-transform shadow-xl absolute bottom-2 right-2 md:bottom-4 md:right-4 z-20 translate-y-12 group-hover:translate-y-0 duration-500"><i class="fas fa-plus"></i></button>` : '';
+                // Botón de Añadir rápido: se ubicó estático en la tarjeta, de forma alineada en la descripción.
+                const btnQuickAddHTML = (!prod.isPresale && !isOut) ? `<button onclick="quickAdd('${prod.id}', event)" class="bg-white text-dark w-8 h-8 rounded shrink-0 flex items-center justify-center hover:bg-primary transition-colors shadow-lg" title="Añadir rápido"><i class="fas fa-plus text-[10px]"></i></button>` : '';
 
                 return `
-                <div class="gallery-item group cursor-pointer animate-in fade-in duration-500 relative" onclick="openModalById('${prod.id}')">
-                    <div class="relative aspect-[3/4] overflow-hidden bg-darker border border-white/5 shadow-2xl">
-                        ${badgeHTML} ${btnFavHTML} ${btnQuickAddHTML}
+                <div class="gallery-item group cursor-pointer animate-in fade-in duration-500 flex flex-col h-full bg-darker border border-white/5 rounded-lg shadow-xl hover:border-primary/30 transition-colors" onclick="openModalById('${prod.id}')">
+                    <div class="relative aspect-[3/4] overflow-hidden rounded-t-lg">
+                        ${badgeHTML} ${btnFavHTML}
                         <img src="${coverImg}" loading="lazy" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 ${isOut ? 'grayscale opacity-70' : ''}">
-                        <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+                        <div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     </div>
-                    <div class="mt-3 md:mt-4 flex flex-col xl:flex-row justify-between items-start">
-                        <div class="overflow-hidden w-full xl:w-auto">
-                            <h3 class="text-white font-medium uppercase tracking-widest text-[10px] md:text-xs truncate pr-2">${prod.titulo}</h3>
-                            <p class="text-gray-500 text-[8px] md:text-[9px] uppercase font-bold mt-1">${prod.categoria || 'General'}</p>
+                    <div class="p-3 md:p-4 flex-1 flex flex-col justify-between">
+                        <div class="mb-2">
+                            <p class="text-gray-500 text-[8px] md:text-[9px] uppercase font-bold mb-1">${prod.categoria || 'General'}</p>
+                            <h3 class="text-white font-medium uppercase tracking-widest text-[10px] md:text-xs line-clamp-2 leading-snug">${prod.titulo}</h3>
                         </div>
-                        <span class="text-primary font-bold whitespace-nowrap text-xs md:text-sm mt-1 xl:mt-0">${prod.precio}</span>
+                        <div class="flex justify-between items-center mt-auto pt-2 border-t border-white/5">
+                            <span class="text-primary font-bold whitespace-nowrap text-xs md:text-sm truncate">${prod.precio}</span>
+                            ${btnQuickAddHTML}
+                        </div>
                     </div>
                 </div>`
             }).join('');
         }
 
-        // AGREGADO RÁPIDO SIN MODAL
         function quickAdd(id, event) {
             event.stopPropagation();
             const p = inventario.find(x => x.id === id); if(!p || p.isPresale || p.stock <= 0) return;
-            let talla = "Única"; if(p.hasMeasures && p.tallas && p.tallas.length > 0) talla = p.tallas[0]; // Selecciona la primera disponible
+            let talla = "Única"; if(p.hasMeasures && p.tallas && p.tallas.length > 0) talla = p.tallas[0];
             const idx = carrito.findIndex(i => i.id === p.id && i.talla === talla);
             if(idx !== -1) carrito[idx].cantidad++;
             else carrito.push({ id: p.id, titulo: p.titulo, sku: p.sku || '', precio: p.precio, talla: talla, cantidad: 1, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen });
@@ -447,15 +478,23 @@
             saveCart(); renderCarrito();
         }
 
+        // Lógica actualizada para el Menú Lateral y Select Mobile
         function renderFilters() {
-            const filters = document.getElementById('filter-container'); if(!filters) return; const catsToUse = config.categories || [];
-            filters.innerHTML = `<button onclick="filterGallery('all', event)" class="filter-btn shrink-0 px-4 py-2 text-xs uppercase tracking-widest ${currentCategory === 'all' ? 'text-primary border-b border-primary font-bold' : 'text-gray-500 hover:text-white'} transition-all snap-start">Todos</button>` + 
-                catsToUse.map(cat => `<button onclick="filterGallery('${cat}', event)" class="filter-btn shrink-0 px-4 py-2 text-xs uppercase tracking-widest ${currentCategory === cat ? 'text-primary border-b border-primary font-bold' : 'text-gray-500 hover:text-white'} transition-all snap-start">${cat}</button>`).join('');
+            const dContainer = document.getElementById('desktop-filter-container');
+            const mContainer = document.getElementById('mobile-filter-container');
+            if(!dContainer || !mContainer) return; 
+            
+            const catsToUse = config.categories || [];
+            
+            dContainer.innerHTML = `<button onclick="filterGallery('all', event)" class="filter-btn w-full text-left px-4 py-3 text-xs uppercase tracking-widest rounded transition-all ${currentCategory === 'all' ? 'bg-primary/10 text-primary font-bold border-l-2 border-primary' : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent'}">Todos los artículos</button>` + 
+                catsToUse.map(cat => `<button onclick="filterGallery('${cat}', event)" class="filter-btn w-full text-left px-4 py-3 text-xs uppercase tracking-widest rounded transition-all ${currentCategory === cat ? 'bg-primary/10 text-primary font-bold border-l-2 border-primary' : 'text-gray-400 hover:text-white hover:bg-white/5 border-l-2 border-transparent'}">${cat}</button>`).join('');
+
+            mContainer.innerHTML = `<option value="all">Todos los artículos</option>` + catsToUse.map(cat => `<option value="${cat}" ${currentCategory === cat ? 'selected' : ''}>${cat}</option>`).join('');
         }
 
         function filterGallery(cat, e) {
-            currentCategory = cat; document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('text-primary', 'border-primary', 'font-bold'); b.classList.add('text-gray-500'); });
-            if(e) { e.target.classList.remove('text-gray-500'); e.target.classList.add('text-primary', 'border-primary', 'font-bold'); }
+            currentCategory = cat; 
+            renderFilters(); // Actualiza estilos activos del sidebar
             const grid = document.getElementById('gallery-grid'); grid.style.opacity = '0';
             setTimeout(() => { renderGallery(); grid.style.opacity = '1'; }, 200);
         }
@@ -511,7 +550,16 @@
             setTimeout(() => { btn.innerHTML = originalHTML; btn.classList.remove('bg-white'); closeModal(); }, 1000);
         }
 
-        function eliminarDelPedido(index) { carrito.splice(index, 1); saveCart(); renderCarrito(); Toast.fire({ icon: 'info', title: 'Artículo removido' }); }
+        // NUEVA FUNCIÓN: Actualizar cantidad en carrito mediante botones (+) (-)
+        function actualizarCantidadCarrito(index, delta) {
+            carrito[index].cantidad += delta;
+            if(carrito[index].cantidad <= 0) {
+                carrito.splice(index, 1);
+                Toast.fire({ icon: 'info', title: 'Artículo removido' });
+            }
+            saveCart(); 
+            renderCarrito();
+        }
 
         function renderCarrito() {
             const totalItems = carrito.reduce((acc, item) => acc + item.cantidad, 0);
@@ -528,7 +576,28 @@
             let total = 0;
             container.innerHTML = carrito.map((item, index) => {
                 const subtotalItem = (parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0) * item.cantidad; total += subtotalItem;
-                return `<div class="flex items-center gap-4 bg-darker border border-white/5 p-3 rounded group relative"><div class="w-12 h-12 bg-dark rounded border border-white/10 overflow-hidden shrink-0 relative"><img src="${item.img}" class="w-full h-full object-cover"><div class="absolute bottom-0 right-0 bg-primary text-dark text-[8px] font-bold px-1 rounded-tl">x${item.cantidad}</div></div><div class="flex-1 min-w-0"><p class="text-white text-[11px] font-bold uppercase truncate">${item.titulo}</p><div class="flex justify-between items-center mt-0.5"><p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white font-bold notranslate" translate="no">${item.talla}</span></p><p class="text-primary text-[10px] font-bold">L${subtotalItem.toFixed(2)}</p></div></div><button onclick="eliminarDelPedido(${index})" class="text-red-500 bg-red-500/10 w-8 h-8 rounded shrink-0 hover:bg-red-500/20 transition-colors"><i class="fas fa-trash-alt"></i></button></div>`;
+                
+                // Se han sustituido el icono de eliminar por los botones (+ / -) requeridos
+                return `
+                <div class="flex items-center gap-4 bg-darker border border-white/5 p-3 rounded group relative">
+                    <div class="w-12 h-12 bg-dark rounded border border-white/10 overflow-hidden shrink-0 relative">
+                        <img src="${item.img}" class="w-full h-full object-cover">
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white text-[11px] font-bold uppercase truncate">${item.titulo}</p>
+                        <div class="flex justify-between items-center mt-0.5">
+                            <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white font-bold notranslate" translate="no">${item.talla}</span></p>
+                            <p class="text-primary text-[10px] font-bold">L${subtotalItem.toFixed(2)}</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Controles de Sumar y Restar Cantidad -->
+                    <div class="flex items-center gap-2 bg-dark border border-white/10 rounded px-1 shrink-0">
+                        <button onclick="actualizarCantidadCarrito(${index}, -1)" class="w-6 h-6 text-white hover:text-primary flex items-center justify-center transition-colors"><i class="fas fa-minus text-[8px]"></i></button>
+                        <span class="text-white text-[10px] font-bold w-3 text-center select-none">${item.cantidad}</span>
+                        <button onclick="actualizarCantidadCarrito(${index}, 1)" class="w-6 h-6 text-white hover:text-primary flex items-center justify-center transition-colors"><i class="fas fa-plus text-[8px]"></i></button>
+                    </div>
+                </div>`;
             }).join('');
             totalContainer.innerText = `L${total.toFixed(2)}`; fabTotal.innerText = `L${total.toFixed(0)}`;
         }

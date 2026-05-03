@@ -85,7 +85,6 @@
             body { background: white !important; color: black !important; margin: 0; padding: 0; }
         }
         
-        /* Ocultar barra de scroll para áreas limpias */
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -197,7 +196,7 @@
                 </div>
             </div>
 
-            <!-- TAB NUEVOS PEDIDOS -->
+            <!-- TAB NUEVOS PEDIDOS (Solo en POS) -->
             <div id="tab-pedidos" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
@@ -211,7 +210,7 @@
                 </div>
             </div>
 
-            <!-- TAB HISTORIAL Y FACTURAS -->
+            <!-- TAB HISTORIAL Y FACTURAS (Solo en POS) -->
             <div id="tab-facturas" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
@@ -260,14 +259,21 @@
                                 </div>
                             </div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
                                 <div>
-                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio</label>
-                                    <input type="text" id="new-price" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors">
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio del producto</label>
+                                    <div class="flex bg-darker border border-white/10 rounded focus-within:border-primary transition-colors overflow-hidden">
+                                        <select id="new-currency" class="bg-transparent text-primary px-3 outline-none border-r border-white/10 font-bold cursor-pointer text-sm w-16">
+                                            <option value="L">L</option>
+                                            <option value="$">$</option>
+                                            <option value="€">€</option>
+                                        </select>
+                                        <input type="number" id="new-price" step="0.01" min="0" placeholder="0.00" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-white font-mono">
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Categoría</label>
-                                    <select id="new-cat" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-gray-300 transition-colors cursor-pointer"></select>
+                                    <select id="new-cat" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-gray-300 transition-colors cursor-pointer rounded"></select>
                                 </div>
                             </div>
 
@@ -317,19 +323,19 @@
                     </div>
 
                     <div class="flex gap-4 mt-8">
-                        <button id="btn-submit-admin" onclick="addProduct()" class="flex-1 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-white transition-all flex justify-center items-center gap-2 shadow-lg">
+                        <button id="btn-submit-admin" onclick="addProduct()" class="flex-1 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-white transition-all flex justify-center items-center gap-2 shadow-lg rounded">
                             <span id="btn-submit-text">Guardar Producto en la Nube</span>
                             <div id="btn-submit-loader" class="loader !border-t-dark !border-dark/30"></div>
                         </button>
-                        <button id="btn-cancel-edit" onclick="cancelEdit()" class="hidden bg-red-600 text-white px-8 py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-red-500 transition-all">Cancelar</button>
+                        <button id="btn-cancel-edit" onclick="cancelEdit()" class="hidden bg-red-600 text-white px-8 py-4 font-bold uppercase text-xs tracking-[0.3em] hover:bg-red-500 transition-all rounded">Cancelar</button>
                     </div>
                 </div>
 
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-16 shadow-2xl">
                     <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-4 italic flex items-center gap-2"><i class="fas fa-tags"></i> Gestión de Categorías</h3>
                     <div class="flex flex-col md:flex-row gap-4 mb-6">
-                        <input type="text" id="new-category-name" class="flex-1 bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white">
-                        <button onclick="addNewCategory()" class="bg-darker border border-primary/40 text-primary px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-dark transition-all"><i class="fas fa-plus"></i> Guardar</button>
+                        <input type="text" id="new-category-name" placeholder="Ej. Urban, Anime, Invierno..." class="flex-1 bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white rounded">
+                        <button onclick="addNewCategory()" class="bg-darker border border-primary/40 text-primary px-8 py-3 text-[10px] font-bold uppercase tracking-widest hover:bg-primary hover:text-dark transition-all rounded"><i class="fas fa-plus"></i> Guardar</button>
                     </div>
                     <div id="categories-manager-list" class="flex flex-wrap gap-2"></div>
                 </div>
@@ -354,9 +360,9 @@
                     <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2"><i class="fas fa-image"></i> Personalizar Sección Hero Web</h3>
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
                         <div class="space-y-6">
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título Hero</label><input type="text" id="config-hero-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none"></div>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Subtítulo Hero</label><input type="text" id="config-hero-subtitle" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none"></div>
-                            <button onclick="saveHeroConfig()" id="btn-save-hero" class="w-full mt-4 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-xl">Actualizar Textos y Foto Hero</button>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título Hero</label><input type="text" id="config-hero-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none rounded"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Subtítulo Hero</label><input type="text" id="config-hero-subtitle" class="w-full bg-darker border border-white/10 px-4 py-3 text-white focus:border-primary outline-none rounded"></div>
+                            <button onclick="saveHeroConfig()" id="btn-save-hero" class="w-full mt-4 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.4em] hover:bg-white transition-all shadow-xl rounded">Actualizar Textos y Foto Hero</button>
                         </div>
                         <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-6 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[250px]" onclick="document.getElementById('new-hero-img').click()">
                             <input type="file" id="new-hero-img" class="hidden" accept="image/*" onchange="compressHeroImage(this)">
@@ -371,15 +377,15 @@
                     <div class="bg-dark p-8 border border-white/5 shadow-2xl rounded-lg flex flex-col justify-between h-full">
                         <div class="space-y-6">
                             <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Textos de la Marca</h3>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Eslogan en Tienda</label><input type="text" id="config-slogan" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título "Nosotros"</label><input type="text" id="config-about-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Descripción "Nosotros"</label><textarea id="config-about-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-24"></textarea></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Eslogan en Tienda</label><input type="text" id="config-slogan" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Título "Nosotros"</label><input type="text" id="config-about-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Descripción "Nosotros"</label><textarea id="config-about-desc" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none h-24 rounded"></textarea></div>
                             
                             <hr class="border-white/5 my-4">
                             
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Mensaje Compartir WhatsApp</label><input type="text" id="config-share-text" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Encabezado de Factura</label><input type="text" id="config-invoice-header" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Pie de Factura (Notas/Legal)</label><input type="text" id="config-invoice-footer" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Mensaje Compartir WhatsApp</label><input type="text" id="config-share-text" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Encabezado de Factura</label><input type="text" id="config-invoice-header" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Pie de Factura (Notas/Legal)</label><input type="text" id="config-invoice-footer" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded"></div>
                         </div>
                         <button onclick="saveBrandTexts()" class="w-full mt-8 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-white transition-all shadow-xl rounded">Guardar Textos de Marca</button>
                     </div>
@@ -389,12 +395,12 @@
                             <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad de la Cuenta Actual</h3>
                             <div>
                                 <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Mi Contraseña</label>
-                                <input type="password" id="config-password" placeholder="Nueva contraseña (mín 6 caracteres)" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none">
+                                <input type="password" id="config-password" placeholder="Nueva contraseña (mín 6 caracteres)" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded">
                                 <p class="text-[8px] text-gray-500 mt-1 italic">Dejar vacío si no deseas cambiarla.</p>
                             </div>
                             <hr class="border-white/5 my-4">
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</label><input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
-                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label><input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-whatsapp text-green-500"></i> WhatsApp</label><input type="text" id="config-whatsapp" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded"></div>
+                            <div><label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fab fa-instagram text-pink-500"></i> Instagram URL</label><input type="text" id="config-instagram" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded"></div>
                         </div>
                         <button onclick="saveSecuritySocials()" class="w-full mt-8 bg-primary text-dark py-4 font-bold uppercase text-xs tracking-[0.2em] hover:bg-white transition-all shadow-xl rounded">Guardar Cambios</button>
                     </div>
@@ -407,12 +413,12 @@
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Correo del Nuevo Usuario</label>
-                            <input type="email" id="new-user-email" placeholder="ej. pos2@newgate.com" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none">
+                            <input type="email" id="new-user-email" placeholder="ej. pos2@newgate.com" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded">
                             <p class="text-[8px] text-gray-500 mt-1 italic">Si contiene la palabra "pos", el sistema lo reconocerá como Cajero automáticamente.</p>
                         </div>
                         <div>
                             <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold">Asignar Contraseña</label>
-                            <input type="password" id="new-user-pass" placeholder="Mínimo 6 caracteres" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none">
+                            <input type="password" id="new-user-pass" placeholder="Mínimo 6 caracteres" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded">
                         </div>
                         <div>
                             <button id="btn-create-user" onclick="crearUsuarioSecundario()" class="w-full bg-darker border border-primary text-primary hover:bg-primary hover:text-dark py-3 font-bold uppercase text-[10px] tracking-widest transition-all rounded shadow-xl flex justify-center items-center gap-2">
@@ -437,11 +443,9 @@
         let currentFormSizes = ["S", "M", "L", "XL"];
         let currentFormColumns = ["Pecho", "Largo", "Ancho"];
 
-        // POS Logic Variables
         let posCart = [];
         let posEditingOrderId = null;
 
-        // CONTROL DE ACCESO
         let currentFirebaseUser = null;
         let activeModule = null; 
         let listenersInitialized = { pos: false, admin: false };
@@ -514,7 +518,10 @@
                 showAdminTab('pos');
             } else if (module === 'ADMIN') {
                 title.innerHTML = 'ADMIN<span class="text-primary">.</span>';
-                btnPos.style.display = 'none'; btnPedidos.style.display = 'flex'; btnFacturas.style.display = 'flex';
+                btnPos.style.display = 'none'; 
+                // Se ocultan Pedidos y Facturas del Administrador global según lo requerido
+                btnPedidos.style.display = 'none'; 
+                btnFacturas.style.display = 'none';
                 btnInventario.style.display = 'flex'; btnConfig.style.display = 'flex';
                 showAdminTab('inventario');
             }
@@ -528,7 +535,6 @@
             Toast.fire({ icon: 'info', title: 'Sesión Finalizada' });
         }
 
-        // === NUEVO: MÓDULO TERMINAL POS ===
 
         function renderPosInventory() {
             const grid = document.getElementById('pos-inventory-grid');
@@ -559,7 +565,6 @@
             const p = inventario.find(x => x.id === id); if(!p) return;
             if(!p.hasMeasures || !p.tallas || p.tallas.length === 0) return addToPosCart(p, "Única");
             
-            // Selector rápido con SweetAlert para UI de POS
             let htmlOptions = p.tallas.map(t => `<button class="swal-size-btn bg-darker border border-white/10 text-white w-full py-3 mb-2 rounded hover:border-primary transition-colors text-sm font-bold uppercase" onclick="Swal.clickConfirm(); window.tempSelectedSize='${t}'">${t}</button>`).join('');
             window.tempSelectedSize = null;
             
@@ -638,7 +643,7 @@
             const processOrder = isEditing ? db.collection("pedidos").doc(docId).set(orderData, {merge: true}) : db.collection("pedidos").add(orderData);
 
             processOrder.then(async () => {
-                if(targetStatus === 'despachado') await procesarStockParaDespacho(posCart); // Restar inventario real
+                if(targetStatus === 'despachado') await procesarStockParaDespacho(posCart); 
                 Toast.fire({ icon: 'success', title: targetStatus === 'despachado' ? 'Venta Cobrada' : 'Pedido Guardado' });
                 posCart = []; posEditingOrderId = null; document.getElementById('pos-client-name').value = ''; document.getElementById('pos-ticket-title').innerText = 'Venta Nueva'; renderPosCart();
             }).catch(e => DarkAlert.fire({ icon: 'error', title: 'Error', text: e.message }));
@@ -681,9 +686,6 @@
                 }
             });
         }
-
-
-        // === FIN MÓDULO TERMINAL POS ===
 
         function escucharPedidos() {
             db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
@@ -815,8 +817,6 @@
             window.print();
         }
 
-        // === INVENTARIO, CONFIG, AUTH ===
-
         function escucharFirebase() { 
             db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { 
                 inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); renderPosInventory();
@@ -866,15 +866,22 @@
         async function uploadImageToStorage(b64, path) { if (!b64.startsWith('data:image')) return b64; const res = await fetch(b64); const blob = await res.blob(); const ref = storage.ref().child(path); await ref.put(blob); return await ref.getDownloadURL(); }
 
         async function addProduct() {
-            const title = document.getElementById('new-title').value.trim(); const price = document.getElementById('new-price').value.trim();
-            if(!title || !price || selectedBase64Imgs.length === 0) return Toast.fire({ icon: 'warning', title: 'Faltan campos/fotos' });
+            const title = document.getElementById('new-title').value.trim(); 
+            const priceVal = parseFloat(document.getElementById('new-price').value);
+            const currency = document.getElementById('new-currency').value;
+            
+            if(!title || isNaN(priceVal) || priceVal < 0 || selectedBase64Imgs.length === 0) return Toast.fire({ icon: 'warning', title: 'Faltan campos o precio inválido' });
+            
+            // Concatenación para mantener compatibilidad 
+            const finalPrice = `${currency}${priceVal.toFixed(2)}`;
+
             document.getElementById('btn-submit-admin').disabled = true; document.getElementById('btn-submit-loader').style.display = "block";
             try {
                 let docId = editId; let docRef = docId ? db.collection("productos").doc(docId) : db.collection("productos").doc(); docId = docRef.id;
                 const imageUrls = await Promise.all(selectedBase64Imgs.map((b64, idx) => uploadImageToStorage(b64, `productos/${docId}/img_${idx}_${Date.now()}.jpg`)));
                 const hasMeasures = document.getElementById('toggle-measures').checked; const tallas = []; const medidas = {};
                 if(hasMeasures) { currentFormSizes.forEach(t => { const safeT = t.replace(/[^a-zA-Z0-9_-]/g, ''); const checkbox = document.getElementById(`t-${safeT}`); if(checkbox && checkbox.checked) { tallas.push(t); medidas[t] = {}; currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const inputEl = document.getElementById(`measure-${safeT}-${safeC}`); medidas[t][c] = inputEl ? inputEl.value : ""; }); } }); }
-                const productData = { sku: document.getElementById('new-sku').value.trim().toUpperCase() || "", categoria: document.getElementById('new-cat').value || 'general', titulo: title, descripcion: document.getElementById('new-desc').value.trim() || "", precio: price, stock: parseInt(document.getElementById('new-stock').value) || 0, isPresale: document.getElementById('toggle-presale').checked, hasMeasures, tallas, medidas, columnas: currentFormColumns, imagen: imageUrls[0] || "", imagenes: imageUrls || [] };
+                const productData = { sku: document.getElementById('new-sku').value.trim().toUpperCase() || "", categoria: document.getElementById('new-cat').value || 'general', titulo: title, descripcion: document.getElementById('new-desc').value.trim() || "", precio: finalPrice, stock: parseInt(document.getElementById('new-stock').value) || 0, isPresale: document.getElementById('toggle-presale').checked, hasMeasures, tallas, medidas, columnas: currentFormColumns, imagen: imageUrls[0] || "", imagenes: imageUrls || [] };
                 if (!editId) productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
                 await docRef.set(productData, { merge: true }); Toast.fire({ icon: 'success', title: 'Guardado exitoso' }); cancelEdit(); 
             } catch (error) { DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message }); }
@@ -886,7 +893,19 @@
         function startEdit(id) {
             const p = inventario.find(x => x.id === id); if(!p) return; editId = id; showAdminTab('inventario'); window.scrollTo({top: 0, behavior: 'smooth'});
             document.getElementById('admin-form-container').classList.add('editing-mode'); document.getElementById('btn-cancel-edit').classList.remove('hidden');
-            document.getElementById('new-title').value = p.titulo || ""; document.getElementById('new-sku').value = p.sku || ""; document.getElementById('new-price').value = p.precio || ""; document.getElementById('new-desc').value = p.descripcion || ""; if (p.categoria) document.getElementById('new-cat').value = p.categoria;
+            document.getElementById('new-title').value = p.titulo || ""; 
+            document.getElementById('new-sku').value = p.sku || ""; 
+            document.getElementById('new-desc').value = p.descripcion || ""; 
+            if (p.categoria) document.getElementById('new-cat').value = p.categoria;
+            
+            // Lógica de separación moneda/precio numérico
+            const pPrice = p.precio || "L0.00";
+            const match = pPrice.match(/^([^0-9.]+)?([0-9.]+)/);
+            if(match) {
+                document.getElementById('new-currency').value = match[1] || "L";
+                document.getElementById('new-price').value = parseFloat(match[2]);
+            } else { document.getElementById('new-price').value = 0; }
+
             document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0; document.getElementById('toggle-presale').checked = !!p.isPresale; document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
             selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []); renderThumbnails();
             currentFormSizes = ["S", "M", "L", "XL"]; currentFormColumns = p.columnas && p.columnas.length > 0 ? p.columnas : ["Pecho", "Largo", "Ancho"]; if(p.hasMeasures && p.tallas) { p.tallas.forEach(t => { if(!currentFormSizes.includes(t)) currentFormSizes.push(t); }); }
