@@ -18,7 +18,6 @@
       measurementId: "G-9Y1BH12NG4"
     };
 
-    // App principal
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
     const auth = firebase.auth();
@@ -33,7 +32,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- HTML2CANVAS: Agregado para renderizado off-screen de facturas a imagen -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
     <script>
@@ -80,13 +78,16 @@
         
         .swal2-container { z-index: 9999 !important; }
 
-        /* ESTILOS EXCLUSIVOS PARA IMPRESIÓN DE FACTURAS */
         #printable-invoice { display: none; }
         @media print {
             body > *:not(#printable-invoice) { display: none !important; }
             #printable-invoice { display: block !important; position: absolute; left: 0; top: 0; width: 100%; background: white !important; color: black !important; }
             body { background: white !important; color: black !important; margin: 0; padding: 0; }
         }
+        
+        /* Ocultar barra de scroll para áreas limpias */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
 <body class="bg-dark text-gray-300 font-sans antialiased selection:bg-primary selection:text-dark min-h-screen flex flex-col">
@@ -102,20 +103,17 @@
         </div>
     </header>
 
-    <!-- SELECTOR DE MÓDULO INICIAL -->
     <div id="selector-modal" class="modal-overlay active">
         <div class="modal-content p-8 text-center shadow-2xl !max-w-2xl bg-darker">
             <h2 class="font-graffiti text-4xl text-white mb-2">NEW GATE<span class="text-primary">.</span></h2>
             <p class="text-[10px] uppercase tracking-widest text-gray-500 mb-8 font-bold">Selecciona tu módulo de acceso</p>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- POS -->
                 <div onclick="selectModule('POS')" class="bg-dark border border-white/5 p-8 rounded-lg cursor-pointer hover:border-primary/50 transition-colors group">
                     <i class="fas fa-cash-register text-4xl text-primary mb-4 group-hover:scale-110 transition-transform"></i>
                     <h3 class="text-white font-serif italic text-xl mb-2">Punto de Venta</h3>
                     <p class="text-gray-500 text-[10px] uppercase tracking-widest">Gestión de pedidos y facturación</p>
                 </div>
-                <!-- ADMIN GLOBAL -->
                 <div onclick="selectModule('ADMIN')" class="bg-dark border border-white/5 p-8 rounded-lg cursor-pointer hover:border-primary/50 transition-colors group">
                     <i class="fas fa-cogs text-4xl text-primary mb-4 group-hover:scale-110 transition-transform"></i>
                     <h3 class="text-white font-serif italic text-xl mb-2">Ajustes Globales</h3>
@@ -125,7 +123,6 @@
         </div>
     </div>
 
-    <!-- MODAL UNIFICADO DE ACCESO (EMAIL/PASS) -->
     <div id="login-modal" class="modal-overlay">
         <div class="modal-content p-8 text-center shadow-2xl">
             <button onclick="goBackToSelector()" class="absolute top-4 left-4 text-gray-500 hover:text-white transition-colors w-8 h-8 flex items-center justify-center rounded"><i class="fas fa-arrow-left"></i></button>
@@ -140,15 +137,15 @@
         </div>
     </div>
 
-    <!-- PANEL PRINCIPAL -->
     <div id="admin" class="section-fade py-12 bg-darker flex-1">
-        <div class="max-w-6xl mx-auto px-6">
+        <div class="max-w-7xl mx-auto px-6">
             
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-12 gap-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-white/10 mb-8 gap-4">
                 <div class="flex space-x-8 overflow-x-auto w-full md:w-auto scrollbar-hide pb-2">
                     <!-- TABS POS -->
-                    <button id="nav-pedidos" onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-bell"></i> Nuevos Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
-                    <button id="nav-facturas" onclick="showAdminTab('facturas', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-file-invoice"></i> Historial Facturas</button>
+                    <button id="nav-pos" onclick="showAdminTab('pos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-cash-register"></i> Terminal POS</button>
+                    <button id="nav-pedidos" onclick="showAdminTab('pedidos', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-bell"></i> Pedidos <span id="badge-pedidos" class="bg-red-500 text-white px-2 py-0.5 rounded-full text-[8px] hidden">0</span></button>
+                    <button id="nav-facturas" onclick="showAdminTab('facturas', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-file-invoice"></i> Historial</button>
                     
                     <!-- TABS ADMIN -->
                     <button id="nav-inventario" onclick="showAdminTab('inventario', event)" class="tab-btn py-4 text-[10px] uppercase tracking-widest font-bold whitespace-nowrap transition-colors flex items-center gap-2"><i class="fas fa-box"></i> Inventario</button>
@@ -157,14 +154,56 @@
                 <button onclick="exitModule()" class="pb-4 md:pb-0 text-red-500 text-[10px] uppercase tracking-widest font-bold hover:text-red-400 transition-colors flex items-center gap-2"><i class="fas fa-sign-out-alt"></i> Cerrar Sesión</button>
             </div>
 
-            <!-- TAB NUEVOS PEDIDOS (Solo POS) -->
+            <!-- TAB NUEVA TERMINAL POS (Punto de Venta Dinámico) -->
+            <div id="tab-pos" class="admin-tab hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Catálogo e Inventario Rápido -->
+                    <div class="lg:col-span-2 bg-dark p-6 border border-white/5 rounded-lg shadow-2xl h-[75vh] flex flex-col">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-white uppercase tracking-[0.2em] text-xs font-bold flex items-center gap-2"><i class="fas fa-search text-primary"></i> Catálogo Rápido</h3>
+                            <input type="text" id="pos-search" oninput="renderPosInventory()" placeholder="Buscar producto o SKU..." class="bg-darker border border-white/10 px-4 py-2 text-sm outline-none focus:border-primary text-white w-1/2 rounded">
+                        </div>
+                        <div id="pos-inventory-grid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 overflow-y-auto pr-2 pb-4">
+                            <!-- Productos cargados vía JS -->
+                        </div>
+                    </div>
+                    
+                    <!-- Ticket / Pedido Actual -->
+                    <div class="bg-dark p-6 border border-white/5 rounded-lg shadow-2xl h-[75vh] flex flex-col">
+                        <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-4">
+                            <h3 class="text-primary uppercase tracking-[0.2em] text-xs font-bold italic" id="pos-ticket-title">Venta Nueva</h3>
+                            <button onclick="clearPosCart()" class="text-red-500 text-[10px] uppercase font-bold hover:text-red-400"><i class="fas fa-trash"></i> Limpiar</button>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <input type="text" id="pos-client-name" placeholder="Nombre del Cliente (Opcional)" class="w-full bg-darker border border-white/10 px-3 py-2 text-sm outline-none focus:border-primary text-white rounded">
+                        </div>
+
+                        <div id="pos-cart-list" class="flex-1 overflow-y-auto space-y-3 pr-2 border-b border-white/10 mb-4 pb-4">
+                            <div class="text-center py-10 text-gray-600 text-[10px] uppercase font-bold">Carrito vacío</div>
+                        </div>
+
+                        <div class="mt-auto">
+                            <div class="flex justify-between items-center mb-6">
+                                <span class="text-white text-xs uppercase tracking-widest font-bold">Total a Cobrar</span>
+                                <span id="pos-total-display" class="text-3xl text-primary font-serif font-bold">L0.00</span>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <button onclick="savePosOrder('pendiente')" class="w-full bg-darker border border-primary text-primary py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary hover:text-dark transition-all rounded shadow-lg">Guardar (Pendiente)</button>
+                                <button onclick="savePosOrder('despachado')" class="w-full bg-primary text-dark py-4 font-bold uppercase text-[11px] tracking-widest hover:bg-white transition-all rounded shadow-lg flex items-center justify-center gap-2"><i class="fas fa-check-double"></i> Cobrar y Despachar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB NUEVOS PEDIDOS -->
             <div id="tab-pedidos" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
                             <i class="fas fa-clipboard-list"></i> Pedidos Entrantes
                         </h3>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Al despachar, se mueven a Facturas.</p>
                     </div>
                     <div id="admin-pedidos-list" class="space-y-4">
                         <div class="text-center py-10"><div class="loader !block border-t-primary w-8 h-8 mx-auto"></div></div>
@@ -172,14 +211,13 @@
                 </div>
             </div>
 
-            <!-- TAB HISTORIAL Y FACTURAS (Solo POS) -->
+            <!-- TAB HISTORIAL Y FACTURAS -->
             <div id="tab-facturas" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6">
                         <h3 class="text-white uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
                             <i class="fas fa-archive text-primary"></i> Facturación e Historial
                         </h3>
-                        <p class="text-[10px] text-gray-500 uppercase tracking-widest">Imprime tickets o elimina registros antiguos.</p>
                     </div>
                     <div id="admin-facturas-list" class="space-y-4">
                         <div class="text-center py-10"><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Cargando facturas...</p></div>
@@ -187,7 +225,7 @@
                 </div>
             </div>
 
-            <!-- TAB INVENTARIO (Solo Admin Global) -->
+            <!-- TAB INVENTARIO -->
             <div id="tab-inventario" class="admin-tab hidden">
                 <div id="admin-form-container" class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl transition-all duration-300">
                     <h3 id="admin-form-title" class="text-primary uppercase tracking-[0.3em] text-xs font-bold mb-8 italic flex items-center gap-2">
@@ -242,9 +280,7 @@
                             </div>
 
                             <div id="measures-config-panel" class="bg-darker p-5 border border-white/10 rounded transition-all">
-                                
                                 <div id="medidas-inputs-container" class="space-y-3 mb-4"></div>
-                                
                                 <div class="flex flex-col md:flex-row gap-4 border-t border-white/5 pt-4 mt-2">
                                     <div class="flex-1 flex gap-2 items-center">
                                         <input type="text" id="new-size-input" class="bg-dark border border-white/10 px-3 py-2 text-[10px] text-white uppercase outline-none focus:border-primary w-full">
@@ -311,7 +347,7 @@
                 <div id="admin-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
             </div>
 
-            <!-- TAB AJUSTES GLOBALES (Solo Admin Global) -->
+            <!-- TAB AJUSTES GLOBALES -->
             <div id="tab-config" class="admin-tab hidden space-y-10">
                 
                 <div class="bg-dark p-8 border border-white/5 rounded-lg shadow-2xl">
@@ -364,10 +400,9 @@
                     </div>
                 </div>
 
-                <!-- SECCIÓN NUEVA: GESTOR DE USUARIOS -->
                 <div class="bg-dark p-8 border border-white/5 shadow-2xl rounded-lg">
                     <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic mb-4 flex items-center gap-2"><i class="fas fa-users-cog"></i> Gestor de Accesos (Crear/Restaurar Cuentas)</h3>
-                    <p class="text-[10px] text-gray-400 mb-6 uppercase tracking-widest">Si perdiste una cuenta (como el POS) o quieres crear una nueva para otro cajero, hazlo aquí sin perder tu sesión actual.</p>
+                    <p class="text-[10px] text-gray-400 mb-6 uppercase tracking-widest">Si perdiste una cuenta o quieres crear una nueva para otro cajero, hazlo aquí sin perder tu sesión actual.</p>
                     
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-end">
                         <div>
@@ -402,6 +437,10 @@
         let currentFormSizes = ["S", "M", "L", "XL"];
         let currentFormColumns = ["Pecho", "Largo", "Ancho"];
 
+        // POS Logic Variables
+        let posCart = [];
+        let posEditingOrderId = null;
+
         // CONTROL DE ACCESO
         let currentFirebaseUser = null;
         let activeModule = null; 
@@ -410,33 +449,22 @@
         function init() {
             auth.onAuthStateChanged((user) => {
                 currentFirebaseUser = user;
-                
                 const loginModal = document.getElementById('login-modal');
                 if (user && loginModal.classList.contains('active')) {
                      const target = loginModal.dataset.targetModule || 'ADMIN';
-                     // Lógica optimizada: Si el email contiene "pos", se fuerza a ir al módulo POS
-                     if (target === 'ADMIN' && user.email.toLowerCase().includes('pos')) {
-                         enterModule('POS');
-                     } else {
-                         enterModule(target);
-                     }
+                     if (target === 'ADMIN' && user.email.toLowerCase().includes('pos')) enterModule('POS');
+                     else enterModule(target);
                 }
             });
-            
             escucharConfigGlobal();
             renderMedidasForm();
-            
             document.getElementById('selector-modal').classList.add('active');
             document.getElementById('login-modal').classList.remove('active');
         }
 
         function selectModule(module) {
             if (currentFirebaseUser) {
-                // Bloqueo de seguridad: Si el email tiene "pos", no entra al ADMIN
-                if (module === 'ADMIN' && currentFirebaseUser.email.toLowerCase().includes('pos')) {
-                    Toast.fire({ icon: 'error', title: 'Acceso denegado: Cuenta de Cajero' });
-                    return;
-                }
+                if (module === 'ADMIN' && currentFirebaseUser.email.toLowerCase().includes('pos')) return Toast.fire({ icon: 'error', title: 'Acceso denegado: Cuenta de Cajero' });
                 enterModule(module);
             } else {
                 document.getElementById('selector-modal').classList.remove('active');
@@ -449,219 +477,261 @@
         function goBackToSelector() {
             document.getElementById('login-modal').classList.remove('active');
             document.getElementById('selector-modal').classList.add('active');
-            document.getElementById('admin-email-input').value = "";
-            document.getElementById('admin-pass-input').value = "";
+            document.getElementById('admin-email-input').value = ""; document.getElementById('admin-pass-input').value = "";
             document.getElementById('login-error').classList.add('hidden');
         }
 
         function validateLogin() {
-            const email = document.getElementById('admin-email-input').value.trim(); 
-            const pass = document.getElementById('admin-pass-input').value;
+            const email = document.getElementById('admin-email-input').value.trim(); const pass = document.getElementById('admin-pass-input').value;
             if(!email || !pass) return;
-
             const target = document.getElementById('login-modal').dataset.targetModule || 'ADMIN';
-
             auth.signInWithEmailAndPassword(email, pass).then((cred) => { 
                 document.getElementById('login-error').classList.add('hidden'); 
                 document.getElementById('admin-pass-input').value = ""; 
                 document.getElementById('login-modal').classList.remove('active');
-                
-                // Si la cuenta tiene "pos" en el nombre, lo forzamos al punto de venta
-                if (target === 'ADMIN' && cred.user.email.toLowerCase().includes('pos')) {
-                    Toast.fire({ icon: 'warning', title: 'Cajero detectado. Entrando a POS.' });
-                    enterModule('POS');
-                } else {
-                    enterModule(target);
-                    Toast.fire({ icon: 'success', title: 'Acceso Autorizado' }); 
-                }
-            }).catch(() => { 
-                document.getElementById('login-error').classList.remove('hidden'); 
-            });
+                if (target === 'ADMIN' && cred.user.email.toLowerCase().includes('pos')) { Toast.fire({ icon: 'warning', title: 'Cajero detectado. Entrando a POS.' }); enterModule('POS'); } 
+                else { enterModule(target); Toast.fire({ icon: 'success', title: 'Acceso Autorizado' }); }
+            }).catch(() => { document.getElementById('login-error').classList.remove('hidden'); });
         }
 
         function enterModule(module) {
             activeModule = module;
-            
-            document.getElementById('selector-modal').classList.remove('active');
-            document.getElementById('login-modal').classList.remove('active');
-
+            document.getElementById('selector-modal').classList.remove('active'); document.getElementById('login-modal').classList.remove('active');
             document.getElementById('admin').style.display = 'block'; 
             setTimeout(() => document.getElementById('admin').classList.add('active'), 50);
             
-            const btnPedidos = document.getElementById('nav-pedidos');
-            const btnFacturas = document.getElementById('nav-facturas');
-            const btnInventario = document.getElementById('nav-inventario');
-            const btnConfig = document.getElementById('nav-config');
+            const btnPos = document.getElementById('nav-pos'); const btnPedidos = document.getElementById('nav-pedidos'); const btnFacturas = document.getElementById('nav-facturas');
+            const btnInventario = document.getElementById('nav-inventario'); const btnConfig = document.getElementById('nav-config');
             const title = document.getElementById('header-title');
+
+            if (!listenersInitialized.admin) { escucharFirebase(); escucharHero(); listenersInitialized.admin = true; }
+            if (!listenersInitialized.pos) { escucharPedidos(); listenersInitialized.pos = true; }
 
             if (module === 'POS') {
                 title.innerHTML = 'POS<span class="text-primary">.</span>';
-                btnPedidos.style.display = 'flex'; btnFacturas.style.display = 'flex';
+                btnPos.style.display = 'flex'; btnPedidos.style.display = 'flex'; btnFacturas.style.display = 'flex';
                 btnInventario.style.display = 'none'; btnConfig.style.display = 'none';
-                
-                showAdminTab('pedidos');
-                if (!listenersInitialized.pos) { escucharPedidos(); listenersInitialized.pos = true; }
-                
+                showAdminTab('pos');
             } else if (module === 'ADMIN') {
                 title.innerHTML = 'ADMIN<span class="text-primary">.</span>';
-                btnPedidos.style.display = 'none'; btnFacturas.style.display = 'none';
+                btnPos.style.display = 'none'; btnPedidos.style.display = 'flex'; btnFacturas.style.display = 'flex';
                 btnInventario.style.display = 'flex'; btnConfig.style.display = 'flex';
-                
                 showAdminTab('inventario');
-                if (!listenersInitialized.admin) { escucharFirebase(); escucharHero(); listenersInitialized.admin = true; }
             }
         }
 
         function exitModule() {
             if (currentFirebaseUser) auth.signOut();
-            
             activeModule = null;
             document.getElementById('admin').classList.remove('active'); 
-            setTimeout(() => { 
-                document.getElementById('admin').style.display = 'none'; 
-                document.getElementById('selector-modal').classList.add('active'); 
-            }, 400);
+            setTimeout(() => { document.getElementById('admin').style.display = 'none'; document.getElementById('selector-modal').classList.add('active'); }, 400);
             Toast.fire({ icon: 'info', title: 'Sesión Finalizada' });
         }
 
+        // === NUEVO: MÓDULO TERMINAL POS ===
 
-        // === LÓGICA POS Y FACTURACIÓN ===
+        function renderPosInventory() {
+            const grid = document.getElementById('pos-inventory-grid');
+            const term = (document.getElementById('pos-search').value || "").toLowerCase();
+            const filt = inventario.filter(p => !p.isPresale && ((p.titulo || "").toLowerCase().includes(term) || (p.sku || "").toLowerCase().includes(term)));
+            
+            if(filt.length === 0) return grid.innerHTML = `<div class="col-span-full text-center py-10 text-gray-600 text-[10px] uppercase">No hay productos disponibles</div>`;
+            
+            grid.innerHTML = filt.map(p => {
+                const img = p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen;
+                const priceNum = parseFloat((p.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                const isOut = p.stock !== undefined && p.stock <= 0;
+                
+                return `
+                <div class="bg-darker border border-white/5 rounded-lg overflow-hidden cursor-pointer hover:border-primary/50 transition-all ${isOut ? 'opacity-50' : ''}" onclick="${isOut ? '' : `openPosSizeSelector('${p.id}')`}">
+                    <div class="aspect-square relative"><img src="${img}" class="w-full h-full object-cover">
+                    ${isOut ? '<div class="absolute inset-0 bg-red-900/50 flex items-center justify-center"><span class="bg-red-600 text-white text-[8px] px-2 py-1 uppercase font-bold tracking-widest">Agotado</span></div>' : ''}
+                    </div>
+                    <div class="p-2">
+                        <p class="text-[9px] uppercase font-bold text-white truncate">${p.titulo}</p>
+                        <p class="text-primary font-bold text-[10px]">L${priceNum.toFixed(2)}</p>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openPosSizeSelector(id) {
+            const p = inventario.find(x => x.id === id); if(!p) return;
+            if(!p.hasMeasures || !p.tallas || p.tallas.length === 0) return addToPosCart(p, "Única");
+            
+            // Selector rápido con SweetAlert para UI de POS
+            let htmlOptions = p.tallas.map(t => `<button class="swal-size-btn bg-darker border border-white/10 text-white w-full py-3 mb-2 rounded hover:border-primary transition-colors text-sm font-bold uppercase" onclick="Swal.clickConfirm(); window.tempSelectedSize='${t}'">${t}</button>`).join('');
+            window.tempSelectedSize = null;
+            
+            Swal.fire({
+                title: 'Seleccionar Talla', html: htmlOptions, background: '#0f0f0f', color: '#fff',
+                showConfirmButton: false, showCloseButton: true,
+                preConfirm: () => { if(window.tempSelectedSize) addToPosCart(p, window.tempSelectedSize); }
+            });
+        }
+
+        function addToPosCart(p, talla) {
+            const priceNum = parseFloat((p.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
+            const idx = posCart.findIndex(i => i.id === p.id && i.talla === talla);
+            if(idx !== -1) posCart[idx].cantidad++;
+            else posCart.push({ id: p.id, titulo: p.titulo, precio: `L${priceNum.toFixed(2)}`, talla: talla, cantidad: 1, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen });
+            renderPosCart();
+        }
+
+        function updatePosQty(idx, delta) {
+            posCart[idx].cantidad += delta;
+            if(posCart[idx].cantidad <= 0) posCart.splice(idx, 1);
+            renderPosCart();
+        }
+
+        function clearPosCart() {
+            DarkAlert.fire({ title: '¿Limpiar ticket?', text: "Se borrarán todos los artículos actuales", icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, limpiar' })
+            .then((r) => { if (r.isConfirmed) { posCart = []; posEditingOrderId = null; document.getElementById('pos-client-name').value = ''; document.getElementById('pos-ticket-title').innerText = 'Venta Nueva'; renderPosCart(); }});
+        }
+
+        function renderPosCart() {
+            const list = document.getElementById('pos-cart-list'); const displayTotal = document.getElementById('pos-total-display');
+            if(posCart.length === 0) { list.innerHTML = `<div class="text-center py-10 text-gray-600 text-[10px] uppercase font-bold">Carrito vacío</div>`; displayTotal.innerText = "L0.00"; return; }
+            
+            let total = 0;
+            list.innerHTML = posCart.map((item, index) => {
+                const pNum = parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                const sub = pNum * item.cantidad; total += sub;
+                return `
+                <div class="flex items-center gap-3 bg-darker border border-white/5 p-2 rounded relative">
+                    <div class="w-10 h-10 bg-dark rounded overflow-hidden shrink-0"><img src="${item.img}" class="w-full h-full object-cover"></div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-white text-[10px] font-bold uppercase truncate">${item.titulo}</p>
+                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${item.talla}</span> | <span class="text-primary font-bold">L${sub.toFixed(2)}</span></p>
+                    </div>
+                    <div class="flex items-center gap-1 bg-dark px-1 py-0.5 rounded border border-white/10">
+                        <button onclick="updatePosQty(${index}, -1)" class="w-6 h-6 text-white hover:text-primary"><i class="fas fa-minus text-[8px]"></i></button>
+                        <span class="text-[10px] text-white font-bold w-4 text-center">${item.cantidad}</span>
+                        <button onclick="updatePosQty(${index}, 1)" class="w-6 h-6 text-white hover:text-primary"><i class="fas fa-plus text-[8px]"></i></button>
+                    </div>
+                </div>`;
+            }).join('');
+            displayTotal.innerText = `L${total.toFixed(2)}`;
+        }
+
+        function savePosOrder(targetStatus) {
+            if(posCart.length === 0) return Toast.fire({icon:'error', title:'Carrito vacío'});
+            let client = document.getElementById('pos-client-name').value.trim() || 'Mostrador / Anónimo';
+            let total = posCart.reduce((acc, item) => acc + (parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,""))||0) * item.cantidad, 0);
+            
+            const isEditing = !!posEditingOrderId;
+            const docId = isEditing ? posEditingOrderId : `NG-POS-${Math.floor(1000 + Math.random() * 9000)}`;
+            const orderRef = isEditing ? db.collection("pedidos").doc(docId) : db.collection("pedidos").add;
+            
+            const orderData = { 
+                idPedido: isEditing ? posCart._origIdPedido || docId : docId, 
+                cliente: client, 
+                items: posCart, 
+                total: total, 
+                estado: targetStatus, 
+                updatedAt: firebase.firestore.FieldValue.serverTimestamp() 
+            };
+
+            if(!isEditing) orderData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+            if(targetStatus === 'despachado') orderData.despachadoAt = firebase.firestore.FieldValue.serverTimestamp();
+
+            const processOrder = isEditing ? db.collection("pedidos").doc(docId).set(orderData, {merge: true}) : db.collection("pedidos").add(orderData);
+
+            processOrder.then(async () => {
+                if(targetStatus === 'despachado') await procesarStockParaDespacho(posCart); // Restar inventario real
+                Toast.fire({ icon: 'success', title: targetStatus === 'despachado' ? 'Venta Cobrada' : 'Pedido Guardado' });
+                posCart = []; posEditingOrderId = null; document.getElementById('pos-client-name').value = ''; document.getElementById('pos-ticket-title').innerText = 'Venta Nueva'; renderPosCart();
+            }).catch(e => DarkAlert.fire({ icon: 'error', title: 'Error', text: e.message }));
+        }
+
+        async function procesarStockParaDespacho(items) {
+            const batch = db.batch();
+            items.forEach(item => {
+                const prod = inventario.find(p => p.id === item.id);
+                if(prod) batch.update(db.collection("productos").doc(item.id), { stock: firebase.firestore.FieldValue.increment(-item.cantidad) });
+            });
+            return batch.commit();
+        }
+
+        async function reverirStockParaPendiente(items) {
+            const batch = db.batch();
+            items.forEach(item => {
+                const prod = inventario.find(p => p.id === item.id);
+                if(prod) batch.update(db.collection("productos").doc(item.id), { stock: firebase.firestore.FieldValue.increment(item.cantidad) });
+            });
+            return batch.commit();
+        }
+
+        function loadOrderIntoPos(docId) {
+            const pedido = pedidosList.find(p => p.id === docId); if(!pedido) return;
+            posEditingOrderId = docId; posCart = [...pedido.items]; posCart._origIdPedido = pedido.idPedido;
+            document.getElementById('pos-client-name').value = pedido.cliente || '';
+            document.getElementById('pos-ticket-title').innerText = `Editando: ${pedido.idPedido || 'S/N'}`;
+            showAdminTab('pos'); renderPosCart();
+        }
+
+        function marcarPendiente(docId) {
+            const pedido = pedidosList.find(p => p.id === docId); if(!pedido) return;
+            DarkAlert.fire({ title: '¿Regresar a Pendiente?', text: "Esto devolverá los productos al stock del inventario.", icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, regresar' })
+            .then(async (result) => {
+                if (result.isConfirmed) {
+                    await reverirStockParaPendiente(pedido.items);
+                    db.collection("pedidos").doc(docId).update({ estado: 'pendiente', despachadoAt: firebase.firestore.FieldValue.delete() })
+                    .then(() => Toast.fire({ icon: 'success', title: 'Pedido marcado como pendiente' }));
+                }
+            });
+        }
+
+
+        // === FIN MÓDULO TERMINAL POS ===
 
         function escucharPedidos() {
             db.collection("pedidos").orderBy("createdAt", "desc").onSnapshot((snapshot) => {
                 pedidosList = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                renderPedidosList();
-                renderFacturasList(); 
+                renderPedidosList(); renderFacturasList(); 
             }, (error) => {
                 console.error("🔥 Error en Firestore (Pedidos):", error.code, error.message);
-                
-                const listPedidos = document.getElementById('admin-pedidos-list');
-                const listFacturas = document.getElementById('admin-facturas-list');
-                
-                const errorUI = `
-                    <div class="text-center py-12 border border-red-500/30 bg-red-500/5 rounded-lg shadow-xl mx-2">
-                        <i class="fas fa-shield-alt text-4xl text-red-500 mb-4"></i>
-                        <h4 class="text-white font-bold uppercase tracking-widest text-xs mb-2">Bloqueo de Seguridad (Reglas de Firebase)</h4>
-                        <p class="text-[10px] text-gray-400 uppercase tracking-widest mb-4 font-mono bg-black/30 inline-block px-3 py-1 rounded">${error.code}</p>
-                        <p class="text-[11px] text-gray-300 px-6 mb-4">Debes publicar las <b>Reglas de Seguridad</b> en tu consola de Firebase.</p>
-                        <button onclick="window.location.reload()" class="bg-primary text-dark font-bold text-[10px] uppercase tracking-widest px-6 py-2 rounded shadow-lg hover:bg-white transition-colors">Ya las publiqué, Reintentar</button>
-                    </div>
-                `;
-
-                if(listPedidos) listPedidos.innerHTML = errorUI;
-                if(listFacturas) listFacturas.innerHTML = errorUI;
-                
-                Toast.fire({ icon: 'error', title: 'Permisos denegados en Firebase' });
+                const errorUI = `<div class="text-center py-12 border border-red-500/30 bg-red-500/5 rounded-lg mx-2"><i class="fas fa-shield-alt text-4xl text-red-500 mb-4"></i><h4 class="text-white font-bold uppercase tracking-widest text-xs mb-2">Error de Permisos</h4><p class="text-[10px] text-gray-400 uppercase tracking-widest mb-4">Por favor configura las Reglas de Firestore.</p></div>`;
+                if(document.getElementById('admin-pedidos-list')) document.getElementById('admin-pedidos-list').innerHTML = errorUI;
+                if(document.getElementById('admin-facturas-list')) document.getElementById('admin-facturas-list').innerHTML = errorUI;
             });
         }
 
         async function compartirPorWhatsApp(docId, tipo) {
-            const pedido = pedidosList.find(p => p.id === docId);
-            if (!pedido) return;
-
+            const pedido = pedidosList.find(p => p.id === docId); if (!pedido) return;
             if (tipo === 'pedido') {
-                let texto = `🔥 *NUEVO PEDIDO: ${pedido.idPedido || 'S/N'}*\n\n👤 *Cliente:* ${pedido.cliente}\n\n🛍️ *PRODUCTOS:*\n`;
-                (pedido.items || []).forEach((item, index) => {
-                    const precioNum = parseFloat(item.precio.replace(/[^0-9.-]+/g,"")) || 0;
-                    texto += `${index + 1}. [x${item.cantidad}] ${item.titulo} - Talla: ${item.talla} | L${(precioNum * item.cantidad).toFixed(2)}\n`;
-                });
+                let texto = `🔥 *PEDIDO: ${pedido.idPedido || 'S/N'}*\n\n👤 *Cliente:* ${pedido.cliente}\n\n🛍️ *PRODUCTOS:*\n`;
+                (pedido.items || []).forEach((item, index) => { const precioNum = parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0; texto += `${index + 1}. [x${item.cantidad}] ${item.titulo} - Talla: ${item.talla} | L${(precioNum * item.cantidad).toFixed(2)}\n`; });
                 texto += `\n💵 *TOTAL: L${(pedido.total || 0).toFixed(2)}*\n📌 *Estado:* PENDIENTE`;
-                
-                const urlWa = `https://wa.me/?text=${encodeURIComponent(texto)}`;
-                window.open(urlWa, '_blank');
-
+                window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
             } else if (tipo === 'factura') {
                 Toast.fire({ icon: 'info', title: 'Generando imagen de factura...' });
-                
                 const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') ? new Date(pedido.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
-                const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO';
-                const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
-
-                const itemsHtml = (pedido.items || []).map(i => {
-                    const pNum = parseFloat(i.precio.replace(/[^0-9.-]+/g,"")) || 0;
-                    return `
-                    <tr style="border-bottom: 1px solid #ddd;">
-                        <td style="padding: 8px 0; font-size: 12px; color: #000;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td>
-                        <td style="text-align: center; font-size: 12px; color: #000;">${i.cantidad}</td>
-                        <td style="text-align: right; font-size: 12px; color: #000;">L${(pNum * i.cantidad).toFixed(2)}</td>
-                    </tr>`;
-                }).join('');
-
-                const ticketHtml = `
-                    <div id="temp-invoice-capture" style="background: white; color: black; font-family: 'Courier New', Courier, monospace; width: 350px; padding: 20px; box-sizing: border-box; position: absolute; left: -9999px; top: -9999px; z-index: -1;">
-                        <h2 style="text-align: center; margin-bottom: 5px; font-size: 24px; color: #000;">NEW GATE</h2>
-                        <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p>
-                        <hr style="border: 1px dashed #000; margin: 15px 0;">
-                        <p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FACTURA:</strong> ${pedido.idPedido || 'S/N'}</p>
-                        <p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>CLIENTE:</strong> ${pedido.cliente}</p>
-                        <p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FECHA:</strong> ${dateStr}</p>
-                        <hr style="border: 1px dashed #000; margin: 15px 0;">
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="border-bottom: 2px solid #000;">
-                                    <th style="text-align: left; padding-bottom: 5px; font-size: 12px; color: #000;">DESC.</th>
-                                    <th style="text-align: center; padding-bottom: 5px; font-size: 12px; color: #000;">CANT</th>
-                                    <th style="text-align: right; padding-bottom: 5px; font-size: 12px; color: #000;">SUB</th>
-                                </tr>
-                            </thead>
-                            <tbody>${itemsHtml}</tbody>
-                        </table>
-                        <hr style="border: 1px dashed #000; margin: 15px 0;">
-                        <h3 style="text-align: right; font-size: 18px; margin: 0; color: #000;">TOTAL: L${(pedido.total || 0).toFixed(2)}</h3>
-                        <p style="text-align: center; margin-top: 30px; font-size: 11px; color: #000;">${invFooter}</p>
-                    </div>
-                `;
-
+                const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO'; const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
+                const itemsHtml = (pedido.items || []).map(i => `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px; color: #000;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td><td style="text-align: center; font-size: 12px; color: #000;">${i.cantidad}</td><td style="text-align: right; font-size: 12px; color: #000;">L${((parseFloat((i.precio||"0").replace(/[^0-9.-]+/g,""))||0) * i.cantidad).toFixed(2)}</td></tr>`).join('');
+                const ticketHtml = `<div id="temp-invoice-capture" style="background: white; color: black; font-family: 'Courier New', Courier, monospace; width: 350px; padding: 20px; box-sizing: border-box; position: absolute; left: -9999px; top: -9999px; z-index: -1;"><h2 style="text-align: center; margin-bottom: 5px; font-size: 24px; color: #000;">NEW GATE</h2><p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FACTURA:</strong> ${pedido.idPedido || 'S/N'}</p><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>CLIENTE:</strong> ${pedido.cliente}</p><p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FECHA:</strong> ${dateStr}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #000;"><th style="text-align: left; padding-bottom: 5px; font-size: 12px; color: #000;">DESC.</th><th style="text-align: center; padding-bottom: 5px; font-size: 12px; color: #000;">CANT</th><th style="text-align: right; padding-bottom: 5px; font-size: 12px; color: #000;">SUB</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr style="border: 1px dashed #000; margin: 15px 0;"><h3 style="text-align: right; font-size: 18px; margin: 0; color: #000;">TOTAL: L${(pedido.total || 0).toFixed(2)}</h3><p style="text-align: center; margin-top: 30px; font-size: 11px; color: #000;">${invFooter}</p></div>`;
                 document.body.insertAdjacentHTML('beforeend', ticketHtml);
                 const captureDiv = document.getElementById('temp-invoice-capture');
-
                 try {
                     const canvas = await html2canvas(captureDiv, { backgroundColor: '#ffffff', scale: 2 });
                     const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
                     const file = new File([blob], `Factura_${pedido.idPedido}.png`, { type: 'image/png' });
-
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        await navigator.share({
-                            files: [file],
-                            title: `Factura ${pedido.idPedido}`,
-                            text: `¡Gracias por tu compra! Aquí tienes tu factura.`
-                        });
-                        Toast.fire({ icon: 'success', title: 'Menú de compartir abierto' });
-                    } else {
-                        const item = new ClipboardItem({ 'image/png': blob });
-                        await navigator.clipboard.write([item]);
-                        DarkAlert.fire({
-                            icon: 'success',
-                            title: 'Imagen copiada',
-                            text: 'La imagen de la factura se ha copiado. Abre WhatsApp Web y presiona Ctrl+V (o Cmd+V) para enviarla.',
-                            confirmButtonText: 'Entendido'
-                        });
-                    }
-                } catch (error) {
-                    console.error("Error al generar imagen de factura:", error);
-                    DarkAlert.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar la imagen de la factura.' });
-                } finally {
-                    if (captureDiv) captureDiv.remove(); 
-                }
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: `Factura ${pedido.idPedido}`, text: `Aquí tienes tu factura.`}); Toast.fire({ icon: 'success', title: 'Abriendo compartir' }); } 
+                    else { await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); DarkAlert.fire({ icon: 'success', title: 'Imagen copiada', text: 'Pega la imagen en WhatsApp (Ctrl+V).' }); }
+                } catch (error) { DarkAlert.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar la imagen.' }); } 
+                finally { if (captureDiv) captureDiv.remove(); }
             }
         }
 
         function renderPedidosList() {
-            const list = document.getElementById('admin-pedidos-list');
-            const badge = document.getElementById('badge-pedidos');
+            const list = document.getElementById('admin-pedidos-list'); const badge = document.getElementById('badge-pedidos');
             const pedidosPendientes = pedidosList.filter(p => p.estado !== 'despachado');
 
-            if(pedidosPendientes.length > 0) { badge.classList.remove('hidden'); badge.innerText = pedidosPendientes.length; } 
-            else { badge.classList.add('hidden'); }
-
-            if(pedidosPendientes.length === 0) {
-                list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay pedidos nuevos</p></div>`;
-                return;
-            }
+            if(pedidosPendientes.length > 0) { badge.classList.remove('hidden'); badge.innerText = pedidosPendientes.length; } else badge.classList.add('hidden');
+            if(pedidosPendientes.length === 0) return list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-box-open text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay pedidos nuevos</p></div>`;
 
             list.innerHTML = pedidosPendientes.map(pedido => {
                 const dateStr = (pedido.createdAt && typeof pedido.createdAt.toDate === 'function') ? new Date(pedido.createdAt.toDate()).toLocaleDateString() : 'Nuevo / Pendiente';
-
                 return `
                 <div class="bg-darker border border-white/5 p-6 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-6 shadow-xl relative overflow-hidden">
                     <div class="absolute left-0 top-0 bottom-0 w-1 bg-red-500/50"></div>
@@ -672,26 +742,18 @@
                         </div>
                         <p class="text-white text-xs mb-1 uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
                         ${pedido.mensaje ? `<p class="text-gray-400 text-[10px] italic mb-3 bg-white/5 p-2 rounded border-l-2 border-primary">" ${pedido.mensaje} "</p>` : ''}
-                        
                         <div class="bg-black/30 p-3 rounded space-y-2 mt-3">
-                            ${(pedido.items || []).map(i => `
-                                <div class="flex items-center gap-3 bg-darker border border-white/5 p-2 rounded">
-                                    <div class="w-10 h-10 bg-dark rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover"></div>
-                                    <div class="flex-1 min-w-0">
-                                        <p class="text-white text-[10px] font-bold uppercase truncate">${i.titulo}</p>
-                                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white notranslate" translate="no">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p>
-                                    </div>
-                                </div>
-                            `).join('')}
+                            ${(pedido.items || []).map(i => `<div class="flex items-center gap-3 bg-darker border border-white/5 p-2 rounded"><div class="w-10 h-10 bg-dark rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover"></div><div class="flex-1 min-w-0"><p class="text-white text-[10px] font-bold uppercase truncate">${i.titulo}</p><p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${i.talla}</span> | Cant: <span class="text-primary">x${i.cantidad}</span></p></div></div>`).join('')}
                         </div>
                     </div>
                     
                     <div class="flex flex-col sm:flex-row items-end sm:items-center gap-3 w-full md:w-auto mt-4 md:mt-0">
                         <p class="text-2xl text-white font-serif font-bold w-full text-right sm:text-left mb-2 sm:mb-0">L${(pedido.total || 0).toFixed(2)}</p>
-                        <div class="flex gap-2 w-full sm:w-auto">
-                            <button onclick="compartirPorWhatsApp('${pedido.id}', 'pedido')" class="flex-1 sm:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all rounded shadow-xl" title="Compartir WhatsApp"><i class="fab fa-whatsapp text-sm md:text-base"></i></button>
-                            <button onclick="cancelarPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded shadow-xl" title="Cancelar sin rebajar inventario"><i class="fas fa-times"></i></button>
-                            <button onclick="despacharPedido('${pedido.id}')" class="flex-1 sm:flex-none bg-primary/20 text-primary border border-primary/30 px-4 py-3 font-bold uppercase text-[10px] tracking-widest hover:bg-primary hover:text-dark transition-all flex items-center justify-center gap-2 rounded shadow-xl" title="Despachar y guardar factura"><i class="fas fa-check-double"></i> Despachar</button>
+                        <div class="flex flex-wrap justify-end gap-2 w-full sm:w-auto">
+                            <button onclick="compartirPorWhatsApp('${pedido.id}', 'pedido')" class="bg-green-900/30 text-green-400 border border-green-500/30 px-3 py-2 font-bold uppercase text-[10px] tracking-widest hover:bg-green-500 hover:text-white transition-all rounded" title="WhatsApp"><i class="fab fa-whatsapp"></i></button>
+                            <button onclick="loadOrderIntoPos('${pedido.id}')" class="bg-blue-900/30 text-blue-400 border border-blue-500/30 px-3 py-2 font-bold uppercase text-[10px] tracking-widest hover:bg-blue-500 hover:text-white transition-all rounded" title="Editar en POS"><i class="fas fa-edit"></i></button>
+                            <button onclick="cancelarPedido('${pedido.id}')" class="bg-red-900/30 text-red-400 border border-red-500/30 px-3 py-2 font-bold uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all rounded"><i class="fas fa-times"></i></button>
+                            <button onclick="despacharPedido('${pedido.id}')" class="bg-primary/20 text-primary border border-primary/30 px-4 py-2 font-bold uppercase text-[10px] tracking-widest hover:bg-primary hover:text-dark transition-all rounded"><i class="fas fa-check-double"></i> Despachar</button>
                         </div>
                     </div>
                 </div>`
@@ -699,31 +761,23 @@
         }
 
         function renderFacturasList() {
-            const list = document.getElementById('admin-facturas-list');
-            const facturas = pedidosList.filter(p => p.estado === 'despachado');
-
-            if(facturas.length === 0) {
-                list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-archive text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay facturas registradas</p></div>`;
-                return;
-            }
+            const list = document.getElementById('admin-facturas-list'); const facturas = pedidosList.filter(p => p.estado === 'despachado');
+            if(facturas.length === 0) return list.innerHTML = `<div class="text-center py-12 border border-dashed border-white/10 rounded-lg"><i class="fas fa-archive text-3xl text-gray-700 mb-2"></i><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">No hay facturas registradas</p></div>`;
 
             list.innerHTML = facturas.map(pedido => {
                 const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') ? new Date(pedido.despachadoAt.toDate()).toLocaleString() : 'Fecha desconocida';
-
                 return `
                 <div class="bg-darker border border-white/5 p-4 rounded-lg flex flex-col md:flex-row justify-between items-start md:items-center gap-4 shadow-xl opacity-80 hover:opacity-100 transition-opacity">
                     <div class="flex-1 w-full">
-                        <div class="flex justify-between items-center mb-1">
-                            <h4 class="text-white text-sm font-bold uppercase tracking-widest"><i class="fas fa-file-alt text-gray-600 mr-2"></i>FACTURA: ${pedido.idPedido || 'S/N'}</h4>
-                            <p class="text-primary font-serif font-bold">L${(pedido.total || 0).toFixed(2)}</p>
-                        </div>
+                        <div class="flex justify-between items-center mb-1"><h4 class="text-white text-sm font-bold uppercase tracking-widest"><i class="fas fa-file-alt text-gray-600 mr-2"></i>FACTURA: ${pedido.idPedido || 'S/N'}</h4><p class="text-primary font-serif font-bold">L${(pedido.total || 0).toFixed(2)}</p></div>
                         <p class="text-gray-400 text-[10px] uppercase font-bold"><i class="fas fa-user text-gray-600 w-4"></i> ${pedido.cliente}</p>
                         <p class="text-gray-500 text-[9px] mt-1"><i class="fas fa-calendar-check text-green-500/50 w-4"></i> Despachado: ${dateStr}</p>
                     </div>
-                    <div class="flex gap-2 w-full md:w-auto mt-2 md:mt-0">
-                        <button onclick="compartirPorWhatsApp('${pedido.id}', 'factura')" class="flex-1 md:flex-none bg-green-900/30 text-green-400 border border-green-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-green-600 hover:text-white transition-all rounded shadow-xl" title="Compartir Imagen a WhatsApp"><i class="fab fa-whatsapp text-sm md:text-base"></i></button>
-                        <button onclick="imprimirFactura('${pedido.id}')" class="flex-1 md:flex-none bg-blue-900/30 text-blue-400 border border-blue-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all rounded shadow-xl"><i class="fas fa-print"></i> Imprimir</button>
-                        <button onclick="eliminarFactura('${pedido.id}')" class="flex-1 md:flex-none bg-red-900/30 text-red-400 border border-red-500/30 px-4 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-red-600 hover:text-white transition-all rounded shadow-xl" title="Eliminar del historial permanente"><i class="fas fa-trash"></i> Eliminar</button>
+                    <div class="flex flex-wrap gap-2 w-full md:w-auto mt-2 md:mt-0">
+                        <button onclick="marcarPendiente('${pedido.id}')" class="bg-yellow-900/30 text-yellow-500 border border-yellow-500/30 px-3 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-yellow-600 hover:text-white transition-all rounded" title="Regresar a Pendiente"><i class="fas fa-undo"></i></button>
+                        <button onclick="compartirPorWhatsApp('${pedido.id}', 'factura')" class="bg-green-900/30 text-green-400 border border-green-500/30 px-3 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-green-600 hover:text-white transition-all rounded"><i class="fab fa-whatsapp"></i></button>
+                        <button onclick="imprimirFactura('${pedido.id}')" class="bg-blue-900/30 text-blue-400 border border-blue-500/30 px-3 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-blue-600 hover:text-white transition-all rounded"><i class="fas fa-print"></i></button>
+                        <button onclick="eliminarFactura('${pedido.id}')" class="bg-red-900/30 text-red-400 border border-red-500/30 px-3 py-2 font-bold uppercase text-[9px] tracking-widest hover:bg-red-600 hover:text-white transition-all rounded"><i class="fas fa-trash"></i></button>
                     </div>
                 </div>`
             }).join('');
@@ -731,99 +785,42 @@
 
         function cancelarPedido(docId) {
             DarkAlert.fire({ title: '¿Cancelar Pedido?', text: "El pedido se eliminará por completo.", icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Sí, Cancelar', cancelButtonText: 'Atrás' })
-            .then((result) => { if (result.isConfirmed) { db.collection("pedidos").doc(docId).delete().then(() => { Toast.fire({ icon: 'info', title: 'Pedido cancelado' }); }); }});
+            .then((result) => { if (result.isConfirmed) db.collection("pedidos").doc(docId).delete().then(() => Toast.fire({ icon: 'info', title: 'Pedido cancelado' })); });
         }
 
         function despacharPedido(docId) {
-            const pedido = pedidosList.find(p => p.id === docId);
-            if(!pedido) return;
-
-            DarkAlert.fire({ title: '¿Despachar Pedido?', text: "Esto rebajará el inventario (si existe) y moverá el pedido a Facturas.", icon: 'question', showCancelButton: true, confirmButtonText: '<i class="fas fa-check-double"></i> Despachar', cancelButtonText: 'Atrás' })
-            .then((result) => {
+            const pedido = pedidosList.find(p => p.id === docId); if(!pedido) return;
+            DarkAlert.fire({ title: '¿Despachar Pedido?', text: "Esto rebajará el inventario permanentemente.", icon: 'question', showCancelButton: true, confirmButtonText: '<i class="fas fa-check-double"></i> Despachar', cancelButtonText: 'Atrás' })
+            .then(async (result) => {
                 if (result.isConfirmed) {
-                    const batch = db.batch();
-                    if (inventario.length > 0) {
-                        (pedido.items || []).forEach(item => {
-                            const prodInStock = inventario.find(p => p.id === item.id);
-                            if(prodInStock) {
-                                const prodRef = db.collection("productos").doc(item.id);
-                                batch.update(prodRef, { stock: firebase.firestore.FieldValue.increment(-item.cantidad) });
-                            }
-                        });
-                    }
-
-                    const orderRef = db.collection("pedidos").doc(docId);
-                    batch.update(orderRef, { estado: 'despachado', despachadoAt: firebase.firestore.FieldValue.serverTimestamp() });
-
-                    batch.commit()
-                    .then(() => Toast.fire({ icon: 'success', title: 'Despachado con éxito' }))
-                    .catch(error => DarkAlert.fire({ icon: 'error', title: 'Error al procesar', text: error.message }));
+                    await procesarStockParaDespacho(pedido.items);
+                    db.collection("pedidos").doc(docId).update({ estado: 'despachado', despachadoAt: firebase.firestore.FieldValue.serverTimestamp() })
+                    .then(() => Toast.fire({ icon: 'success', title: 'Despachado con éxito' })).catch(error => DarkAlert.fire({ icon: 'error', title: 'Error', text: error.message }));
                 }
             });
         }
 
         function eliminarFactura(docId) {
-            DarkAlert.fire({ title: '¿Borrar Factura?', text: "Esta acción no se puede deshacer y borrará el registro.", icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Eliminar Permanentemente', cancelButtonText: 'Atrás' })
-            .then((result) => { if (result.isConfirmed) { db.collection("pedidos").doc(docId).delete().then(() => Toast.fire({ icon: 'info', title: 'Factura eliminada' })); }});
+            DarkAlert.fire({ title: '¿Borrar Factura?', text: "Esta acción no se puede deshacer.", icon: 'warning', showCancelButton: true, confirmButtonText: '<i class="fas fa-trash"></i> Eliminar', cancelButtonText: 'Atrás' })
+            .then((result) => { if (result.isConfirmed) db.collection("pedidos").doc(docId).delete().then(() => Toast.fire({ icon: 'info', title: 'Factura eliminada' })); });
         }
 
         function imprimirFactura(docId) {
-            const f = pedidosList.find(p => p.id === docId);
-            if(!f) return;
+            const f = pedidosList.find(p => p.id === docId); if(!f) return;
             const dateStr = (f.despachadoAt && f.despachadoAt.toDate) ? new Date(f.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
-            const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO';
-            const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
-
-            const itemsHtml = (f.items || []).map(i => {
-                const pNum = parseFloat(i.precio.replace(/[^0-9.-]+/g,"")) || 0;
-                return `
-                <tr style="border-bottom: 1px solid #ddd;">
-                    <td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td>
-                    <td style="text-align: center; font-size: 12px;">${i.cantidad}</td>
-                    <td style="text-align: right; font-size: 12px;">L${(pNum * i.cantidad).toFixed(2)}</td>
-                </tr>`;
-            }).join('');
-
-            const ticketHtml = `
-                <div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;">
-                    <h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2>
-                    <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p>
-                    <hr style="border: 1px dashed #000; margin: 15px 0;">
-                    <p style="font-size: 13px; margin: 5px 0;"><strong>FACTURA:</strong> ${f.idPedido}</p>
-                    <p style="font-size: 13px; margin: 5px 0;"><strong>CLIENTE:</strong> ${f.cliente}</p>
-                    <p style="font-size: 13px; margin: 5px 0;"><strong>FECHA:</strong> ${dateStr}</p>
-                    <hr style="border: 1px dashed #000; margin: 15px 0;">
-                    <table style="width: 100%; border-collapse: collapse;">
-                        <thead>
-                            <tr style="border-bottom: 2px solid #000;">
-                                <th style="text-align: left; padding-bottom: 5px; font-size: 12px;">DESC.</th>
-                                <th style="text-align: center; padding-bottom: 5px; font-size: 12px;">CANT</th>
-                                <th style="text-align: right; padding-bottom: 5px; font-size: 12px;">SUB</th>
-                            </tr>
-                        </thead>
-                        <tbody>${itemsHtml}</tbody>
-                    </table>
-                    <hr style="border: 1px dashed #000; margin: 15px 0;">
-                    <h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: L${(f.total || 0).toFixed(2)}</h3>
-                    <p style="text-align: center; margin-top: 30px; font-size: 11px;">${invFooter}</p>
-                </div>
-            `;
+            const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO'; const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
+            const itemsHtml = (f.items || []).map(i => `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td><td style="text-align: center; font-size: 12px;">${i.cantidad}</td><td style="text-align: right; font-size: 12px;">L${((parseFloat((i.precio||"0").replace(/[^0-9.-]+/g,""))||0) * i.cantidad).toFixed(2)}</td></tr>`).join('');
             const printDiv = document.getElementById('printable-invoice');
-            printDiv.innerHTML = ticketHtml;
+            printDiv.innerHTML = `<div style="font-family: 'Courier New', Courier, monospace; max-width: 350px; margin: 0 auto; padding: 20px;"><h2 style="text-align: center; margin-bottom: 5px; font-size: 24px;">NEW GATE</h2><p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><p style="font-size: 13px; margin: 5px 0;"><strong>FACTURA:</strong> ${f.idPedido}</p><p style="font-size: 13px; margin: 5px 0;"><strong>CLIENTE:</strong> ${f.cliente}</p><p style="font-size: 13px; margin: 5px 0;"><strong>FECHA:</strong> ${dateStr}</p><hr style="border: 1px dashed #000; margin: 15px 0;"><table style="width: 100%; border-collapse: collapse;"><thead><tr style="border-bottom: 2px solid #000;"><th style="text-align: left; padding-bottom: 5px; font-size: 12px;">DESC.</th><th style="text-align: center; padding-bottom: 5px; font-size: 12px;">CANT</th><th style="text-align: right; padding-bottom: 5px; font-size: 12px;">SUB</th></tr></thead><tbody>${itemsHtml}</tbody></table><hr style="border: 1px dashed #000; margin: 15px 0;"><h3 style="text-align: right; font-size: 18px; margin: 0;">TOTAL: L${(f.total || 0).toFixed(2)}</h3><p style="text-align: center; margin-top: 30px; font-size: 11px;">${invFooter}</p></div>`;
             window.print();
         }
 
-        // === LÓGICA ADMIN GLOBAL E INVENTARIO ===
+        // === INVENTARIO, CONFIG, AUTH ===
 
         function escucharFirebase() { 
             db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { 
-                inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
-                renderAdminList(); 
-            }, (error) => {
-                console.error("🔥 Error leyendo productos:", error);
-                const list = document.getElementById('admin-list');
-                if(list) list.innerHTML = `<div class="col-span-full text-center py-12 border border-red-500/30 bg-red-500/5 rounded-lg"><i class="fas fa-shield-alt text-3xl text-red-500 mb-4"></i><h4 class="text-white font-bold text-xs uppercase tracking-widest">Error de Permisos</h4><p class="text-gray-400 text-[10px] mt-2">Revisa las reglas de Firestore.</p></div>`;
-            }); 
+                inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); renderPosInventory();
+            }, (error) => console.error("Error leyendo productos:", error)); 
         }
         function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); } }); }
         function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderHeroConfig(); } }); }
@@ -831,27 +828,13 @@
         function showAdminTab(tab, event) {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden'); if(event) event.currentTarget.classList.add('active');
+            if(tab === 'pos') renderPosInventory();
         }
 
         function compressAndAddImages(input) {
-            if (!input.files || input.files.length === 0) return;
-            document.getElementById('img-loading').classList.remove('hidden');
+            if (!input.files || input.files.length === 0) return; document.getElementById('img-loading').classList.remove('hidden');
             let filesProcessed = 0; const totalFiles = input.files.length;
-
-            Array.from(input.files).forEach(file => {
-                const reader = new FileReader(); reader.readAsDataURL(file);
-                reader.onload = function(event) {
-                    const img = new Image(); img.src = event.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas'); let w = img.width, h = img.height;
-                        if (w > h) { if (w > 800) { h *= 800 / w; w = 800; } } else { if (h > 1000) { w *= 1000 / h; h = 1000; } }
-                        canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                        selectedBase64Imgs.push(canvas.toDataURL('image/jpeg', 0.8)); filesProcessed++;
-                        if (filesProcessed === totalFiles) { renderThumbnails(); document.getElementById('img-loading').classList.add('hidden'); }
-                    }
-                };
-            });
-            input.value = ""; 
+            Array.from(input.files).forEach(file => { const reader = new FileReader(); reader.readAsDataURL(file); reader.onload = function(event) { const img = new Image(); img.src = event.target.result; img.onload = function() { const canvas = document.createElement('canvas'); let w = img.width, h = img.height; if (w > h) { if (w > 800) { h *= 800 / w; w = 800; } } else { if (h > 1000) { w *= 1000 / h; h = 1000; } } canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); selectedBase64Imgs.push(canvas.toDataURL('image/jpeg', 0.8)); filesProcessed++; if (filesProcessed === totalFiles) { renderThumbnails(); document.getElementById('img-loading').classList.add('hidden'); } } }; }); input.value = ""; 
         }
 
         function removeImage(index) { selectedBase64Imgs.splice(index, 1); renderThumbnails(); }
@@ -859,39 +842,25 @@
         function moveImageRight(index) { if (index >= selectedBase64Imgs.length - 1) return; const temp = selectedBase64Imgs[index]; selectedBase64Imgs[index] = selectedBase64Imgs[index + 1]; selectedBase64Imgs[index + 1] = temp; renderThumbnails(); }
 
         function renderThumbnails() {
-            const c = document.getElementById('thumbnails-container');
-            if (selectedBase64Imgs.length === 0) return c.innerHTML = `<p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6">Aún no hay imágenes seleccionadas</p>`;
-            c.innerHTML = selectedBase64Imgs.map((imgSrc, index) => `
-            <div class="img-thumb-container group relative">
-                <img src="${imgSrc}">
-                ${index === 0 ? '<div class="absolute bottom-0 left-0 right-0 bg-primary text-dark text-[8px] font-bold text-center uppercase tracking-widest">Portada</div>' : ''}
-                <div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
-                    ${index > 0 ? `<button type="button" onclick="moveImageLeft(${index})" class="text-white hover:text-primary transition-colors"><i class="fas fa-chevron-left text-sm"></i></button>` : `<span class="w-3"></span>`}
-                    <button type="button" onclick="removeImage(${index})" class="text-red-500 hover:text-red-400 transition-colors"><i class="fas fa-trash text-sm"></i></button>
-                    ${index < selectedBase64Imgs.length - 1 ? `<button type="button" onclick="moveImageRight(${index})" class="text-white hover:text-primary transition-colors"><i class="fas fa-chevron-right text-sm"></i></button>` : `<span class="w-3"></span>`}
-                </div>
-            </div>`).join('');
+            const c = document.getElementById('thumbnails-container'); if (selectedBase64Imgs.length === 0) return c.innerHTML = `<p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6">Aún no hay imágenes seleccionadas</p>`;
+            c.innerHTML = selectedBase64Imgs.map((imgSrc, index) => `<div class="img-thumb-container group relative"><img src="${imgSrc}">${index === 0 ? '<div class="absolute bottom-0 left-0 right-0 bg-primary text-dark text-[8px] font-bold text-center uppercase tracking-widest">Portada</div>' : ''}<div class="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">${index > 0 ? `<button type="button" onclick="moveImageLeft(${index})" class="text-white hover:text-primary transition-colors"><i class="fas fa-chevron-left text-sm"></i></button>` : `<span class="w-3"></span>`}<button type="button" onclick="removeImage(${index})" class="text-red-500 hover:text-red-400 transition-colors"><i class="fas fa-trash text-sm"></i></button>${index < selectedBase64Imgs.length - 1 ? `<button type="button" onclick="moveImageRight(${index})" class="text-white hover:text-primary transition-colors"><i class="fas fa-chevron-right text-sm"></i></button>` : `<span class="w-3"></span>`}</div></div>`).join('');
         }
         
         function toggleMeasuresVisibility() { document.getElementById('measures-config-panel').style.display = document.getElementById('toggle-measures').checked ? 'block' : 'none'; }
-
         function addNewSizeToForm() { const input = document.getElementById('new-size-input'); const val = input.value.trim().toUpperCase(); if(!val) return; if(!currentFormSizes.includes(val)) { currentFormSizes.push(val); renderMedidasForm(); } else { Toast.fire({ icon: 'info', title: 'La talla ya existe' }); } input.value = ""; }
         function removeSizeFromForm(size) { currentFormSizes = currentFormSizes.filter(s => s !== size); renderMedidasForm(); }
-        function addNewColumnToForm() { const input = document.getElementById('new-column-input'); const val = input.value.trim(); const formattedVal = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase(); if(!formattedVal) return; if(!currentFormColumns.includes(formattedVal)) { currentFormColumns.push(formattedVal); renderMedidasForm(); } else { Toast.fire({ icon: 'info', title: 'La columna ya existe' }); } input.value = ""; }
+        function addNewColumnToForm() { const input = document.getElementById('new-column-input'); const val = input.value.trim(); const formattedVal = val.charAt(0).toUpperCase() + val.slice(1).toLowerCase(); if(!formattedVal) return; if(!currentFormColumns.includes(formattedVal)) { currentFormColumns.push(formattedVal); renderMedidasForm(); } input.value = ""; }
         function removeColumnFromForm(col) { if(currentFormColumns.length <= 1) return Toast.fire({ icon: 'warning', title: 'Mínimo 1 columna requerida' }); currentFormColumns = currentFormColumns.filter(c => c !== col); renderMedidasForm(); }
 
         function renderMedidasForm() {
-            const currentValues = {};
-            currentFormSizes.forEach(s => { const safeS = s.replace(/[^a-zA-Z0-9_-]/g, ''); currentValues[s] = {}; currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const el = document.getElementById(`measure-${safeS}-${safeC}`); if (el) currentValues[s][c] = el.value; }); });
+            const currentValues = {}; currentFormSizes.forEach(s => { const safeS = s.replace(/[^a-zA-Z0-9_-]/g, ''); currentValues[s] = {}; currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const el = document.getElementById(`measure-${safeS}-${safeC}`); if (el) currentValues[s][c] = el.value; }); });
             let headerHTML = `<div class="flex items-center gap-2 mb-2 pr-8"><div class="w-12"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold text-center">Talla</p></div><div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">`;
-            currentFormColumns.forEach(c => { headerHTML += `<div class="relative group text-center"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold inline-block truncate w-full" title="${c}">${c}</p><button onclick="removeColumnFromForm('${c}')" class="absolute -top-2 -right-2 text-red-500 hidden group-hover:flex bg-darker border border-white/10 rounded-full w-4 h-4 text-[8px] items-center justify-center cursor-pointer"><i class="fas fa-times"></i></button></div>`; });
-            headerHTML += `</div></div>`;
+            currentFormColumns.forEach(c => { headerHTML += `<div class="relative group text-center"><p class="text-[9px] uppercase text-gray-500 tracking-widest font-bold inline-block truncate w-full" title="${c}">${c}</p><button onclick="removeColumnFromForm('${c}')" class="absolute -top-2 -right-2 text-red-500 hidden group-hover:flex bg-darker border border-white/10 rounded-full w-4 h-4 text-[8px] items-center justify-center cursor-pointer"><i class="fas fa-times"></i></button></div>`; }); headerHTML += `</div></div>`;
             let rowsHTML = currentFormSizes.map(t => {
                 const safeT = t.replace(/[^a-zA-Z0-9_-]/g, '');
-                let inputsHTML = currentFormColumns.map(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); let defaultVal = ""; if (currentValues[t] && currentValues[t][c] !== undefined) { defaultVal = currentValues[t][c]; } else if (!editId && DEFAULT_MEASURES[t] && DEFAULT_MEASURES[t][c.toLowerCase()] !== undefined) { defaultVal = DEFAULT_MEASURES[t][c.toLowerCase()]; } return `<input type="text" id="measure-${safeT}-${safeC}" class="measure-input rounded w-full" value="${defaultVal}">`; }).join('');
-                return `<div class="flex items-center gap-2 mb-2"><div class="w-12"><input type="checkbox" id="t-${safeT}" value="${t}" checked class="hidden"><label for="t-${safeT}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1 notranslate" translate="no" title="${t}">${t}</label></div><div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">${inputsHTML}</div><button onclick="removeSizeFromForm('${t}')" class="w-6 text-red-500 hover:text-red-400 p-1 flex justify-center cursor-pointer"><i class="fas fa-trash text-xs"></i></button></div>`;
-            }).join('');
-            document.getElementById('medidas-inputs-container').innerHTML = headerHTML + rowsHTML;
+                let inputsHTML = currentFormColumns.map(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); let defaultVal = currentValues[t] && currentValues[t][c] !== undefined ? currentValues[t][c] : (!editId && DEFAULT_MEASURES[t] && DEFAULT_MEASURES[t][c.toLowerCase()] !== undefined ? DEFAULT_MEASURES[t][c.toLowerCase()] : ""); return `<input type="text" id="measure-${safeT}-${safeC}" class="measure-input rounded w-full" value="${defaultVal}">`; }).join('');
+                return `<div class="flex items-center gap-2 mb-2"><div class="w-12"><input type="checkbox" id="t-${safeT}" value="${t}" checked class="hidden"><label for="t-${safeT}" class="block text-center py-2 border border-white/10 text-[10px] cursor-pointer hover:border-primary/50 font-bold rounded truncate px-1">${t}</label></div><div class="flex-1 grid gap-2" style="grid-template-columns: repeat(${currentFormColumns.length}, minmax(0, 1fr));">${inputsHTML}</div><button onclick="removeSizeFromForm('${t}')" class="w-6 text-red-500 hover:text-red-400 p-1 flex justify-center cursor-pointer"><i class="fas fa-trash text-xs"></i></button></div>`;
+            }).join(''); document.getElementById('medidas-inputs-container').innerHTML = headerHTML + rowsHTML;
         }
 
         async function uploadImageToStorage(b64, path) { if (!b64.startsWith('data:image')) return b64; const res = await fetch(b64); const blob = await res.blob(); const ref = storage.ref().child(path); await ref.put(blob); return await ref.getDownloadURL(); }
@@ -903,8 +872,7 @@
             try {
                 let docId = editId; let docRef = docId ? db.collection("productos").doc(docId) : db.collection("productos").doc(); docId = docRef.id;
                 const imageUrls = await Promise.all(selectedBase64Imgs.map((b64, idx) => uploadImageToStorage(b64, `productos/${docId}/img_${idx}_${Date.now()}.jpg`)));
-                const hasMeasures = document.getElementById('toggle-measures').checked;
-                const tallas = []; const medidas = {};
+                const hasMeasures = document.getElementById('toggle-measures').checked; const tallas = []; const medidas = {};
                 if(hasMeasures) { currentFormSizes.forEach(t => { const safeT = t.replace(/[^a-zA-Z0-9_-]/g, ''); const checkbox = document.getElementById(`t-${safeT}`); if(checkbox && checkbox.checked) { tallas.push(t); medidas[t] = {}; currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const inputEl = document.getElementById(`measure-${safeT}-${safeC}`); medidas[t][c] = inputEl ? inputEl.value : ""; }); } }); }
                 const productData = { sku: document.getElementById('new-sku').value.trim().toUpperCase() || "", categoria: document.getElementById('new-cat').value || 'general', titulo: title, descripcion: document.getElementById('new-desc').value.trim() || "", precio: price, stock: parseInt(document.getElementById('new-stock').value) || 0, isPresale: document.getElementById('toggle-presale').checked, hasMeasures, tallas, medidas, columnas: currentFormColumns, imagen: imageUrls[0] || "", imagenes: imageUrls || [] };
                 if (!editId) productData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
@@ -913,18 +881,15 @@
             finally { document.getElementById('btn-submit-admin').disabled = false; document.getElementById('btn-submit-loader').style.display = "none"; }
         }
 
-        function deleteProduct(id) { DarkAlert.fire({ title: '¿Eliminar producto?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar', cancelButtonText: 'Cancelar' }).then((r) => { if (r.isConfirmed) db.collection("productos").doc(id).delete().then(() => Toast.fire({ icon: 'success', title: 'Eliminado' })); }); }
+        function deleteProduct(id) { DarkAlert.fire({ title: '¿Eliminar producto?', icon: 'warning', showCancelButton: true, confirmButtonText: 'Eliminar' }).then((r) => { if (r.isConfirmed) db.collection("productos").doc(id).delete().then(() => Toast.fire({ icon: 'success', title: 'Eliminado' })); }); }
 
         function startEdit(id) {
-            const p = inventario.find(x => x.id === id); if(!p) return;
-            editId = id; showAdminTab('inventario'); window.scrollTo({top: 0, behavior: 'smooth'});
+            const p = inventario.find(x => x.id === id); if(!p) return; editId = id; showAdminTab('inventario'); window.scrollTo({top: 0, behavior: 'smooth'});
             document.getElementById('admin-form-container').classList.add('editing-mode'); document.getElementById('btn-cancel-edit').classList.remove('hidden');
-            document.getElementById('new-title').value = p.titulo || ""; document.getElementById('new-sku').value = p.sku || ""; document.getElementById('new-price').value = p.precio || ""; document.getElementById('new-desc').value = p.descripcion || "";
-            if (p.categoria) document.getElementById('new-cat').value = p.categoria;
+            document.getElementById('new-title').value = p.titulo || ""; document.getElementById('new-sku').value = p.sku || ""; document.getElementById('new-price').value = p.precio || ""; document.getElementById('new-desc').value = p.descripcion || ""; if (p.categoria) document.getElementById('new-cat').value = p.categoria;
             document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0; document.getElementById('toggle-presale').checked = !!p.isPresale; document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
             selectedBase64Imgs = p.imagenes && p.imagenes.length > 0 ? [...p.imagenes] : (p.imagen ? [p.imagen] : []); renderThumbnails();
-            currentFormSizes = ["S", "M", "L", "XL"]; currentFormColumns = p.columnas && p.columnas.length > 0 ? p.columnas : ["Pecho", "Largo", "Ancho"];
-            if(p.hasMeasures && p.tallas) { p.tallas.forEach(t => { if(!currentFormSizes.includes(t)) currentFormSizes.push(t); }); }
+            currentFormSizes = ["S", "M", "L", "XL"]; currentFormColumns = p.columnas && p.columnas.length > 0 ? p.columnas : ["Pecho", "Largo", "Ancho"]; if(p.hasMeasures && p.tallas) { p.tallas.forEach(t => { if(!currentFormSizes.includes(t)) currentFormSizes.push(t); }); }
             renderMedidasForm();
             if(p.hasMeasures && p.tallas) { currentFormSizes.forEach(t => { const safeT = t.replace(/[^a-zA-Z0-9_-]/g, ''); const checkbox = document.getElementById(`t-${safeT}`); if(checkbox) { checkbox.checked = p.tallas.includes(t); if(p.medidas && p.medidas[t]) { currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const el = document.getElementById(`measure-${safeT}-${safeC}`); const val = p.medidas[t][c] !== undefined ? p.medidas[t][c] : (p.medidas[t][c.toLowerCase()] !== undefined ? p.medidas[t][c.toLowerCase()] : ""); if(el) el.value = val; }); } } }); }
         }
@@ -943,7 +908,7 @@
             list.innerHTML = filt.map(prod => {
                 const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : prod.imagen;
                 let statusInfo = `<span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria || 'Gen'}</span>`;
-                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Próximamente</span>`;
+                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Prev</span>`;
                 else if(prod.stock <= 0) statusInfo += `<span class="bg-red-600/20 text-red-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-ban"></i> Agotado</span>`;
                 else statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-check"></i> Stock: ${prod.stock}</span>`;
 
@@ -959,91 +924,19 @@
         function compressHeroImage(input) { if (!input.files || !input.files[0]) return; const reader = new FileReader(); reader.readAsDataURL(input.files[0]); reader.onload = function(e) { const img = new Image(); img.src = e.target.result; img.onload = function() { const canvas = document.createElement('canvas'); let w = img.width > 1200 ? 1200 : img.width; canvas.width = w; canvas.height = img.height * (w / img.width); canvas.getContext('2d').drawImage(img, 0, 0, w, canvas.height); selectedHeroImg = canvas.toDataURL('image/jpeg', 0.8); document.getElementById('hero-preview').src = selectedHeroImg; document.getElementById('hero-preview').classList.remove('hidden'); document.getElementById('hero-preview-container').classList.add('bg-darker/80'); } } }
         async function saveHeroConfig() { const btn = document.getElementById('btn-save-hero'); btn.innerText = "Subiendo..."; btn.disabled = true; try { let img = config.heroImage || ""; if (selectedHeroImg) img = await uploadImageToStorage(selectedHeroImg, `config/hero_bg_${Date.now()}.jpg`); await db.collection("config").doc("hero").set({ heroTitle: document.getElementById('config-hero-title').value, heroSubtitle: document.getElementById('config-hero-subtitle').value, heroImage: img }, { merge: true }); btn.innerText = "¡Actualizado!"; setTimeout(() => { btn.innerText = "Actualizar Textos y Foto Hero"; btn.disabled = false; }, 2000); } catch (e) { btn.disabled = false; } }
 
-        function renderConfig() { 
-            document.getElementById('config-slogan').value = config.slogan || ""; 
-            document.getElementById('config-about-title').value = config.aboutTitle || ""; 
-            document.getElementById('config-about-desc').value = config.aboutDesc || ""; 
-            document.getElementById('config-whatsapp').value = config.whatsapp || ""; 
-            document.getElementById('config-instagram').value = config.instagram || ""; 
-            document.getElementById('config-invoice-header').value = config.invoiceHeader || ""; 
-            document.getElementById('config-invoice-footer').value = config.invoiceFooter || ""; 
-            document.getElementById('config-share-text').value = config.shareText || ""; 
-        }
+        function renderConfig() { document.getElementById('config-slogan').value = config.slogan || ""; document.getElementById('config-about-title').value = config.aboutTitle || ""; document.getElementById('config-about-desc').value = config.aboutDesc || ""; document.getElementById('config-whatsapp').value = config.whatsapp || ""; document.getElementById('config-instagram').value = config.instagram || ""; document.getElementById('config-invoice-header').value = config.invoiceHeader || ""; document.getElementById('config-invoice-footer').value = config.invoiceFooter || ""; document.getElementById('config-share-text').value = config.shareText || ""; }
+        function saveBrandTexts() { db.collection("config").doc("global").set({ slogan: document.getElementById('config-slogan').value, aboutTitle: document.getElementById('config-about-title').value, aboutDesc: document.getElementById('config-about-desc').value, invoiceHeader: document.getElementById('config-invoice-header').value, invoiceFooter: document.getElementById('config-invoice-footer').value, shareText: document.getElementById('config-share-text').value }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Textos Guardados' })); }
+        function saveSecuritySocials() { db.collection("config").doc("global").set({ whatsapp: document.getElementById('config-whatsapp').value, instagram: document.getElementById('config-instagram').value }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Datos Guardados' })); const p = document.getElementById('config-password').value; if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> { document.getElementById('config-password').value = ""; Toast.fire({ icon:'success', title:'Contraseña Cambiada' }); }).catch(e => DarkAlert.fire({ icon:'error', title:'Error', text: e.message })); }
 
-        function saveBrandTexts() { 
-            db.collection("config").doc("global").set({ 
-                slogan: document.getElementById('config-slogan').value, 
-                aboutTitle: document.getElementById('config-about-title').value, 
-                aboutDesc: document.getElementById('config-about-desc').value,
-                invoiceHeader: document.getElementById('config-invoice-header').value,
-                invoiceFooter: document.getElementById('config-invoice-footer').value,
-                shareText: document.getElementById('config-share-text').value
-            }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Textos Guardados' })); 
-        }
-
-        function saveSecuritySocials() {
-            const updates = { 
-                whatsapp: document.getElementById('config-whatsapp').value, 
-                instagram: document.getElementById('config-instagram').value 
-            };
-
-            db.collection("config").doc("global").set(updates, { merge: true }).then(()=> {
-                Toast.fire({ icon:'success', title:'Datos Guardados' });
-            }); 
-
-            const p = document.getElementById('config-password').value; 
-            if(p && p.length >= 6) auth.currentUser.updatePassword(p).then(()=> {
-                document.getElementById('config-password').value = "";
-                Toast.fire({ icon:'success', title:'Contraseña Cambiada' });
-            }).catch(e => DarkAlert.fire({ icon:'error', title:'Error', text: e.message })); 
-        }
-
-        // TÉCNICA AVANZADA: Crear usuarios usando una App Secundaria de Firebase
-        // Esto permite crear cuentas sin desloguear al administrador actual.
         let secondaryApp = null;
         function crearUsuarioSecundario() {
-            const email = document.getElementById('new-user-email').value.trim();
-            const pass = document.getElementById('new-user-pass').value;
-            const btn = document.getElementById('btn-create-user');
-
-            if (!email || pass.length < 6) {
-                return Toast.fire({ icon: 'warning', title: 'Email válido y contraseña mínima de 6 caracteres.' });
-            }
-
-            btn.disabled = true;
-            btn.innerHTML = `<div class="loader !border-t-dark !border-white/30 !block w-4 h-4"></div> Procesando...`;
-
-            if (!secondaryApp) {
-                secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
-            }
-
-            secondaryApp.auth().createUserWithEmailAndPassword(email, pass)
-                .then(() => {
-                    secondaryApp.auth().signOut(); // Desconectar de la app secundaria
-                    Toast.fire({ icon: 'success', title: 'Usuario Registrado Correctamente' });
-                    document.getElementById('new-user-email').value = "";
-                    document.getElementById('new-user-pass').value = "";
-                })
-                .catch((error) => {
-                    let msg = error.message;
-                    if (error.code === 'auth/email-already-in-use') msg = 'Este correo ya está en uso. Usa otro o cambia la contraseña desde la consola.';
-                    DarkAlert.fire({ icon: 'error', title: 'Error al crear', text: msg });
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    btn.innerHTML = `<i class="fas fa-user-plus"></i> Registrar Usuario`;
-                });
+            const email = document.getElementById('new-user-email').value.trim(); const pass = document.getElementById('new-user-pass').value; const btn = document.getElementById('btn-create-user');
+            if (!email || pass.length < 6) return Toast.fire({ icon: 'warning', title: 'Email válido y contraseña mínima de 6 caracteres.' });
+            btn.disabled = true; btn.innerHTML = `<div class="loader !border-t-dark !border-white/30 !block w-4 h-4"></div> Procesando...`;
+            if (!secondaryApp) secondaryApp = firebase.initializeApp(firebaseConfig, "SecondaryApp");
+            secondaryApp.auth().createUserWithEmailAndPassword(email, pass).then(() => { secondaryApp.auth().signOut(); Toast.fire({ icon: 'success', title: 'Usuario Registrado Correctamente' }); document.getElementById('new-user-email').value = ""; document.getElementById('new-user-pass').value = ""; }).catch((error) => { let msg = error.message; if (error.code === 'auth/email-already-in-use') msg = 'Este correo ya está en uso.'; DarkAlert.fire({ icon: 'error', title: 'Error al crear', text: msg }); }).finally(() => { btn.disabled = false; btn.innerHTML = `<i class="fas fa-user-plus"></i> Registrar Usuario`; });
         }
-
-        function renderHeroConfig() {
-            document.getElementById('config-hero-title').value = config.heroTitle || "";
-            document.getElementById('config-hero-subtitle').value = config.heroSubtitle || "";
-            if(config.heroImage) {
-                document.getElementById('hero-preview').src = config.heroImage;
-                document.getElementById('hero-preview').classList.remove('hidden');
-                document.getElementById('hero-preview-container').classList.add('bg-darker/80');
-            }
-        }
+        function renderHeroConfig() { document.getElementById('config-hero-title').value = config.heroTitle || ""; document.getElementById('config-hero-subtitle').value = config.heroSubtitle || ""; if(config.heroImage) { document.getElementById('hero-preview').src = config.heroImage; document.getElementById('hero-preview').classList.remove('hidden'); document.getElementById('hero-preview-container').classList.add('bg-darker/80'); } }
 
         window.onload = init;
     </script>
