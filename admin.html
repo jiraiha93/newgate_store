@@ -177,7 +177,7 @@
             <!-- TAB NUEVA TERMINAL POS -->
             <div id="tab-pos" class="admin-tab hidden">
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-                    <!-- Catálogo e Inventario Rápido (Se eliminó h-fijo y overflow local) -->
+                    <!-- Catálogo e Inventario Rápido -->
                     <div class="lg:col-span-2 bg-dark p-6 border border-white/5 rounded-lg shadow-2xl relative overflow-hidden">
                         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 gap-3">
                             <h3 class="text-white uppercase tracking-[0.2em] text-xs font-bold flex items-center gap-2 shrink-0"><i class="fas fa-search text-primary"></i> Catálogo Rápido</h3>
@@ -194,15 +194,25 @@
                             <!-- Productos cargados vía JS -->
                         </div>
 
-                        <!-- Paginación POS -->
+                        <!-- Paginación POS Actualizada -->
                         <div class="mt-4 pt-4 border-t border-white/10 flex justify-between items-center bg-dark" id="pos-pagination-controls">
                             <button onclick="changePosPage(-1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="pos-btn-prev">Anterior</button>
                             <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Pág <span id="pos-page-indicator" class="text-white">1</span></span>
-                            <button onclick="changePosPage(1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="pos-btn-next">Siguiente</button>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1">
+                                    <label class="text-[9px] text-gray-500 font-bold uppercase tracking-widest hidden sm:block">Mostrar:</label>
+                                    <select onchange="posCurrentPage=1; posItemsPerPage=parseInt(this.value); renderPosInventory();" class="bg-darker border border-white/10 text-white text-[9px] px-1 py-1 outline-none rounded">
+                                        <option value="10" selected>10</option>
+                                        <option value="20">20</option>
+                                        <option value="50">50</option>
+                                    </select>
+                                </div>
+                                <button onclick="changePosPage(1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="pos-btn-next">Siguiente</button>
+                            </div>
                         </div>
                     </div>
                     
-                    <!-- Ticket / Pedido Actual (Sticky en Desktop para facilidad) -->
+                    <!-- Ticket / Pedido Actual -->
                     <div class="bg-dark p-6 border border-white/5 rounded-lg shadow-2xl flex flex-col lg:sticky lg:top-4 z-10">
                         <div class="flex justify-between items-center border-b border-white/10 pb-4 mb-4">
                             <h3 class="text-primary uppercase tracking-[0.2em] text-xs font-bold italic" id="pos-ticket-title">Venta Nueva</h3>
@@ -240,37 +250,39 @@
                 </div>
             </div>
 
-            <!-- TAB NUEVOS PEDIDOS (Sin barras locales) -->
+            <!-- TAB NUEVOS PEDIDOS -->
             <div id="tab-pedidos" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex justify-between items-center mb-6 shrink-0">
                         <h3 class="text-primary uppercase tracking-[0.3em] text-xs font-bold italic flex items-center gap-2">
                             <i class="fas fa-clipboard-list"></i> Pedidos Entrantes
                         </h3>
-                        <div class="flex items-center gap-3">
-                            <label class="text-[10px] text-gray-400 uppercase tracking-widest font-bold">Mostrar:</label>
-                            <select id="ped-per-page" onchange="pedCurrentPage=1; pedItemsPerPage=parseInt(this.value); renderPedidosList();" class="bg-darker border border-white/10 text-white text-[10px] px-2 py-1 outline-none rounded">
-                                <option value="10" selected>10</option>
-                                <option value="20">20</option>
-                                <option value="50">50</option>
-                            </select>
-                        </div>
                     </div>
                     
                     <div id="admin-pedidos-list" class="space-y-4">
                         <div class="text-center py-10"><div class="loader !block border-t-primary w-8 h-8 mx-auto"></div></div>
                     </div>
 
-                    <!-- Paginación Pedidos -->
+                    <!-- Paginación Pedidos Actualizada -->
                     <div class="mt-4 pt-4 border-t border-white/5 flex justify-between items-center bg-dark" id="ped-pagination-controls">
                         <button onclick="changePedPage(-1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="ped-btn-prev">Anterior</button>
                         <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Pág <span id="ped-page-indicator" class="text-white">1</span></span>
-                        <button onclick="changePedPage(1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="ped-btn-next">Siguiente</button>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1">
+                                <label class="text-[9px] text-gray-500 font-bold uppercase tracking-widest hidden sm:block">Mostrar:</label>
+                                <select onchange="pedCurrentPage=1; pedItemsPerPage=parseInt(this.value); renderPedidosList();" class="bg-darker border border-white/10 text-white text-[9px] px-1 py-1 outline-none rounded">
+                                    <option value="10" selected>10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+                            <button onclick="changePedPage(1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="ped-btn-next">Siguiente</button>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <!-- TAB HISTORIAL Y FACTURAS (Sin barras locales) -->
+            <!-- TAB HISTORIAL Y FACTURAS -->
             <div id="tab-facturas" class="admin-tab hidden">
                 <div class="bg-dark p-8 border border-white/5 rounded-lg mb-10 shadow-2xl">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 shrink-0">
@@ -293,11 +305,21 @@
                         <div class="text-center py-10"><p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Cargando facturas...</p></div>
                     </div>
 
-                    <!-- Paginación Facturas -->
+                    <!-- Paginación Facturas Actualizada -->
                     <div class="mt-4 pt-4 border-t border-white/5 flex justify-between items-center bg-dark" id="fac-pagination-controls">
                         <button onclick="changeFacPage(-1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="fac-btn-prev">Anterior</button>
                         <span class="text-[10px] text-gray-400 font-bold tracking-widest uppercase">Pág <span id="fac-page-indicator" class="text-white">1</span></span>
-                        <button onclick="changeFacPage(1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="fac-btn-next">Siguiente</button>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1">
+                                <label class="text-[9px] text-gray-500 font-bold uppercase tracking-widest hidden sm:block">Mostrar:</label>
+                                <select onchange="facCurrentPage=1; facItemsPerPage=parseInt(this.value); renderFacturasList();" class="bg-darker border border-white/10 text-white text-[9px] px-1 py-1 outline-none rounded">
+                                    <option value="10" selected>10</option>
+                                    <option value="20">20</option>
+                                    <option value="50">50</option>
+                                </select>
+                            </div>
+                            <button onclick="changeFacPage(1)" class="text-[10px] text-white hover:text-primary uppercase tracking-widest font-bold px-3 py-2 border border-white/10 rounded disabled:opacity-30 disabled:cursor-not-allowed" id="fac-btn-next">Siguiente</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -612,7 +634,7 @@
         
         // Paginación y vistas globales
         let posViewMode = 'grid'; // grid | list
-        let posCurrentPage = 1; let posItemsPerPage = 8;
+        let posCurrentPage = 1; let posItemsPerPage = 10;
         
         let pedCurrentPage = 1; let pedItemsPerPage = 10;
         let facCurrentPage = 1; let facItemsPerPage = 10;
@@ -622,8 +644,8 @@
         let activeModule = null; 
         let listenersInitialized = { pos: false, admin: false };
 
-        // Idle Timer logic global
-        let idleTime = 0;
+        // Idle Timer logic global (Modificado para mejor respuesta en móviles)
+        let lastActivityTime = Date.now();
         let idleInterval;
         let systemLocked = false;
 
@@ -634,24 +656,30 @@
         }
 
         function resetIdleTimer() { 
-            if(!systemLocked) idleTime = 0; 
+            if(!systemLocked) lastActivityTime = Date.now();
         }
         
         function startIdleTimer() {
             if(idleInterval) clearInterval(idleInterval);
             idleInterval = setInterval(() => {
                 if(systemLocked) return;
-                idleTime++;
-                const timeoutLimit = parseInt(config.posTimeout || 0); 
-                if (timeoutLimit > 0 && activeModule && idleTime >= timeoutLimit) {
-                    lockSystem();
+                const timeoutLimitMinutes = parseInt(config.posTimeout || 0); 
+                if (timeoutLimitMinutes > 0 && activeModule) {
+                    const timeElapsed = Date.now() - lastActivityTime;
+                    const timeoutLimitMs = timeoutLimitMinutes * 60 * 1000;
+                    if (timeElapsed >= timeoutLimitMs) {
+                        lockSystem();
+                    }
                 }
-            }, 60000); // Check cada minuto
+            }, 5000); // Checkeo cada 5 segundos para que sea preciso al regresar al navegador móvil
         }
 
-        window.addEventListener('mousemove', resetIdleTimer);
-        window.addEventListener('keypress', resetIdleTimer);
-        window.addEventListener('touchstart', resetIdleTimer);
+        // Listener mejorados para móviles
+        window.addEventListener('mousemove', resetIdleTimer, true);
+        window.addEventListener('keypress', resetIdleTimer, true);
+        window.addEventListener('touchstart', resetIdleTimer, true);
+        window.addEventListener('scroll', resetIdleTimer, true);
+        window.addEventListener('click', resetIdleTimer, true);
 
         function lockSystem() {
             systemLocked = true;
@@ -782,11 +810,9 @@
             if(mode === 'grid') {
                 document.getElementById('pos-view-grid').classList.replace('text-gray-500', 'text-primary'); document.getElementById('pos-view-grid').classList.add('bg-white/5');
                 document.getElementById('pos-view-list').classList.replace('text-primary', 'text-gray-500'); document.getElementById('pos-view-list').classList.remove('bg-white/5');
-                posItemsPerPage = 8;
             } else {
                 document.getElementById('pos-view-list').classList.replace('text-gray-500', 'text-primary'); document.getElementById('pos-view-list').classList.add('bg-white/5');
                 document.getElementById('pos-view-grid').classList.replace('text-primary', 'text-gray-500'); document.getElementById('pos-view-grid').classList.remove('bg-white/5');
-                posItemsPerPage = 6;
             }
             posCurrentPage = 1;
             renderPosInventory();
@@ -1091,7 +1117,7 @@
                         <div id="acc-${pedido.id}" class="hidden bg-black/30 p-3 rounded space-y-2 mt-3">
                             ${(pedido.items || []).map(i => `
                                 <div class="flex items-center gap-3 bg-dark border border-white/5 p-2 rounded">
-                                    <div class="w-10 h-10 bg-darker rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover"></div>
+                                    <div class="w-10 h-10 bg-darker rounded border border-white/10 overflow-hidden shrink-0"><img src="${i.img}" class="w-full h-full object-cover" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'100\\' height=\\'100\\' viewBox=\\'0 0 100 100\\'%3E%3Crect width=\\'100\\' height=\\'100\\' fill=\\'%231a1a1a\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' font-family=\\'sans-serif\\' font-size=\\'12\\' fill=\\'%23d4af37\\'%3ENo Img%3C/text%3E%3C/svg%3E';"></div>
                                     <div class="flex-1 min-w-0">
                                         <p class="text-white text-[10px] font-bold uppercase truncate">${i.titulo}</p>
                                         <p class="text-gray-500 text-[9px] uppercase mt-0.5">Talla: <span class="text-white">${i.talla}</span> | SKU: <span class="text-white">${i.sku || 'N/A'}</span></p>
@@ -1291,7 +1317,8 @@
                 <!-- Botones Accionables dentro del Cierre -->
                 <div class="flex gap-3 border-t border-white/5 pt-4">
                     <button onclick="Swal.close(); imprimirCierrePeriodo('${dStart}', '${dEnd}')" class="flex-1 bg-blue-900/30 text-blue-400 border border-blue-500/30 py-3 rounded uppercase text-[10px] font-bold tracking-widest hover:bg-blue-600 hover:text-white transition-colors"><i class="fas fa-print mr-1"></i> Imprimir</button>
-                    <button onclick="Swal.close(); compartirCierreWA('${dStart}', '${dEnd}')" class="flex-1 bg-green-900/30 text-green-400 border border-green-500/30 py-3 rounded uppercase text-[10px] font-bold tracking-widest hover:bg-green-600 hover:text-white transition-colors"><i class="fab fa-whatsapp mr-1"></i> WhatsApp</button>
+                    <!-- SE HA ACTUALIZADO EL BOTÓN WA PARA COMPARTIR POR IMAGEN -->
+                    <button onclick="Swal.close(); compartirCierreWAPorImagen('${dStart}', '${dEnd}')" class="flex-1 bg-green-900/30 text-green-400 border border-green-500/30 py-3 rounded uppercase text-[10px] font-bold tracking-widest hover:bg-green-600 hover:text-white transition-colors"><i class="fab fa-whatsapp mr-1"></i> WhatsApp</button>
                 </div>
             `;
 
@@ -1317,15 +1344,54 @@
             return { count: facturas.length, subtotal: tSub, impuesto: tImpuesto, total: tTotal };
         }
 
-        function compartirCierreWA(dStart, dEnd) {
+        // --- NUEVA FUNCIÓN PARA EXPORTAR EL CIERRE COMO IMAGEN Y ENVIARLO A WHATSAPP ---
+        async function compartirCierreWAPorImagen(dStart, dEnd) {
+            Toast.fire({ icon: 'info', title: 'Generando imagen del cierre...' });
             const data = obtenerCalculosCierre(dStart, dEnd);
-            let texto = `📊 *CIERRE DE CAJA NEW GATE*\n\n📅 *Desde:* ${dStart}\n📅 *Hasta:* ${dEnd}\n🧾 *Facturas:* ${data.count}\n\n`;
+            const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO';
+            let extraTotals = '';
+            
             if(config.taxEnabled) {
-                texto += `💵 *Subtotal:* ${config.currency||'L'}${data.subtotal.toFixed(2)}\n`;
-                texto += `🏛️ *Impuestos:* ${config.currency||'L'}${data.impuesto.toFixed(2)}\n`;
+                extraTotals = `
+                <h3 style="text-align: right; font-size: 14px; margin: 0 0 5px 0; color: #333; font-weight: normal;">Subtotal: ${config.currency||'L'}${data.subtotal.toFixed(2)}</h3>
+                <h3 style="text-align: right; font-size: 14px; margin: 0 0 10px 0; color: #333; font-weight: normal;">Impuestos: ${config.currency||'L'}${data.impuesto.toFixed(2)}</h3>
+                `;
             }
-            texto += `💰 *TOTAL INGRESOS: ${config.currency||'L'}${data.total.toFixed(2)}*\n\n_Generado automáticamente desde POS_`;
-            window.open(`https://wa.me/?text=${encodeURIComponent(texto)}`, '_blank');
+
+            const ticketHtml = `
+            <div id="temp-cierre-capture" style="background: white; color: black; font-family: 'Courier New', Courier, monospace; width: 350px; padding: 20px; box-sizing: border-box; position: absolute; left: -9999px; top: -9999px; z-index: -1;">
+                <h2 style="text-align: center; margin-bottom: 5px; font-size: 24px; color: #000;">REPORTE DE CIERRE</h2>
+                <p style="text-align: center; margin-top: 0; font-size: 12px; color: #333;">${invHeader}</p>
+                <hr style="border: 1px dashed #000; margin: 15px 0;">
+                <p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>DESDE:</strong> ${dStart}</p>
+                <p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>HASTA:</strong> ${dEnd}</p>
+                <p style="font-size: 13px; margin: 5px 0; color: #000;"><strong>FACTURAS GENERADAS:</strong> ${data.count}</p>
+                <hr style="border: 1px dashed #000; margin: 15px 0;">
+                ${extraTotals}
+                <h3 style="text-align: right; font-size: 18px; margin: 0; color: #000;">INGRESO TOTAL: ${config.currency||'L'}${data.total.toFixed(2)}</h3>
+                <p style="text-align: center; margin-top: 30px; font-size: 11px; color: #000;">Generado automáticamente desde POS</p>
+            </div>`;
+            
+            document.body.insertAdjacentHTML('beforeend', ticketHtml);
+            const captureDiv = document.getElementById('temp-cierre-capture');
+            
+            try {
+                const canvas = await html2canvas(captureDiv, { backgroundColor: '#ffffff', scale: 2 });
+                const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+                const file = new File([blob], `Cierre_${dStart}_${dEnd}.png`, { type: 'image/png' });
+                
+                if (navigator.canShare && navigator.canShare({ files: [file] })) { 
+                    await navigator.share({ files: [file], title: `Cierre de Caja`, text: `Adjunto Cierre de Caja correspondiente del ${dStart} al ${dEnd}`}); 
+                    Toast.fire({ icon: 'success', title: 'Abriendo compartir' }); 
+                } else { 
+                    await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]); 
+                    DarkAlert.fire({ icon: 'success', title: 'Imagen copiada', text: 'Pega la imagen del cierre en WhatsApp (Ctrl+V).' }); 
+                }
+            } catch (error) { 
+                DarkAlert.fire({ icon: 'error', title: 'Error', text: 'No se pudo generar la imagen del cierre.' }); 
+            } finally { 
+                if (captureDiv) captureDiv.remove(); 
+            }
         }
 
         function imprimirCierrePeriodo(dStart, dEnd) {
@@ -1605,7 +1671,6 @@
         function saveSocials() { db.collection("config").doc("global").set({ whatsapp: document.getElementById('config-whatsapp').value, instagram: document.getElementById('config-instagram').value, facebook: document.getElementById('config-facebook').value, shareText: document.getElementById('config-share-text').value }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Redes y Contacto Guardados' })); }
         function saveSystemConfig() { db.collection("config").doc("global").set({ currency: document.getElementById('config-currency').value, posTimeout: document.getElementById('config-pos-timeout').value, taxEnabled: document.getElementById('config-tax-enabled').checked, taxRate: parseFloat(document.getElementById('config-tax-rate').value) || 0 }, { merge: true }).then(()=> { Toast.fire({ icon:'success', title:'Preferencias de Sistema Guardadas' }); resetIdleTimer(); }); }
         
-        // --- FUNCIÓN DE SEGURIDAD ACTUALIZADA (EXIGE CONTRASEÑA VIEJA) ---
         function saveSecurity() { 
             const pinVal = document.getElementById('config-pin').value;
             db.collection("config").doc("global").set({ posPin: pinVal }, { merge: true }).then(()=> Toast.fire({ icon:'success', title:'Seguridad Actualizada' })); 
