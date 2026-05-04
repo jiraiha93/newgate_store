@@ -798,4 +798,34 @@
                 const itemFinalTotal = finalPriceNum * item.cantidad;
                 
                 subtotal += itemSubBase;
-                totalImpuesto += (itemFinalTotal - itemSub
+                totalImpuesto += (itemFinalTotal - itemSubBase);
+                total += itemFinalTotal;
+
+                msg += `${index + 1}. [x${item.cantidad}] ${item.titulo} \n   📏 Talla: *${item.talla}* | 💰 ${config.currency||'L'}${itemFinalTotal.toFixed(2)}\n`; 
+            });
+            
+            msg += `\n💵 *TOTAL: ${config.currency||'L'}${total.toFixed(2)}*\n`; if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
+
+            const pedidoData = { 
+                idPedido: orderId, cliente: n || 'Desconocido', mensaje: m, 
+                items: carrito, subtotal: subtotal, impuesto: totalImpuesto, total: total, 
+                estado: 'pendiente', createdAt: firebase.firestore.FieldValue.serverTimestamp() 
+            };
+            db.collection("pedidos").add(pedidoData).catch(error => console.error("Error al guardar en Firebase", error));
+            
+            const historialLocal = JSON.parse(localStorage.getItem('ng_pedidos') || '[]'); historialLocal.push({ idPedido: orderId, fecha: new Date().toISOString(), items: carrito, total: total }); localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
+
+            Toast.fire({ icon: 'success', title: 'Pedido Procesado' });
+            carrito = []; saveCart(); renderCarrito(); document.getElementById('mensaje').value = ''; document.getElementById('cliente-nombre').value = ''; btnText.innerText = originalText;
+            toggleCartDrawer();
+            
+            // Abrir en nueva pestaña
+            window.open(`https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function applyConfig() { document.getElementById('display-hero-title').innerText = config.heroTitle; document.getElementById('display-hero-subtitle').innerText = config.heroSubtitle; document.getElementById('hero-display').style.backgroundImage = `url('${config.heroImage}')`; document.getElementById('display-shop-slogan').innerText = config.slogan; document.getElementById('display-about-title').innerText = config.aboutTitle; document.getElementById('display-about-desc').innerText = config.aboutDesc; const waLink = document.getElementById('link-whatsapp'); if(waLink) waLink.href = `https://wa.me/${config.whatsapp}`; const igLink = document.getElementById('link-instagram'); if(igLink) { igLink.href = config.instagram !== "#" ? config.instagram : "#"; igLink.style.display = config.instagram === "#" || !config.instagram ? "none" : "inline-block"; } const fbLink = document.getElementById('link-facebook'); if(fbLink) { fbLink.href = config.facebook !== "#" ? config.facebook : "#"; fbLink.style.display = config.facebook === "#" || !config.facebook ? "none" : "inline-block"; } }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
