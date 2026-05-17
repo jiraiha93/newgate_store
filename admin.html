@@ -342,9 +342,15 @@
                                 <div class="flex items-center justify-between sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
                                     <span class="text-[9px] uppercase tracking-widest text-blue-400 font-bold">Modo Preventa</span>
                                     <label class="switch switch-blue">
-                                        <input type="checkbox" id="toggle-presale">
+                                        <!-- SURGICAL EDIT: Al activar preventa mostramos el selector de fecha -->
+                                        <input type="checkbox" id="toggle-presale" onchange="document.getElementById('release-date-container').style.display = this.checked ? 'block' : 'none'">
                                         <span class="slider"></span>
                                     </label>
+                                </div>
+                                <!-- SURGICAL ADD: Contenedor para la Fecha de Lanzamiento -->
+                                <div id="release-date-container" style="display:none;" class="border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
+                                    <label class="text-[9px] uppercase tracking-widest text-gray-500 font-bold block mb-1">Fecha Lanzamiento</label>
+                                    <input type="date" id="new-release-date" class="bg-dark border border-white/10 px-2 py-1 text-xs outline-none focus:border-blue-400 text-white rounded cursor-pointer [color-scheme:dark]">
                                 </div>
                                 <div class="flex items-center justify-between sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
                                     <span class="text-[9px] uppercase tracking-widest text-primary font-bold">Aplica Impuesto</span>
@@ -366,12 +372,21 @@
                                 </div>
                             </div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
+                            <!-- SURGICAL EDIT: De md:grid-cols-2 a md:grid-cols-3 para acomodar el Precio de Oferta -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div>
-                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Precio <span class="text-red-500">*</span></label>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="El precio real que se cobrará">Precio Final <span class="text-red-500">*</span></label>
                                     <div class="flex bg-darker border border-white/10 rounded focus-within:border-primary transition-colors overflow-hidden">
                                         <span id="form-currency-display" class="bg-transparent text-primary px-3 py-3 border-r border-white/10 font-bold text-sm">L</span>
                                         <input type="number" id="new-price" step="0.01" min="0" placeholder="0.00" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-white font-mono" required>
+                                    </div>
+                                </div>
+                                <!-- SURGICAL ADD: Input visual para precio original / tachado -->
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="Si es mayor al precio final, se mostrará en oferta">Precio Anterior</label>
+                                    <div class="flex bg-darker border border-white/10 rounded focus-within:border-primary transition-colors overflow-hidden">
+                                        <span id="form-currency-display-compare" class="bg-transparent text-gray-500 px-3 py-3 border-r border-white/10 font-bold text-sm">L</span>
+                                        <input type="number" id="new-price-compare" step="0.01" min="0" placeholder="0.00" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-gray-400 font-mono">
                                     </div>
                                 </div>
                                 <div>
@@ -673,7 +688,6 @@
                     const timeElapsed = Date.now() - lastActivityTime;
                     const timeoutLimitMs = timeoutLimitMinutes * 60 * 1000;
                     if (timeElapsed >= timeoutLimitMs) {
-                        // REQUISITO: Cerrar sesión prioritariamente en el ADMIN.
                         if (activeModule === 'ADMIN') {
                             exitModule(); // Expulsa al usuario
                             Swal.fire({
@@ -684,15 +698,13 @@
                                 confirmButtonColor: '#d4af37'
                             });
                         } else {
-                            // Si está en POS, preferimos bloquear para que el cajero no pierda un carrito a medio cobrar.
                             lockSystem();
                         }
                     }
                 }
-            }, 5000); // Checkeo cada 5 segundos para que sea preciso al regresar al navegador móvil
+            }, 5000); 
         }
 
-        // Listener mejorados para móviles
         window.addEventListener('mousemove', resetIdleTimer, true);
         window.addEventListener('keypress', resetIdleTimer, true);
         window.addEventListener('touchstart', resetIdleTimer, true);
@@ -701,7 +713,7 @@
 
         function lockSystem() {
             systemLocked = true;
-            sessionStorage.setItem('ng_locked', 'true'); // Persistencia de bloqueo
+            sessionStorage.setItem('ng_locked', 'true'); 
             document.getElementById('lock-modal').classList.add('active');
             document.getElementById('lock-pass-input').value = "";
             document.getElementById('lock-error').classList.add('hidden');
@@ -711,7 +723,7 @@
             const pass = document.getElementById('lock-pass-input').value;
             auth.signInWithEmailAndPassword(currentFirebaseUser.email, pass).then(() => {
                 systemLocked = false;
-                sessionStorage.removeItem('ng_locked'); // Remover bandera de bloqueo
+                sessionStorage.removeItem('ng_locked'); 
                 document.getElementById('lock-modal').classList.remove('active');
                 resetIdleTimer();
             }).catch(() => {
@@ -728,7 +740,6 @@
                     document.getElementById('user-role-badge').innerText = isPosOnly ? 'Cajero (POS)' : 'Admin Global';
                     document.getElementById('user-role-badge').classList.remove('hidden');
                     
-                    // Comprobar persistencia de pantalla de bloqueo tras recargar
                     if (sessionStorage.getItem('ng_locked') === 'true') {
                         systemLocked = true;
                         document.getElementById('lock-modal').classList.add('active');
@@ -795,7 +806,6 @@
             resetIdleTimer();
             startIdleTimer();
 
-            // VISUAL SEPARATION LOGIC
             const navGroupPos = document.getElementById('nav-group-pos');
             const navGroupAdmin = document.getElementById('nav-group-admin');
 
@@ -822,7 +832,6 @@
             Toast.fire({ icon: 'info', title: 'Sesión Finalizada' });
         }
 
-        // --- Paginación y Vista de POS ---
         function changePosView(mode) {
             posViewMode = mode;
             if(mode === 'grid') {
@@ -843,7 +852,6 @@
             const term = (document.getElementById('pos-search').value || "").toLowerCase();
             const filt = inventario.filter(p => !p.isPresale && ((p.titulo || "").toLowerCase().includes(term) || (p.sku || "").toLowerCase().includes(term)));
             
-            // Paginación POS
             const totalPages = Math.ceil(filt.length / posItemsPerPage) || 1;
             if(posCurrentPage > totalPages) posCurrentPage = totalPages;
             if(posCurrentPage < 1) posCurrentPage = 1;
@@ -856,7 +864,7 @@
 
             if(filt.length === 0) {
                 container.innerHTML = `<div class="text-center py-10 text-gray-600 text-[10px] uppercase">No hay productos disponibles</div>`;
-                container.className = "pb-4"; // reset classes (sin scroll interno)
+                container.className = "pb-4"; 
                 return;
             }
             
@@ -874,27 +882,59 @@
             const isOut = p.stock !== undefined && p.stock <= 0;
             const clickAction = isOut ? '' : `openPosSizeSelector('${p.id}')`;
             
+            // --- SURGICAL EDIT: Creación de Etiquetas Visuales de Oferta y Preventa ---
+            let priceHtml = `<p class="text-primary font-bold text-[10px] mt-1">${formatPrice(p.precio)}</p>`;
+            if (p.precioOriginal) {
+                const finalNum = parseFloat((p.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                const origNum = parseFloat((p.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                if (origNum > finalNum && origNum > 0) {
+                    const discount = Math.round((1 - (finalNum / origNum)) * 100);
+                    priceHtml = `
+                    <div class="flex items-center gap-2 mt-1 flex-wrap">
+                        <span class="bg-[#2dd4bf] text-black font-bold px-1.5 py-0.5 rounded-full text-[9px]">-${discount}%</span>
+                        <span class="text-gray-500 line-through text-[9px] font-mono">${formatPrice(p.precioOriginal)}</span>
+                        <span class="text-white font-bold text-[11px] font-mono">${formatPrice(p.precio)}</span>
+                    </div>`;
+                }
+            }
+
+            let overlayBadges = '';
+            if (isOut) {
+                overlayBadges += '<div class="absolute inset-0 bg-red-900/50 flex items-center justify-center"><span class="bg-red-600 text-white text-[8px] px-2 py-1 uppercase font-bold tracking-widest">Agotado</span></div>';
+            } else if (p.isPresale) {
+                const relText = p.fechaLanzamiento ? `<br><span class="text-[7px]">Lanz: ${p.fechaLanzamiento}</span>` : '';
+                overlayBadges += `<div class="absolute top-2 right-2 bg-blue-600/90 backdrop-blur-sm text-white text-[8px] px-2 py-1 uppercase font-bold tracking-widest rounded shadow-lg text-center leading-tight border border-blue-400/30">Preventa${relText}</div>`;
+            }
+            // -------------------------------------------------------------------------
+
             if(isGrid) {
                 return `
-                <div class="bg-darker border border-white/5 rounded-lg overflow-hidden cursor-pointer hover:border-primary/50 transition-all ${isOut ? 'opacity-50' : ''}" onclick="${clickAction}">
-                    <div class="aspect-square relative bg-black/40"><img src="${img}" class="w-full h-full object-contain">
-                    ${isOut ? '<div class="absolute inset-0 bg-red-900/50 flex items-center justify-center"><span class="bg-red-600 text-white text-[8px] px-2 py-1 uppercase font-bold tracking-widest">Agotado</span></div>' : ''}
+                <div class="bg-darker border border-white/5 rounded-lg overflow-hidden cursor-pointer hover:border-primary/50 transition-all flex flex-col ${isOut ? 'opacity-50' : ''}" onclick="${clickAction}">
+                    <div class="aspect-square relative bg-black/40 shrink-0">
+                        <img src="${img}" class="w-full h-full object-contain">
+                        ${overlayBadges}
                     </div>
-                    <div class="p-2 border-t border-white/5">
+                    <div class="p-2 border-t border-white/5 flex flex-col justify-between flex-1">
                         <p class="text-[9px] uppercase font-bold text-white truncate">${p.titulo}</p>
-                        <p class="text-primary font-bold text-[10px]">${formatPrice(p.precio)}</p>
+                        ${priceHtml}
                     </div>
                 </div>`;
             } else {
+                let listOverlayBadges = isOut ? '<div class="absolute inset-0 bg-red-900/50 flex items-center justify-center"><i class="fas fa-ban text-white/70 text-xs"></i></div>' : '';
+                
                 return `
                 <div class="flex items-center gap-4 bg-darker border border-white/5 p-2 rounded-lg cursor-pointer hover:border-primary/50 transition-all ${isOut ? 'opacity-50' : ''}" onclick="${clickAction}">
-                    <div class="w-14 h-14 bg-black/40 rounded overflow-hidden shrink-0 relative">
+                    <div class="w-16 h-16 bg-black/40 rounded overflow-hidden shrink-0 relative">
                         <img src="${img}" class="w-full h-full object-contain">
-                        ${isOut ? '<div class="absolute inset-0 bg-red-900/50 flex items-center justify-center"><i class="fas fa-ban text-white/70 text-xs"></i></div>' : ''}
+                        ${listOverlayBadges}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <p class="text-[11px] uppercase font-bold text-white truncate">${p.titulo} <span class="text-gray-500 font-normal text-[9px] ml-1">#${p.sku||''}</span></p>
-                        <p class="text-primary font-bold text-[12px] mt-0.5">${formatPrice(p.precio)} <span class="text-gray-500 text-[9px] ml-2 font-normal">Stock: ${p.stock||0}</span></p>
+                        <div class="flex justify-between items-start">
+                            <p class="text-[11px] uppercase font-bold text-white truncate mr-2">${p.titulo} <span class="text-gray-500 font-normal text-[9px] ml-1">#${p.sku||''}</span></p>
+                            ${p.isPresale ? `<span class="bg-blue-600 text-white text-[7px] px-1.5 py-0.5 rounded font-bold uppercase whitespace-nowrap">Prev ${p.fechaLanzamiento?'('+p.fechaLanzamiento+')':''}</span>` : ''}
+                        </div>
+                        ${priceHtml}
+                        <p class="text-gray-500 text-[9px] font-normal mt-1">Stock: ${p.stock||0}</p>
                     </div>
                 </div>`;
             }
@@ -951,7 +991,6 @@
                 const itemSub = pNum * item.cantidad; 
                 subtotal += itemSub;
                 
-                // Cálculo de Impuesto
                 if(item.taxable && config.taxEnabled) {
                     totalImpuesto += itemSub * ((parseFloat(config.taxRate)||0) / 100);
                 }
@@ -990,7 +1029,6 @@
         function savePosOrder(targetStatus) {
             if(posCart.length === 0) return Toast.fire({icon:'error', title:'Carrito vacío'});
             
-            // Verificación de stock antes de vender (Prevenir sobreventa)
             for(let item of posCart) {
                 const p = inventario.find(x => x.id === item.id);
                 if(p && p.stock !== undefined && item.cantidad > p.stock) {
@@ -1000,7 +1038,6 @@
 
             let client = document.getElementById('pos-client-name').value.trim() || 'Mostrador / Anónimo';
             
-            // Recálculo seguro
             let subtotal = 0; let impuesto = 0;
             posCart.forEach(item => {
                 const itemSub = (parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,""))||0) * item.cantidad;
@@ -1070,7 +1107,6 @@
             }, (error) => console.error("Error escuchando pedidos de Firebase:", error));
         }
 
-        // --- FUNCION DE ACORDEON ---
         window.toggleAccordion = function(id) {
             const content = document.getElementById(id);
             const icon = document.getElementById('icon-' + id);
@@ -1083,7 +1119,6 @@
             }
         }
 
-        // --- PAGINACIÓN DE PEDIDOS ENTRANTES ---
         function changePedPage(dir) { pedCurrentPage += dir; renderPedidosList(); }
 
         function renderPedidosList() {
@@ -1092,7 +1127,6 @@
 
             if(pedidosPendientes.length > 0) { badge.classList.remove('hidden'); badge.innerText = pedidosPendientes.length; } else badge.classList.add('hidden');
             
-            // Paginación
             const totalPages = Math.ceil(pedidosPendientes.length / pedItemsPerPage) || 1;
             if(pedCurrentPage > totalPages) pedCurrentPage = totalPages;
             if(pedCurrentPage < 1) pedCurrentPage = 1;
@@ -1126,7 +1160,6 @@
 
                     ${pedido.mensaje ? `<p class="text-gray-400 text-[10px] italic mt-2 bg-white/5 p-3 rounded border-l-2 border-primary">" ${pedido.mensaje} "</p>` : ''}
                     
-                    <!-- NUEVO ACORDEÓN: Lista de Ítems Colapsable -->
                     <div class="mt-4 border-t border-white/5 pt-4">
                         <button onclick="toggleAccordion('acc-${pedido.id}')" class="w-full flex justify-between items-center text-[10px] uppercase font-bold text-gray-400 hover:text-white transition-colors">
                             <span>Ver Productos (${pedido.items ? pedido.items.length : 0})</span>
@@ -1161,7 +1194,6 @@
         async function marcarPendiente(docId) {
             const pedido = pedidosList.find(p => p.id === docId); if(!pedido) return;
             
-            // Requerir PIN de autorización si está configurado
             if (config.posPin) {
                 const { value: pin } = await Swal.fire({
                     title: 'Autorización Requerida',
@@ -1225,7 +1257,6 @@
             }
         }
 
-        // --- PAGINACIÓN DE FACTURAS ---
         function changeFacPage(dir) { facCurrentPage += dir; renderFacturasList(); }
 
         function renderFacturasList() {
@@ -1255,7 +1286,6 @@
                 });
             }
 
-            // Paginación Facturas
             const totalPages = Math.ceil(facturas.length / facItemsPerPage) || 1;
             if(facCurrentPage > totalPages) facCurrentPage = totalPages;
             if(facCurrentPage < 1) facCurrentPage = 1;
@@ -1293,7 +1323,6 @@
             renderFacturasList();
         }
 
-        // --- CIERRE DE CAJA AVANZADO ---
         function generarCierreCaja() {
             const dStart = document.getElementById('filter-date-start').value;
             const dEnd = document.getElementById('filter-date-end').value;
@@ -1332,10 +1361,8 @@
                         <p class="text-4xl text-primary font-serif italic mb-6">${config.currency||'L'}${total.toFixed(2)}</p>
                     </div>
                 </div>
-                <!-- Botones Accionables dentro del Cierre -->
                 <div class="flex gap-3 border-t border-white/5 pt-4">
                     <button onclick="Swal.close(); imprimirCierrePeriodo('${dStart}', '${dEnd}')" class="flex-1 bg-blue-900/30 text-blue-400 border border-blue-500/30 py-3 rounded uppercase text-[10px] font-bold tracking-widest hover:bg-blue-600 hover:text-white transition-colors"><i class="fas fa-print mr-1"></i> Imprimir</button>
-                    <!-- SE HA ACTUALIZADO EL BOTÓN WA PARA COMPARTIR POR IMAGEN -->
                     <button onclick="Swal.close(); compartirCierreWAPorImagen('${dStart}', '${dEnd}')" class="flex-1 bg-green-900/30 text-green-400 border border-green-500/30 py-3 rounded uppercase text-[10px] font-bold tracking-widest hover:bg-green-600 hover:text-white transition-colors"><i class="fab fa-whatsapp mr-1"></i> WhatsApp</button>
                 </div>
             `;
@@ -1362,7 +1389,6 @@
             return { count: facturas.length, subtotal: tSub, impuesto: tImpuesto, total: tTotal };
         }
 
-        // --- NUEVA FUNCIÓN PARA EXPORTAR EL CIERRE COMO IMAGEN Y ENVIARLO A WHATSAPP ---
         async function compartirCierreWAPorImagen(dStart, dEnd) {
             Toast.fire({ icon: 'info', title: 'Generando imagen del cierre...' });
             const data = obtenerCalculosCierre(dStart, dEnd);
@@ -1475,14 +1501,13 @@
                 inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); renderAdminList(); renderPosInventory();
             }, (error) => console.error("Error leyendo productos:", error)); 
         }
-        function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); document.getElementById('form-currency-display').innerText = config.currency || 'L'; } }); }
+        function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderConfig(); renderCategoryInputs(); renderCategoriesManager(); document.getElementById('form-currency-display').innerText = config.currency || 'L'; if(document.getElementById('form-currency-display-compare')) document.getElementById('form-currency-display-compare').innerText = config.currency || 'L'; } }); }
         function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; renderHeroConfig(); } }); }
 
         function showAdminTab(tab, event) {
             document.querySelectorAll('.admin-tab').forEach(t => t.classList.add('hidden')); document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden'); 
             
-            // Activate corresponding button (if exist)
             const targetBtn = document.getElementById(`nav-${tab}`);
             if(targetBtn) targetBtn.classList.add('active');
             else if(event && event.currentTarget.classList.contains('tab-btn')) event.currentTarget.classList.add('active');
@@ -1529,11 +1554,18 @@
             const skuVal = document.getElementById('new-sku').value.trim().toUpperCase();
             const catVal = document.getElementById('new-cat').value;
             const priceVal = parseFloat(document.getElementById('new-price').value);
+            const comparePriceVal = parseFloat(document.getElementById('new-price-compare').value); // SURGICAL ADD
             const globalCurrency = config.currency || 'L';
             
             if(!title || !skuVal || !catVal || isNaN(priceVal) || priceVal < 0) return Toast.fire({ icon: 'warning', title: 'Rellena todos los campos requeridos (*)' });
             
             const finalPrice = `${globalCurrency}${priceVal.toFixed(2)}`;
+            
+            // SURGICAL ADD: Construir precio comparativo visual
+            let finalComparePrice = null;
+            if (!isNaN(comparePriceVal) && comparePriceVal > priceVal) {
+                finalComparePrice = `${globalCurrency}${comparePriceVal.toFixed(2)}`;
+            }
 
             document.getElementById('btn-submit-admin').disabled = true; document.getElementById('btn-submit-loader').style.display = "block";
             try {
@@ -1548,9 +1580,15 @@
 
                 const hasMeasures = document.getElementById('toggle-measures').checked; const tallas = []; const medidas = {};
                 if(hasMeasures) { currentFormSizes.forEach(t => { const safeT = t.replace(/[^a-zA-Z0-9_-]/g, ''); const checkbox = document.getElementById(`t-${safeT}`); if(checkbox && checkbox.checked) { tallas.push(t); medidas[t] = {}; currentFormColumns.forEach(c => { const safeC = c.replace(/[^a-zA-Z0-9_-]/g, ''); const inputEl = document.getElementById(`measure-${safeT}-${safeC}`); medidas[t][c] = inputEl ? inputEl.value : ""; }); } }); }
+                
+                const releaseDateVal = document.getElementById('new-release-date').value; // SURGICAL ADD
+
                 const productData = { 
                     sku: skuVal, categoria: catVal, titulo: title, descripcion: document.getElementById('new-desc').value.trim() || "", 
-                    precio: finalPrice, stock: parseInt(document.getElementById('new-stock').value) || 0, 
+                    precio: finalPrice, 
+                    precioOriginal: finalComparePrice, // Solo uso visual
+                    fechaLanzamiento: releaseDateVal || null, // Uso visual
+                    stock: parseInt(document.getElementById('new-stock').value) || 0, 
                     isPresale: document.getElementById('toggle-presale').checked, 
                     taxable: document.getElementById('toggle-taxable').checked,
                     hasMeasures, tallas, medidas, columnas: currentFormColumns, 
@@ -1584,8 +1622,16 @@
             const match = pPrice.match(/^([^0-9.]+)?([0-9.]+)/);
             if(match) { document.getElementById('new-price').value = parseFloat(match[2]); } else { document.getElementById('new-price').value = 0; }
 
+            // SURGICAL ADD: Restaurar input precio antiguo y fecha de lanzamiento
+            const pCompare = p.precioOriginal || "0";
+            const matchCmp = pCompare.match(/^([^0-9.]+)?([0-9.]+)/);
+            if(matchCmp) { document.getElementById('new-price-compare').value = parseFloat(matchCmp[2]); } else { document.getElementById('new-price-compare').value = ""; }
+            
+            document.getElementById('new-release-date').value = p.fechaLanzamiento || "";
+            document.getElementById('toggle-presale').checked = !!p.isPresale;
+            document.getElementById('release-date-container').style.display = p.isPresale ? 'block' : 'none';
+
             document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0; 
-            document.getElementById('toggle-presale').checked = !!p.isPresale; 
             document.getElementById('toggle-taxable').checked = p.taxable !== undefined ? p.taxable : !!config.taxEnabled;
             document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
             
@@ -1603,13 +1649,21 @@
             editId = null; document.getElementById('admin-form-container').classList.remove('editing-mode'); document.getElementById('btn-cancel-edit').classList.add('hidden');
             document.getElementById('admin-form-title').innerHTML = '<i class="fas fa-box-open"></i> Crear / Editar Producto';
             
-            document.getElementById('new-title').value = ""; document.getElementById('new-sku').value = ""; document.getElementById('new-price').value = ""; document.getElementById('new-desc').value = ""; document.getElementById('new-stock').value = "0"; document.getElementById('toggle-presale').checked = false; document.getElementById('toggle-taxable').checked = !!config.taxEnabled; document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
+            document.getElementById('new-title').value = ""; document.getElementById('new-sku').value = ""; 
+            document.getElementById('new-price').value = ""; document.getElementById('new-desc').value = ""; 
+            document.getElementById('new-stock').value = "0"; document.getElementById('toggle-presale').checked = false; 
+            
+            // SURGICAL ADD: Resetear nuevos campos
+            document.getElementById('new-price-compare').value = ""; 
+            document.getElementById('new-release-date').value = ""; 
+            document.getElementById('release-date-container').style.display = 'none';
+
+            document.getElementById('toggle-taxable').checked = !!config.taxEnabled; document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
             selectedBase64Imgs = []; renderThumbnails(); currentFormSizes = ["S", "M", "L", "XL"]; currentFormColumns = ["Pecho", "Largo", "Ancho"]; renderMedidasForm();
             
             if (wasEditing) showAdminTab('inventario');
         }
 
-        // --- Paginación Inventario Admin ---
         function changeInvPage(dir) { invCurrentPage += dir; renderAdminList(); }
 
         function renderAdminList() {
@@ -1618,7 +1672,6 @@
             
             document.getElementById('inventory-count').innerText = `${filt.length} Productos`;
             
-            // Paginación
             const totalPages = Math.ceil(filt.length / invItemsPerPage) || 1;
             if(invCurrentPage > totalPages) invCurrentPage = totalPages;
             if(invCurrentPage < 1) invCurrentPage = 1;
@@ -1633,7 +1686,10 @@
             list.innerHTML = slice.map(prod => {
                 const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : (prod.imagen||'https://via.placeholder.com/150');
                 let statusInfo = `<span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria || 'Gen'}</span>`;
-                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Prev</span>`;
+                
+                // SURGICAL ADD: Etiquetas visuales en Inventario Administrativo
+                if(prod.precioOriginal) statusInfo += `<span class="bg-teal-500/20 text-teal-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-tags"></i> Oferta</span>`;
+                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Prev ${prod.fechaLanzamiento ? '('+prod.fechaLanzamiento+')' : ''}</span>`;
                 else if(prod.stock <= 0) statusInfo += `<span class="bg-red-600/20 text-red-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-ban"></i> Agotado</span>`;
                 else statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-check"></i> Stock: ${prod.stock}</span>`;
 
@@ -1641,7 +1697,6 @@
             }).join('');
         }
 
-        // Exportar a Excel (Modificado para separar Precio y generar Totales numéricos)
         function exportarExcel() {
             if(inventario.length === 0) return Toast.fire({icon:'warning', title:'No hay datos para exportar'});
             Toast.fire({icon: 'info', title: 'Generando Excel...'});
@@ -1680,7 +1735,6 @@
                 };
             });
 
-            // Añadir fila de sumatoria al final del Excel
             data.push({
                 'Nombre': '---',
                 'SKU': '---',
@@ -1737,7 +1791,6 @@
             if(p && p.length >= 6) {
                 if (!pOld) return Toast.fire({ icon: 'warning', title: 'Ingresa tu contraseña actual' });
                 
-                // Re-autenticación obligatoria
                 const cred = firebase.auth.EmailAuthProvider.credential(currentFirebaseUser.email, pOld);
                 currentFirebaseUser.reauthenticateWithCredential(cred)
                     .then(() => {
