@@ -196,7 +196,7 @@
         <div class="px-6 py-6 border-t border-white/10 bg-dark shrink-0">
             <div class="flex justify-between items-center mb-6">
                 <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Total:</span>
-                <span id="cart-drawer-total" class="text-primary text-2xl font-serif font-bold">L0.00</span>
+                <span id="cart-drawer-total" class="text-primary text-2xl font-bold">L0.00</span>
             </div>
             
             <div id="checkout-form" class="space-y-4 mb-4 hidden">
@@ -545,8 +545,8 @@
                     priceHtml = `
                     <div class="flex items-center gap-2 mt-1">
                         <span class="bg-[#2ebcff] text-dark font-bold px-2 py-0.5 rounded-full text-[9px] shadow-sm">-${discount}%</span>
-                        <span class="text-gray-500 line-through text-[10px] font-mono">${(config.currency||'L') + parseFloat(prod.precioOriginal.replace(/[^0-9.-]+/g,"")).toFixed(2)}</span>
-                        <span class="text-white font-bold text-xs md:text-sm font-mono truncate">${getPrecioFinal(prod)}</span>
+                        <span class="text-gray-500 line-through text-[10px] font-bold">${(config.currency||'L') + parseFloat(prod.precioOriginal.replace(/[^0-9.-]+/g,"")).toFixed(2)}</span>
+                        <span class="text-white font-bold text-xs md:text-sm truncate">${getPrecioFinal(prod)}</span>
                     </div>`;
                 }
 
@@ -655,11 +655,11 @@
                 document.getElementById('modal-price').innerHTML = `
                     <div class="flex items-center gap-3 mb-1">
                         <span class="bg-[#2ebcff] text-dark font-bold px-3 py-1 rounded-full text-xs">-${discount}%</span>
-                        <span class="text-gray-500 line-through text-lg font-mono">${(config.currency||'L') + parseFloat(p.precioOriginal.replace(/[^0-9.-]+/g,"")).toFixed(2)}</span>
+                        <span class="text-gray-500 line-through text-lg font-bold">${(config.currency||'L') + parseFloat(p.precioOriginal.replace(/[^0-9.-]+/g,"")).toFixed(2)}</span>
                     </div>
-                    <span class="text-4xl font-serif text-white block mt-1">${getPrecioFinal(p)}</span>`;
+                    <span class="text-3xl md:text-4xl font-bold text-white block mt-1">${getPrecioFinal(p)}</span>`;
             } else {
-                document.getElementById('modal-price').innerHTML = `<span class="text-4xl font-serif text-white">${getPrecioFinal(p)}</span>`;
+                document.getElementById('modal-price').innerHTML = `<span class="text-3xl md:text-4xl font-bold text-white">${getPrecioFinal(p)}</span>`;
             }
 
             const btnAddCart = document.getElementById('btn-add-cart'); const msgDisabled = document.getElementById('modal-disabled-msg'); const qtyContainer = document.getElementById('modal-quantity-container'); const badge = document.getElementById('modal-status-badge');
@@ -796,9 +796,9 @@
                     const origSubtotal = origWithTax * item.cantidad;
                     
                     itemPriceHtml = `
-                    <div class="flex flex-col items-start leading-tight">
-                        <span class="text-gray-500 line-through text-[9px] font-mono">${config.currency||'L'}${origSubtotal.toFixed(2)}</span>
-                        <span class="text-primary text-[11px] font-bold">${config.currency||'L'}${subtotalItem.toFixed(2)}</span>
+                    <div class="flex flex-col items-start leading-tight mt-1">
+                        <span class="text-gray-500 line-through text-[10px] font-bold">${config.currency||'L'}${origSubtotal.toFixed(2)}</span>
+                        <span class="text-white text-[12px] font-bold">${config.currency||'L'}${subtotalItem.toFixed(2)}</span>
                     </div>`;
                 }
 
