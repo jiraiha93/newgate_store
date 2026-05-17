@@ -75,7 +75,7 @@
         .swal2-container { z-index: 9999 !important; }
         .img-transition { transition: opacity 0.4s ease-in-out; }
         
-        .status-badge { position: absolute; top: 8px; left: 8px; padding: 4px 8px; font-size: 8px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; z-index: 10; border-radius: 2px; }
+        .status-badge { position: absolute; top: 8px; left: 8px; padding: 6px 10px; font-size: 9px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; z-index: 10; border-radius: 4px; display: flex; align-items: center; gap: 4px; }
         
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -102,7 +102,6 @@
             <!-- Barra de Búsqueda Estática Header (Desktop) -->
             <div class="flex-1 max-w-md relative group hidden md:block ml-auto mr-8">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-hover:text-primary transition-colors text-sm"></i>
-                <!-- Se forzó el tamaño mínimo a 16px en mobile (text-[16px]) para evitar zoom en iOS -->
                 <input type="text" id="live-search" oninput="handleSearch(this.value)" placeholder="Buscar productos..." class="w-full bg-black/50 border border-white/10 pl-10 pr-4 py-2 rounded-full text-white outline-none focus:border-primary transition-all text-[16px] md:text-[11px] uppercase tracking-widest">
             </div>
 
@@ -110,7 +109,6 @@
             <nav class="hidden md:flex space-x-6 items-center shrink-0">
                 <span onclick="showSection('inicio')" class="cursor-pointer text-[10px] uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors">Inicio</span>
                 
-                <!-- Dropdown Categorías Desktop -->
                 <div class="relative dropdown group">
                     <button class="cursor-pointer text-[10px] uppercase tracking-[0.2em] hover:text-primary font-bold transition-colors py-4">
                         Categorías <i class="fas fa-chevron-down ml-1 text-[8px]"></i>
@@ -147,11 +145,10 @@
             </div>
         </div>
 
-        <!-- Barra de Búsqueda Desplegable (Mobile) Fija Top-20 -->
+        <!-- Barra de Búsqueda Desplegable (Mobile) -->
         <div id="mobile-search-container" class="md:hidden absolute top-20 left-0 w-full bg-darker/95 backdrop-blur-md border-b border-white/5 p-4 transition-transform origin-top scale-y-0 hidden z-[90]">
             <div class="relative">
                 <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
-                <!-- Se forzó text-[16px] para evitar el auto-zoom al escribir en mobile -->
                 <input type="text" id="mobile-live-search" oninput="handleSearch(this.value)" placeholder="Buscar productos..." class="w-full bg-black/50 border border-white/10 pl-10 pr-4 py-3 rounded-full text-white outline-none focus:border-primary transition-all text-[16px] md:text-[11px] uppercase tracking-widest">
             </div>
         </div>
@@ -187,18 +184,15 @@
     <!-- DRAWER CARRITO (Lado Derecho) -->
     <div id="cart-drawer-overlay" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-[200] hidden transition-opacity opacity-0" onclick="toggleCartDrawer()"></div>
     <div id="cart-drawer" class="fixed inset-y-0 right-0 w-full sm:w-96 bg-darker border-l border-white/10 z-[210] transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl">
-        <!-- Header Drawer -->
         <div class="px-6 py-5 border-b border-white/10 flex justify-between items-center bg-dark shrink-0">
             <h2 class="text-white font-serif italic text-xl"><i class="fas fa-shopping-bag text-primary mr-2"></i> Tu Cesta</h2>
             <button onclick="toggleCartDrawer()" class="text-gray-400 hover:text-white text-xl"><i class="fas fa-times"></i></button>
         </div>
         
-        <!-- Lista de Items -->
         <div id="carrito-drawer-list" class="flex-1 overflow-y-auto p-6 space-y-4">
             <!-- Llenado JS -->
         </div>
 
-        <!-- Footer Checkout -->
         <div class="px-6 py-6 border-t border-white/10 bg-dark shrink-0">
             <div class="flex justify-between items-center mb-6">
                 <span class="text-gray-400 text-[10px] font-bold uppercase tracking-widest">Total:</span>
@@ -261,7 +255,7 @@
                     <h2 id="modal-title" class="font-serif text-3xl md:text-4xl text-white italic mb-1"></h2>
                     <div class="flex items-center gap-3 mb-4">
                         <p id="modal-sku-display" class="text-gray-600 text-[10px] uppercase tracking-widest font-bold"></p>
-                        <span id="modal-status-badge" class="px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded hidden"></span>
+                        <span id="modal-status-badge" class="px-3 py-1 text-[10px] font-bold tracking-widest uppercase rounded hidden flex items-center gap-1"></span>
                     </div>
                     
                     <p id="modal-desc" class="text-gray-400 text-sm leading-relaxed mb-6"></p>
@@ -291,7 +285,9 @@
                     </div>
 
                     <div class="flex flex-col sm:flex-row justify-between items-center pt-6 gap-4 border-t border-white/5 mt-auto">
-                        <span id="modal-price" class="text-3xl font-serif text-white"></span>
+                        <!-- SURGICAL EDIT: Contenedor para el precio final y descuentos en Modal -->
+                        <div id="modal-price" class="flex flex-col items-start w-full sm:w-auto"></div>
+                        
                         <button id="btn-add-cart" onclick="agregarAlPedido()" class="w-full sm:w-auto bg-primary text-dark px-10 py-4 font-bold uppercase text-[10px] tracking-widest hover:bg-white transition-all text-center flex items-center justify-center gap-2 rounded shadow-lg">
                             <i class="fas fa-cart-plus"></i> Añadir a la Cesta
                         </button>
@@ -392,6 +388,17 @@
             return base;
         }
 
+        // SURGICAL ADD: Calcular porcentaje de descuento
+        function getDiscountPercent(precioFinal, precioOriginal) {
+            if (!precioOriginal) return 0;
+            const finalNum = parseFloat((precioFinal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+            const origNum = parseFloat((precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+            if (origNum > finalNum && finalNum > 0) {
+                return Math.round((1 - (finalNum / origNum)) * 100);
+            }
+            return 0;
+        }
+
         function init() {
             cargarDatosLocales(); applyConfig(); escucharFirebase(); escucharHero(); escucharConfigGlobal(); renderCarrito();
         }
@@ -433,7 +440,7 @@
                 overlay.classList.remove('hidden');
                 setTimeout(() => overlay.classList.remove('opacity-0'), 10);
                 drawer.classList.remove('translate-x-full');
-                cancelarCheckout(); // reset view
+                cancelarCheckout(); 
             } else {
                 document.body.classList.remove('overflow-hidden');
                 overlay.classList.add('opacity-0');
@@ -509,7 +516,6 @@
             
             if (term.length > 0) {
                 const sectionProductos = document.getElementById('productos');
-                // MODIFICACIÓN: Solo aplicar Auto-Scroll en pantallas de Computadora (Evita fallos en móvil)
                 if (window.innerWidth >= 768) {
                     if (window.scrollY < sectionProductos.offsetTop - 150) {
                         sectionProductos.scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -530,9 +536,24 @@
                 const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : (prod.imagen||'https://via.placeholder.com/400x500/1a1a1a/d4af37?text=Sin+Imagen');
                 let badgeHTML = ''; const isOut = prod.stock !== undefined && prod.stock <= 0;
                 let btnQuickAddHTML = '';
+                
+                // SURGICAL EDIT: Lógica para Mostrar Diseño de Descuentos en Catálogo
+                let priceHtml = `<span class="text-primary font-bold whitespace-nowrap text-xs md:text-sm truncate">${getPrecioFinal(prod)}</span>`;
+                const discount = getDiscountPercent(prod.precio, prod.precioOriginal);
+                
+                if (discount > 0) {
+                    priceHtml = `
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="bg-[#2ebcff] text-dark font-bold px-2 py-0.5 rounded-full text-[9px] shadow-sm">-${discount}%</span>
+                        <span class="text-gray-500 line-through text-[10px] font-mono">${(config.currency||'L') + parseFloat(prod.precioOriginal.replace(/[^0-9.-]+/g,"")).toFixed(2)}</span>
+                        <span class="text-white font-bold text-xs md:text-sm font-mono truncate">${getPrecioFinal(prod)}</span>
+                    </div>`;
+                }
 
+                // SURGICAL EDIT: Lógica para Mostrar Próximamente con Icono
                 if (prod.isPresale) {
-                    badgeHTML = `<div class="status-badge bg-blue-600 text-white shadow-lg"><i class="fas fa-clock mr-1"></i> Próximamente</div>`;
+                    const dateText = prod.fechaLanzamiento ? ` (${prod.fechaLanzamiento})` : '';
+                    badgeHTML = `<div class="status-badge bg-[#2563eb] text-white shadow-lg"><i class="fas fa-clock"></i> Próximamente${dateText}</div>`;
                     btnQuickAddHTML = `<button disabled class="bg-gray-800 text-gray-500 w-8 h-8 rounded shrink-0 flex items-center justify-center cursor-not-allowed" title="Próximamente"><i class="fas fa-clock text-[10px]"></i></button>`;
                 } else if (isOut) {
                     badgeHTML = `<div class="status-badge bg-red-600 text-white shadow-lg">Agotado</div>`;
@@ -557,7 +578,7 @@
                             <h3 class="text-white font-medium uppercase tracking-widest text-[10px] md:text-xs line-clamp-2 leading-snug">${prod.titulo}</h3>
                         </div>
                         <div class="flex justify-between items-center mt-auto pt-2 border-t border-white/5">
-                            <span class="text-primary font-bold whitespace-nowrap text-xs md:text-sm truncate">${getPrecioFinal(prod)}</span>
+                            ${priceHtml}
                             ${btnQuickAddHTML}
                         </div>
                     </div>
@@ -578,7 +599,7 @@
             let talla = "Única"; 
             const idx = carrito.findIndex(i => i.id === p.id && i.talla === talla);
             if(idx !== -1) carrito[idx].cantidad++;
-            else carrito.push({ id: p.id, titulo: p.titulo, sku: p.sku || '', precio: p.precio, taxable: p.taxable !== undefined ? p.taxable : !!config.taxEnabled, talla: talla, cantidad: 1, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : (p.imagen||'https://via.placeholder.com/150/1a1a1a/d4af37') });
+            else carrito.push({ id: p.id, titulo: p.titulo, sku: p.sku || '', precio: p.precio, precioOriginal: p.precioOriginal, taxable: p.taxable !== undefined ? p.taxable : !!config.taxEnabled, talla: talla, cantidad: 1, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : (p.imagen||'https://via.placeholder.com/150/1a1a1a/d4af37') });
             
             Toast.fire({ icon: 'success', title: `Añadido` });
             saveCart(); renderCarrito();
@@ -626,12 +647,34 @@
             currentImageIndex = 0; updateCarouselView();
             
             document.getElementById('modal-title').innerText = p.titulo; document.getElementById('modal-sku-display').innerText = p.sku ? `SKU: ${p.sku}` : '';
-            document.getElementById('modal-desc').innerText = p.descripcion; document.getElementById('modal-price').innerText = getPrecioFinal(p); document.getElementById('modal-cat').innerText = p.categoria || 'General';
+            document.getElementById('modal-desc').innerText = p.descripcion; document.getElementById('modal-cat').innerText = p.categoria || 'General';
             
+            // SURGICAL EDIT: Actualización del bloque de Precio en el Modal para visualizar Ofertas
+            const discount = getDiscountPercent(p.precio, p.precioOriginal);
+            if (discount > 0) {
+                document.getElementById('modal-price').innerHTML = `
+                    <div class="flex items-center gap-3 mb-1">
+                        <span class="bg-[#2ebcff] text-dark font-bold px-3 py-1 rounded-full text-xs">-${discount}%</span>
+                        <span class="text-gray-500 line-through text-lg font-mono">${(config.currency||'L') + parseFloat(p.precioOriginal.replace(/[^0-9.-]+/g,"")).toFixed(2)}</span>
+                    </div>
+                    <span class="text-4xl font-serif text-white block mt-1">${getPrecioFinal(p)}</span>`;
+            } else {
+                document.getElementById('modal-price').innerHTML = `<span class="text-4xl font-serif text-white">${getPrecioFinal(p)}</span>`;
+            }
+
             const btnAddCart = document.getElementById('btn-add-cart'); const msgDisabled = document.getElementById('modal-disabled-msg'); const qtyContainer = document.getElementById('modal-quantity-container'); const badge = document.getElementById('modal-status-badge');
             badge.classList.remove('hidden', 'bg-blue-600', 'bg-red-600', 'text-white');
-            if (p.isPresale) { badge.classList.add('bg-blue-600', 'text-white'); badge.innerText = "Próximamente"; btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden'); msgDisabled.innerText = "Disponible Próximamente"; } 
-            else if (p.stock !== undefined && p.stock <= 0) { badge.classList.add('bg-red-600', 'text-white'); badge.innerText = "Agotado"; btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden'); msgDisabled.innerText = "Producto Agotado"; } 
+            
+            // SURGICAL EDIT: Textos descriptivos en modal para Lanzamientos
+            if (p.isPresale) { 
+                badge.classList.add('bg-blue-600', 'text-white'); 
+                badge.innerHTML = p.fechaLanzamiento ? `<i class="fas fa-clock"></i> Lanzamiento: ${p.fechaLanzamiento}` : `<i class="fas fa-clock"></i> Próximamente`; 
+                btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden'); msgDisabled.innerText = "Disponible Próximamente"; 
+            } 
+            else if (p.stock !== undefined && p.stock <= 0) { 
+                badge.classList.add('bg-red-600', 'text-white'); badge.innerText = "Agotado"; 
+                btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden'); msgDisabled.innerText = "Producto Agotado"; 
+            } 
             else { badge.classList.add('hidden'); btnAddCart.classList.remove('hidden'); msgDisabled.classList.add('hidden'); qtyContainer.classList.remove('hidden'); }
             
             const measuresContainer = document.getElementById('modal-measures-container'); const tallaSelectContainer = document.getElementById('modal-talla-select-container');
@@ -654,7 +697,6 @@
 
         function changeImage(dir) { currentImageIndex += dir; if (currentImageIndex >= currentModalImages.length) currentImageIndex = 0; if (currentImageIndex < 0) currentImageIndex = currentModalImages.length - 1; updateCarouselView(); }
         
-        // MODIFICACIÓN: Prevención de Loader infinito en modal para productos guardados sin foto.
         function updateCarouselView() { 
             const imgElement = document.getElementById('modal-img'); 
             const loader = document.getElementById('modal-img-loader'); 
@@ -692,7 +734,7 @@
             if (p.hasMeasures && p.tallas && p.tallas.length > 0) { const select = document.getElementById('modal-talla'); if (!select.value) { select.classList.add('border-red-500'); setTimeout(() => select.classList.remove('border-red-500'), 1500); return Toast.fire({ icon: 'warning', title: 'Debes seleccionar una talla' }); } tallaElegida = select.value; }
             const existingItemIndex = carrito.findIndex(item => item.id === p.id && item.talla === tallaElegida);
             if (existingItemIndex !== -1) carrito[existingItemIndex].cantidad += productQuantity;
-            else carrito.push({ id: p.id, titulo: p.titulo, sku: p.sku || '', precio: p.precio, taxable: p.taxable !== undefined ? p.taxable : !!config.taxEnabled, talla: tallaElegida, cantidad: productQuantity, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : (p.imagen||'https://via.placeholder.com/150/1a1a1a/d4af37') });
+            else carrito.push({ id: p.id, titulo: p.titulo, sku: p.sku || '', precio: p.precio, precioOriginal: p.precioOriginal, taxable: p.taxable !== undefined ? p.taxable : !!config.taxEnabled, talla: tallaElegida, cantidad: productQuantity, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : (p.imagen||'https://via.placeholder.com/150/1a1a1a/d4af37') });
             
             const btn = document.getElementById('btn-add-cart'); const originalHTML = btn.innerHTML;
             btn.innerHTML = `<i class="fas fa-check"></i> ¡Añadido!`; btn.classList.add('bg-white');
@@ -741,6 +783,25 @@
                 const finalPriceNum = getPrecioFinalForCartItem(item);
                 const subtotalItem = finalPriceNum * item.cantidad; 
                 total += subtotalItem;
+                
+                // SURGICAL EDIT: Visualizar descuento en el carrito del cliente (Opcional visual)
+                const discount = getDiscountPercent(item.precio, item.precioOriginal);
+                let itemPriceHtml = `<span class="text-primary text-[11px] font-bold">${config.currency||'L'}${subtotalItem.toFixed(2)}</span>`;
+                
+                if (discount > 0) {
+                    const origBase = parseFloat((item.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                    let isTaxable = item.taxable !== undefined ? item.taxable : !!config.taxEnabled;
+                    let origWithTax = origBase;
+                    if (config.taxEnabled && isTaxable) origWithTax += origWithTax * ((parseFloat(config.taxRate) || 0) / 100);
+                    const origSubtotal = origWithTax * item.cantidad;
+                    
+                    itemPriceHtml = `
+                    <div class="flex flex-col items-start leading-tight">
+                        <span class="text-gray-500 line-through text-[9px] font-mono">${config.currency||'L'}${origSubtotal.toFixed(2)}</span>
+                        <span class="text-primary text-[11px] font-bold">${config.currency||'L'}${subtotalItem.toFixed(2)}</span>
+                    </div>`;
+                }
+
                 return `
                 <div class="flex items-center gap-4 bg-darker border border-white/5 p-3 rounded-lg relative shadow-lg">
                     <div class="w-16 h-16 bg-dark rounded border border-white/10 overflow-hidden shrink-0">
@@ -750,7 +811,7 @@
                         <p class="text-white text-[11px] font-bold uppercase truncate pr-4">${item.titulo}</p>
                         <p class="text-gray-500 text-[9px] uppercase mb-1">Talla: <span class="text-white font-bold notranslate" translate="no">${item.talla}</span></p>
                         <div class="flex items-center justify-between">
-                            <span class="text-primary text-[11px] font-bold">${config.currency||'L'}${subtotalItem.toFixed(2)}</span>
+                            ${itemPriceHtml}
                             <div class="flex items-center gap-2 bg-dark border border-white/10 rounded px-1 shrink-0">
                                 <button onclick="actualizarCantidadCarrito(${index}, -1)" class="w-6 h-6 text-white hover:text-primary transition-colors"><i class="fas fa-minus text-[8px]"></i></button>
                                 <span class="text-white text-[10px] font-bold w-4 text-center select-none">${item.cantidad}</span>
@@ -787,7 +848,6 @@
             const btnText = document.getElementById('btn-wa-text'); const originalText = btnText.innerText; btnText.innerText = "Abriendo WhatsApp...";
             const orderId = `NG-${Math.floor(1000 + Math.random() * 9000)}`; 
             
-            // Calculos rigurosos para que el Panel de Administración lea los valores correctos internamente.
             let subtotal = 0; let totalImpuesto = 0; let total = 0;
             let msg = `🔥 *NUEVO PEDIDO: ${orderId}* 🔥\n\n👤 *Cliente:* ${n}\n\n🛍️ *PRODUCTOS:*\n`;
             
@@ -801,10 +861,22 @@
                 totalImpuesto += (itemFinalTotal - itemSubBase);
                 total += itemFinalTotal;
 
-                msg += `${index + 1}. [x${item.cantidad}] ${item.titulo} \n   📏 Talla: *${item.talla}* | 💰 ${config.currency||'L'}${itemFinalTotal.toFixed(2)}\n`; 
+                // SURGICAL EDIT: Mandar visualización de oferta (Ahorro) en el mensaje de Whatsapp
+                const discount = getDiscountPercent(item.precio, item.precioOriginal);
+                if (discount > 0) {
+                    const origBase = parseFloat((item.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                    let isTaxable = item.taxable !== undefined ? item.taxable : !!config.taxEnabled;
+                    let origWithTax = origBase;
+                    if (config.taxEnabled && isTaxable) origWithTax += origWithTax * ((parseFloat(config.taxRate) || 0) / 100);
+                    const origSubtotal = origWithTax * item.cantidad;
+
+                    msg += `${index + 1}. [x${item.cantidad}] ${item.titulo} \n   📏 Talla: *${item.talla}* | 💰 ~${config.currency||'L'}${origSubtotal.toFixed(2)}~ *${config.currency||'L'}${itemFinalTotal.toFixed(2)}*\n`; 
+                } else {
+                    msg += `${index + 1}. [x${item.cantidad}] ${item.titulo} \n   📏 Talla: *${item.talla}* | 💰 *${config.currency||'L'}${itemFinalTotal.toFixed(2)}*\n`; 
+                }
             });
             
-            msg += `\n💵 *TOTAL: ${config.currency||'L'}${total.toFixed(2)}*\n`; if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
+            msg += `\n💵 *TOTAL FINAL: ${config.currency||'L'}${total.toFixed(2)}*\n`; if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
 
             const pedidoData = { 
                 idPedido: orderId, cliente: n || 'Desconocido', mensaje: m, 
@@ -819,7 +891,6 @@
             carrito = []; saveCart(); renderCarrito(); document.getElementById('mensaje').value = ''; document.getElementById('cliente-nombre').value = ''; btnText.innerText = originalText;
             toggleCartDrawer();
             
-            // Abrir en nueva pestaña
             window.open(`https://wa.me/${config.whatsapp}?text=${encodeURIComponent(msg)}`, '_blank');
         }
 

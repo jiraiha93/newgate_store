@@ -331,11 +331,11 @@
                         <i class="fas fa-box-open"></i> Crear / Editar Producto
                     </h3>
                     
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                    <div class="flex flex-col gap-10">
                         <div class="space-y-6">
                             
-                            <div class="flex flex-col sm:flex-row gap-4 bg-darker p-4 border border-white/5 rounded">
-                                <div class="flex-1">
+                            <div class="flex flex-col sm:flex-row flex-wrap gap-4 bg-darker p-4 border border-white/5 rounded items-start">
+                                <div class="flex-1 min-w-[120px]">
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="Stock por defecto es 0">Stock / Cantidad</label>
                                     <input type="number" id="new-stock" min="0" value="0" class="w-full bg-dark border border-white/10 px-4 py-2 text-sm focus:border-primary outline-none text-white transition-colors">
                                 </div>
@@ -348,7 +348,7 @@
                                     </label>
                                 </div>
                                 <!-- SURGICAL ADD: Contenedor para la Fecha de Lanzamiento -->
-                                <div id="release-date-container" style="display:none;" class="border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
+                                <div id="release-date-container" style="display:none;" class="border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0 w-full sm:w-auto">
                                     <label class="text-[9px] uppercase tracking-widest text-gray-500 font-bold block mb-1">Fecha Lanzamiento</label>
                                     <input type="date" id="new-release-date" class="bg-dark border border-white/10 px-2 py-1 text-xs outline-none focus:border-blue-400 text-white rounded cursor-pointer [color-scheme:dark]">
                                 </div>
@@ -423,20 +423,24 @@
                             </div>
                         </div>
                         
-                        <div class="flex flex-col gap-4 h-full">
-                            <div class="flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[120px]" onclick="document.getElementById('new-img').click()">
-                                <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" multiple onchange="compressAndAddImages(this)">
-                                <div class="text-center">
-                                    <i class="fas fa-images text-3xl text-gray-700 mb-2 transition-transform hover:scale-110"></i>
-                                    <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Añadir Fotos (Opcional)</p>
-                                    <p class="text-[8px] text-gray-600 mt-1 italic">Si se deja vacío, se asignará "Sin Imagen"</p>
-                                    <p class="text-[8px] text-primary mt-1 font-bold tracking-wider">RECOMENDADO: 800x1000px, WEBP/JPG, MÁX 300KB</p>
+                        <!-- SURGICAL EDIT: Se movió la galería a la parte inferior para no comprimir los inputs -->
+                        <div class="pt-6 border-t border-white/5">
+                            <h4 class="text-[10px] uppercase text-gray-500 tracking-widest font-bold mb-4"><i class="fas fa-camera"></i> Imágenes del Producto</h4>
+                            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                <div class="lg:col-span-1 flex flex-col justify-center items-center border-2 border-dashed border-white/10 rounded-lg p-4 hover:border-primary/50 transition-colors cursor-pointer relative bg-darker min-h-[120px]" onclick="document.getElementById('new-img').click()">
+                                    <input type="file" id="new-img" class="hidden" accept="image/jpeg, image/png, image/webp" multiple onchange="compressAndAddImages(this)">
+                                    <div class="text-center">
+                                        <i class="fas fa-images text-3xl text-gray-700 mb-2 transition-transform hover:scale-110"></i>
+                                        <p class="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Añadir Fotos (Opcional)</p>
+                                        <p class="text-[8px] text-gray-600 mt-1 italic">Si se deja vacío, se asignará "Sin Imagen"</p>
+                                        <p class="text-[8px] text-primary mt-1 font-bold tracking-wider">RECOMENDADO: 800x1000px, WEBP/JPG, MÁX 300KB</p>
+                                    </div>
+                                    <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-10"><div class="loader !block"></div></div>
                                 </div>
-                                <div id="img-loading" class="hidden absolute inset-0 bg-dark/80 flex flex-col items-center justify-center rounded-lg z-10"><div class="loader !block"></div></div>
-                            </div>
-                            
-                            <div id="thumbnails-container" class="flex flex-wrap gap-3 bg-darker p-4 rounded-lg border border-white/5 min-h-[110px]">
-                                <p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6" id="no-img-text">Aún no hay imágenes seleccionadas</p>
+                                
+                                <div id="thumbnails-container" class="lg:col-span-2 flex flex-wrap gap-3 bg-darker p-4 rounded-lg border border-white/5 min-h-[120px] content-start">
+                                    <p class="text-[9px] text-gray-600 uppercase w-full text-center mt-6" id="no-img-text">Aún no hay imágenes seleccionadas</p>
+                                </div>
                             </div>
                         </div>
                     </div>
