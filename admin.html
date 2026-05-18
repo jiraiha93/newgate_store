@@ -400,6 +400,13 @@
                                         <span class="slider"></span>
                                     </label>
                                 </div>
+                                <div class="flex items-center justify-between sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
+                                    <span class="text-[9px] uppercase tracking-widest text-primary font-bold" title="Mostrar primero en el catálogo">Fijar al Inicio <i class="fas fa-star text-[8px]"></i></span>
+                                    <label class="switch">
+                                        <input type="checkbox" id="toggle-pinned">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
                             </div>
 
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -1774,6 +1781,7 @@
                     stock: parseInt(document.getElementById('new-stock').value) || 0, 
                     isPresale: document.getElementById('toggle-presale').checked, 
                     taxable: document.getElementById('toggle-taxable').checked,
+                    isPinned: document.getElementById('toggle-pinned').checked,
                     hasMeasures, tallas, medidas, columnas: currentFormColumns, 
                     imagen: imageUrls[0] || "", imagenes: imageUrls || [] 
                 };
@@ -1819,6 +1827,7 @@
 
             document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0; 
             document.getElementById('toggle-taxable').checked = p.taxable !== undefined ? p.taxable : !!config.taxEnabled;
+            document.getElementById('toggle-pinned').checked = !!p.isPinned;
             document.getElementById('toggle-measures').checked = !!p.hasMeasures; toggleMeasuresVisibility();
             
             const isPlaceholder = p.imagen && p.imagen.includes('via.placeholder.com');
@@ -1847,7 +1856,9 @@
             document.getElementById('new-offer-start').value = '';
             document.getElementById('new-offer-end').value = '';
 
-            document.getElementById('toggle-taxable').checked = !!config.taxEnabled; document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
+            document.getElementById('toggle-taxable').checked = !!config.taxEnabled; 
+            document.getElementById('toggle-pinned').checked = false;
+            document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
             selectedBase64Imgs = []; renderThumbnails(); currentFormSizes = ["S", "M", "L", "XL"]; currentFormColumns = ["Pecho", "Largo", "Ancho"]; renderMedidasForm();
             
             if (wasEditing) showAdminTab('inventario');
@@ -1875,6 +1886,8 @@
             list.innerHTML = slice.map(prod => {
                 const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : (prod.imagen||'https://via.placeholder.com/150');
                 let statusInfo = '';
+
+                if(prod.isPinned) statusInfo += `<span class="bg-primary/20 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-star"></i> Fijado</span>`;
                 
                 if(prod.precioOriginal) statusInfo += `<span class="bg-teal-500/20 text-teal-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-tags"></i> Oferta</span>`;
                 
