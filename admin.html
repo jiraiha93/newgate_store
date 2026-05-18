@@ -657,7 +657,6 @@
                             <h3 class="text-primary uppercase tracking-widest text-[10px] font-bold italic">Seguridad de la Cuenta Actual</h3>
                             <div>
                                 <label class="text-[10px] uppercase text-gray-500 mb-2 block tracking-widest font-bold"><i class="fas fa-lock text-primary"></i> Cambiar Mi Contraseña</label>
-                                <!-- NUEVO: Se agregó input de Contraseña Actual -->
                                 <input type="password" id="config-password-old" autocomplete="new-password" placeholder="Contraseña Actual" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded mb-2">
                                 <input type="password" id="config-password" autocomplete="new-password" placeholder="Nueva contraseña (mín 6 caracteres)" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm text-white focus:border-primary outline-none rounded">
                                 <p class="text-[8px] text-gray-500 mt-1 italic">Dejar vacío si no deseas cambiarla.</p>
@@ -722,7 +721,6 @@
         let activeModule = null; 
         let listenersInitialized = { pos: false, admin: false };
 
-        // Calculadora para el formulario
         function calcDiscount(source) {
             const finalEl = document.getElementById('new-price');
             const compareEl = document.getElementById('new-price-compare');
@@ -749,7 +747,6 @@
             }
         }
 
-        // Utilidad global de Descuentos para POS/Admin heredada
         function getDiscountPercent(precioFinal, precioOriginal) {
             if (!precioOriginal) return 0;
             const finalNum = parseFloat(String(precioFinal||"0").replace(/[^0-9.-]+/g,"")) || 0;
@@ -758,7 +755,6 @@
             return 0;
         }
 
-        // Idle Timer logic global
         let lastActivityTime = Date.now();
         let idleInterval;
         let systemLocked = false;
@@ -1006,8 +1002,11 @@
                         <img src="${img}" class="w-full h-full object-contain">
                         ${overlayBadges}
                     </div>
-                    <div class="p-2 border-t border-white/5 flex flex-col justify-between flex-1">
-                        <p class="text-[9px] uppercase font-bold text-white truncate">${p.titulo}</p>
+                    <div class="p-2 border-t border-white/5 flex flex-col justify-between flex-1 min-w-0">
+                        <div class="flex items-center gap-1 mb-1 truncate">
+                            <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[7px] font-bold uppercase shrink-0">${p.categoria || 'Gen'}</span>
+                            <p class="text-[9px] uppercase font-bold text-white truncate">${p.titulo}</p>
+                        </div>
                         ${priceHtml}
                     </div>
                 </div>`;
@@ -1021,9 +1020,12 @@
                         ${listOverlayBadges}
                     </div>
                     <div class="flex-1 min-w-0">
-                        <div class="flex justify-between items-start">
-                            <p class="text-[11px] uppercase font-bold text-white truncate mr-2">${p.titulo} <span class="text-gray-500 font-normal text-[9px] ml-1">#${p.sku||''}</span></p>
-                            ${p.isPresale ? `<span class="bg-blue-600 text-white text-[7px] px-1.5 py-0.5 rounded font-bold uppercase whitespace-nowrap">Prev ${p.fechaLanzamiento?'('+p.fechaLanzamiento+')':''}</span>` : ''}
+                        <div class="flex justify-between items-start mb-1">
+                            <div class="flex items-center gap-2 truncate mr-2">
+                                <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[8px] font-bold uppercase shrink-0">${p.categoria || 'Gen'}</span>
+                                <p class="text-[11px] uppercase font-bold text-white truncate">${p.titulo} <span class="text-gray-500 font-normal text-[9px]">#${p.sku||''}</span></p>
+                            </div>
+                            ${p.isPresale ? `<span class="bg-blue-600 text-white text-[7px] px-1.5 py-0.5 rounded font-bold uppercase whitespace-nowrap shrink-0">Prev ${p.fechaLanzamiento?'('+p.fechaLanzamiento+')':''}</span>` : ''}
                         </div>
                         ${priceHtml}
                         <p class="text-gray-500 text-[9px] font-normal mt-1">Stock: ${p.stock||0}</p>
@@ -1115,10 +1117,10 @@
                         <p class="text-gray-500 text-[9px] uppercase mt-0.5 mb-1">Talla: <span class="text-white">${item.talla}</span></p>
                         <div class="flex items-end justify-between">
                             ${priceDisplayHtml}
-                            <div class="flex items-center gap-1 bg-dark border border-white/10 rounded px-1 h-6">
-                                <button onclick="updatePosQty(${index}, -1)" class="w-5 h-full text-white hover:text-primary flex items-center justify-center"><i class="fas fa-minus text-[8px]"></i></button>
-                                <span class="text-[10px] text-white font-bold w-4 text-center font-mono">${item.cantidad}</span>
-                                <button onclick="updatePosQty(${index}, 1)" class="w-5 h-full text-white hover:text-primary flex items-center justify-center"><i class="fas fa-plus text-[8px]"></i></button>
+                            <div class="flex items-center gap-1 bg-dark border border-white/10 rounded p-0.5 shrink-0">
+                                <button onclick="updatePosQty(${index}, -1)" class="w-5 h-5 text-white hover:text-primary bg-white/5 rounded flex items-center justify-center"><i class="fas fa-minus text-[8px]"></i></button>
+                                <span class="text-[10px] text-white font-bold w-5 text-center font-mono">${item.cantidad}</span>
+                                <button onclick="updatePosQty(${index}, 1)" class="w-5 h-5 text-white hover:text-primary bg-white/5 rounded flex items-center justify-center"><i class="fas fa-plus text-[8px]"></i></button>
                             </div>
                         </div>
                     </div>
@@ -1211,12 +1213,10 @@
             return batch.commit();
         }
 
-        // FUNCIÓN QUIRÚRGICA RECONSTRUIDA PARA EVITAR CARRITO EN CERO AL EDITAR
         function loadOrderIntoPos(docId) {
             const pedido = pedidosList.find(p => p.id === docId); if(!pedido) return;
             posEditingOrderId = docId; 
             
-            // MAPEO DINÁMICO PARA LEER `precioFinalAplicado` DEL CLIENTE E IGUALARLO A `precio` DE POS
             posCart = pedido.items.map(item => {
                 const prod = inventario.find(x => x.id === item.id);
                 return {
@@ -1382,7 +1382,6 @@
                     return `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px; color: #000;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small>${discountHtml}</td><td style="text-align: center; font-size: 12px; color: #000;">${i.cantidad}</td><td style="text-align: right; font-size: 12px; color: #000;">${config.currency||'L'}${(finalP * i.cantidad).toFixed(2)}</td></tr>`;
                 }).join('');
                 
-                // DESGLOSE QUIRÚRGICO DE TOTALES SOLICITADO
                 let totalAhorro = pedido.ahorro || 0;
                 if (!pedido.ahorro) {
                      (pedido.items || []).forEach(i => {
@@ -1652,7 +1651,6 @@
                 return `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small>${discountHtml}</td><td style="text-align: center; font-size: 12px;">${i.cantidad}</td><td style="text-align: right; font-size: 12px;">${config.currency||'L'}${(finalP * i.cantidad).toFixed(2)}</td></tr>`;
             }).join('');
             
-            // DESGLOSE QUIRÚRGICO DE TOTALES SOLICITADO
             let totalAhorro = f.ahorro || 0;
             if (!f.ahorro) {
                  (f.items || []).forEach(i => {
@@ -1876,18 +1874,35 @@
             if(filt.length === 0) return list.innerHTML = `<p class="col-span-full text-gray-500 text-xs italic text-center py-4">No se encontraron productos.</p>`;
             list.innerHTML = slice.map(prod => {
                 const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : (prod.imagen||'https://via.placeholder.com/150');
-                let statusInfo = `<span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase">${prod.categoria || 'Gen'}</span>`;
+                let statusInfo = '';
                 
-                if(prod.precioOriginal) statusInfo += `<span class="bg-teal-500/20 text-teal-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-tags"></i> Oferta</span>`;
+                if(prod.precioOriginal) statusInfo += `<span class="bg-teal-500/20 text-teal-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-tags"></i> Oferta</span>`;
                 
-                if(prod.promoType && prod.promoType !== 'normal') statusInfo += `<span class="bg-promo/20 text-promo text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-gift"></i> ${prod.promoType}</span>`;
-                if(prod.ofertaInicio || prod.ofertaFin) statusInfo += `<span class="bg-blue-500/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Programada</span>`;
+                if(prod.promoType && prod.promoType !== 'normal') statusInfo += `<span class="bg-promo/20 text-promo text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-gift"></i> ${prod.promoType}</span>`;
+                if(prod.ofertaInicio || prod.ofertaFin) statusInfo += `<span class="bg-blue-500/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-clock"></i> Programada</span>`;
 
-                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-clock"></i> Prev ${prod.fechaLanzamiento ? '('+prod.fechaLanzamiento+')' : ''}</span>`;
-                else if(prod.stock <= 0) statusInfo += `<span class="bg-red-600/20 text-red-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-ban"></i> Agotado</span>`;
-                else statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase ml-1"><i class="fas fa-check"></i> Stock: ${prod.stock}</span>`;
+                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-clock"></i> Prev ${prod.fechaLanzamiento ? '('+prod.fechaLanzamiento+')' : ''}</span>`;
+                else if(prod.stock <= 0) statusInfo += `<span class="bg-red-600/20 text-red-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-ban"></i> Agotado</span>`;
+                else statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-check"></i> Stock: ${prod.stock}</span>`;
 
-                return `<div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg hover:border-primary/30 transition-all shadow-lg"><div class="flex items-center gap-4 truncate"><div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden relative"><img src="${cover}" class="w-full h-full object-cover"></div><div class="truncate"><p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo} <span class="text-gray-500 font-normal text-[10px]">#${prod.sku||''}</span></p><div class="flex gap-1 mt-1 items-center flex-wrap">${statusInfo}</div></div></div><div class="flex gap-1 flex-shrink-0 ml-2"><button onclick="startEdit('${prod.id}')" class="w-8 h-8 text-primary bg-primary/5 hover:bg-primary/20 rounded"><i class="fas fa-edit"></i></button><button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded"><i class="fas fa-trash"></i></button></div></div>`
+                return `<div class="bg-dark p-4 flex items-center justify-between border border-white/5 rounded-lg hover:border-primary/30 transition-all shadow-lg">
+                    <div class="flex items-center gap-4 truncate min-w-0 flex-1">
+                        <div class="w-14 h-14 bg-darker rounded border border-white/10 flex-shrink-0 overflow-hidden relative">
+                            <img src="${cover}" class="w-full h-full object-cover">
+                        </div>
+                        <div class="truncate min-w-0 flex-1">
+                            <div class="flex items-center gap-2 mb-1 truncate">
+                                <span class="bg-primary/10 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase shrink-0">${prod.categoria || 'Gen'}</span>
+                                <p class="text-white text-xs font-bold uppercase tracking-wider truncate">${prod.titulo} <span class="text-gray-500 font-normal text-[10px]">#${prod.sku||''}</span></p>
+                            </div>
+                            <div class="flex flex-wrap items-center mt-1">${statusInfo}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-1 flex-shrink-0 ml-4">
+                        <button onclick="startEdit('${prod.id}')" class="w-8 h-8 text-primary bg-primary/5 hover:bg-primary/20 rounded"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteProduct('${prod.id}')" class="w-8 h-8 text-red-500 bg-red-500/5 hover:bg-red-500/20 rounded"><i class="fas fa-trash"></i></button>
+                    </div>
+                </div>`
             }).join('');
         }
 
