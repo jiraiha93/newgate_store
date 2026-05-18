@@ -728,6 +728,16 @@
         let activeModule = null; 
         let listenersInitialized = { pos: false, admin: false };
 
+        function esPreventaActiva(prod) {
+            if (!prod.isPresale) return false;
+            if (!prod.fechaLanzamiento) return true;
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0);
+            const partes = prod.fechaLanzamiento.split('-');
+            const fechaLanz = new Date(partes[0], partes[1] - 1, partes[2]);
+            return fechaLanz > hoy;
+        }
+
         function calcDiscount(source) {
             const finalEl = document.getElementById('new-price');
             const compareEl = document.getElementById('new-price-compare');
@@ -947,7 +957,7 @@
         function renderPosInventory() {
             const container = document.getElementById('pos-inventory-container');
             const term = (document.getElementById('pos-search').value || "").toLowerCase();
-            const filt = inventario.filter(p => !p.isPresale && ((p.titulo || "").toLowerCase().includes(term) || (p.sku || "").toLowerCase().includes(term)));
+            const filt = inventario.filter(p => !esPreventaActiva(p) && ((p.titulo || "").toLowerCase().includes(term) || (p.sku || "").toLowerCase().includes(term)));
             
             const totalPages = Math.ceil(filt.length / posItemsPerPage) || 1;
             if(posCurrentPage > totalPages) posCurrentPage = totalPages;
@@ -995,9 +1005,11 @@
             }
 
             let overlayBadges = '';
+            const isPrevActiva = esPreventaActiva(p);
+
             if (isOut) {
                 overlayBadges += '<div class="absolute inset-0 bg-red-900/50 flex items-center justify-center"><span class="bg-red-600 text-white text-[8px] px-2 py-1 uppercase font-bold tracking-widest">Agotado</span></div>';
-            } else if (p.isPresale) {
+            } else if (isPrevActiva) {
                 const relText = p.fechaLanzamiento ? `<br><span class="text-[7px]">Lanz: ${p.fechaLanzamiento}</span>` : '';
                 overlayBadges += `<div class="absolute top-2 right-2 bg-blue-600/90 backdrop-blur-sm text-white text-[8px] px-2 py-1 uppercase font-bold tracking-widest rounded shadow-lg text-center leading-tight border border-blue-400/30">Preventa${relText}</div>`;
             }
@@ -1032,7 +1044,7 @@
                                 <span class="bg-primary/10 text-primary px-1.5 py-0.5 rounded text-[8px] font-bold uppercase shrink-0">${p.categoria || 'Gen'}</span>
                                 <p class="text-[11px] uppercase font-bold text-white truncate">${p.titulo} <span class="text-gray-500 font-normal text-[9px]">#${p.sku||''}</span></p>
                             </div>
-                            ${p.isPresale ? `<span class="bg-blue-600 text-white text-[7px] px-1.5 py-0.5 rounded font-bold uppercase whitespace-nowrap shrink-0">Prev ${p.fechaLanzamiento?'('+p.fechaLanzamiento+')':''}</span>` : ''}
+                            ${isPrevActiva ? `<span class="bg-blue-600 text-white text-[7px] px-1.5 py-0.5 rounded font-bold uppercase whitespace-nowrap shrink-0">Prev ${p.fechaLanzamiento?'('+p.fechaLanzamiento+')':''}</span>` : ''}
                         </div>
                         ${priceHtml}
                         <p class="text-gray-500 text-[9px] font-normal mt-1">Stock: ${p.stock||0}</p>
@@ -1886,7 +1898,7 @@
             list.innerHTML = slice.map(prod => {
                 const cover = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : (prod.imagen||'https://via.placeholder.com/150');
                 let statusInfo = '';
-
+                
                 if(prod.isPinned) statusInfo += `<span class="bg-primary/20 text-primary text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-star"></i> Fijado</span>`;
                 
                 if(prod.precioOriginal) statusInfo += `<span class="bg-teal-500/20 text-teal-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-tags"></i> Oferta</span>`;
@@ -1894,7 +1906,10 @@
                 if(prod.promoType && prod.promoType !== 'normal') statusInfo += `<span class="bg-promo/20 text-promo text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-gift"></i> ${prod.promoType}</span>`;
                 if(prod.ofertaInicio || prod.ofertaFin) statusInfo += `<span class="bg-blue-500/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-clock"></i> Programada</span>`;
 
-                if(prod.isPresale) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-clock"></i> Prev ${prod.fechaLanzamiento ? '('+prod.fechaLanzamiento+')' : ''}</span>`;
+                const isPrevActiva = esPreventaActiva(prod);
+
+                if(prod.isPresale && !isPrevActiva) statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-unlock"></i> Lanzado</span>`;
+                else if(isPrevActiva) statusInfo += `<span class="bg-blue-600/20 text-blue-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-clock"></i> Prev ${prod.fechaLanzamiento ? '('+prod.fechaLanzamiento+')' : ''}</span>`;
                 else if(prod.stock <= 0) statusInfo += `<span class="bg-red-600/20 text-red-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-ban"></i> Agotado</span>`;
                 else statusInfo += `<span class="bg-green-600/20 text-green-400 text-[8px] px-2 py-0.5 rounded font-bold uppercase mr-1 mb-1"><i class="fas fa-check"></i> Stock: ${prod.stock}</span>`;
 

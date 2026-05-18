@@ -287,6 +287,16 @@
         let productQuantity = 1; let touchStartX = 0; let touchEndX = 0;
         let currentCategory = 'all';
 
+        function esPreventaActiva(prod) {
+            if (!prod.isPresale) return false;
+            if (!prod.fechaLanzamiento) return true; // Si no hay fecha, es preventa manual indefinida
+            const hoy = new Date();
+            hoy.setHours(0, 0, 0, 0); // Compara exactamente a la medianoche
+            const partes = prod.fechaLanzamiento.split('-');
+            const fechaLanz = new Date(partes[0], partes[1] - 1, partes[2]);
+            return fechaLanz > hoy; // Si la fecha ya pasó o es hoy, se libera sola.
+        }
+
         const PricingEngine = {
             calcular: function(prod, qty = 1) {
                 const rawPrecio = parseFloat(String(prod.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
@@ -340,7 +350,24 @@
         function renderWishlist() { const lista = document.getElementById('lista-wishlist'); const items = inventario.filter(p => wishlist.includes(p.id)); if(items.length===0) return lista.innerHTML = `<div class="text-center py-8"><i class="fas fa-heart text-3xl text-gray-700 mb-2"></i><p class="text-gray-500 text-[10px] uppercase font-bold tracking-widest">Tu lista está vacía</p></div>`; lista.innerHTML = items.map(p => { const pData = PricingEngine.calcular(p); const img = p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen; return `<div class="flex items-center gap-3 bg-darker border border-white/10 p-2 rounded cursor-pointer hover:border-primary/50 transition-colors" onclick="cerrarWishlist(); openModalById('${p.id}')"><div class="w-14 h-14 bg-dark rounded overflow-hidden shrink-0"><img src="${img}" class="w-full h-full object-cover"></div><div class="flex-1 min-w-0"><p class="text-white text-[11px] font-bold uppercase truncate">${p.titulo}</p><p class="text-primary font-bold text-[10px]">${PricingEngine.format(pData.finalUnitario)}</p></div><button onclick="toggleWishlist('${p.id}', event)" class="w-10 h-10 text-promo hover:bg-white/10 rounded-full flex items-center justify-center transition-colors"><i class="fas fa-heart"></i></button></div>` }).join(''); }
 
         function escucharConfigGlobal() { db.collection("config").doc("global").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; applyConfig(); renderFilters(); renderGallery(); renderCarrito(); } else { applyConfig(); renderFilters(); } }); }
-        function escucharFirebase() { db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); inventario.sort((a, b) => { if (a.isPinned && !b.isPinned) return -1; if (!a.isPinned && b.isPinned) return 1; if (a.isPresale && !b.isPresale) return -1; if (!a.isPresale && b.isPresale) return 1; return 0; }); renderGallery(); if (!hasCheckedUrlParams && inventario.length > 0) { const p = new URLSearchParams(window.location.search); const pId = p.get('producto'); if (pId && inventario.find(x => x.id === pId)) setTimeout(() => openModalById(pId), 400); else window.history.pushState({}, '', window.location.pathname); hasCheckedUrlParams = true; } }, (e) => console.error(e)); }
+        function escucharFirebase() { 
+            db.collection("productos").orderBy("createdAt", "desc").onSnapshot((snapshot) => { 
+                inventario = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })); 
+                
+                // ORDENAMIENTO INTELIGENTE: 1. Preventas Activas -> 2. Fijados -> 3. Resto
+                inventario.sort((a, b) => { 
+                    const aPrev = esPreventaActiva(a); const bPrev = esPreventaActiva(b);
+                    if (aPrev && !bPrev) return -1; 
+                    if (!aPrev && bPrev) return 1; 
+                    if (a.isPinned && !b.isPinned) return -1; 
+                    if (!a.isPinned && b.isPinned) return 1; 
+                    return 0; 
+                }); 
+
+                renderGallery(); 
+                if (!hasCheckedUrlParams && inventario.length > 0) { const p = new URLSearchParams(window.location.search); const pId = p.get('producto'); if (pId && inventario.find(x => x.id === pId)) setTimeout(() => openModalById(pId), 400); else window.history.pushState({}, '', window.location.pathname); hasCheckedUrlParams = true; } 
+            }, (e) => console.error(e)); 
+        }
         function escucharHero() { db.collection("config").doc("hero").onSnapshot((doc) => { if (doc.exists) { config = { ...config, ...doc.data() }; applyConfig(); } }); }
 
         function showSection(id) { document.querySelectorAll('.section-fade').forEach(s => { s.classList.remove('active'); s.style.display = 'none'; }); const target = document.getElementById(id); if(target) { target.style.display = 'block'; setTimeout(() => target.classList.add('active'), 50); } window.scrollTo({top: 0, behavior: 'smooth'}); }
@@ -362,7 +389,9 @@
                 let badgesHTML = '';
                 let priceHtml = `<span class="text-white font-bold whitespace-nowrap text-xs md:text-sm truncate font-mono">${PricingEngine.format(pData.finalUnitario)}</span>`;
 
-                if (prod.isPresale) {
+                const isPrevActiva = esPreventaActiva(prod);
+
+                if (isPrevActiva) {
                     badgesHTML += `<div class="bg-[#2563eb] text-white px-2 py-1 text-[9px] font-bold uppercase rounded shadow-lg flex items-center gap-1"><i class="fas fa-clock"></i> Próximamente</div>`;
                     btnQuickAddHTML = `<button disabled class="bg-gray-800 text-gray-500 w-8 h-8 rounded shrink-0 flex items-center justify-center cursor-not-allowed"><i class="fas fa-clock text-[10px]"></i></button>`;
                 } else if (isOut) {
@@ -412,7 +441,7 @@
         }
 
         function quickAdd(id, event) {
-            event.stopPropagation(); const p = inventario.find(x => x.id === id); if(!p || p.isPresale || p.stock <= 0) return;
+            event.stopPropagation(); const p = inventario.find(x => x.id === id); if(!p || esPreventaActiva(p) || p.stock <= 0) return;
             if (p.hasMeasures && p.tallas && p.tallas.length > 0) { openModalById(p.id); Toast.fire({ icon: 'info', title: 'Selecciona una talla' }); return; }
             let t = "Única"; const idx = carrito.findIndex(i => i.id === p.id && i.talla === t);
             if(idx !== -1) carrito[idx].cantidad++; else carrito.push({ id: p.id, titulo: p.titulo, talla: t, cantidad: 1, img: p.imagenes && p.imagenes.length > 0 ? p.imagenes[0] : p.imagen });
@@ -465,7 +494,9 @@
             const btnAddCart = document.getElementById('btn-add-cart'); const msgDisabled = document.getElementById('modal-disabled-msg'); const qtyContainer = document.getElementById('modal-quantity-container'); const badge = document.getElementById('modal-status-badge');
             badge.className = 'px-2 py-0.5 text-[9px] font-bold tracking-widest uppercase rounded hidden border';
             
-            if (p.isPresale) { badge.classList.remove('hidden'); badge.classList.add('bg-blue-900/30', 'text-blue-400', 'border-blue-500/30'); badge.innerHTML = p.fechaLanzamiento ? `Lanzamiento: ${p.fechaLanzamiento}` : `Próximamente`; btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden', 'sm:hidden'); msgDisabled.innerText = "Disponible Próximamente"; } 
+            const isPrevActiva = esPreventaActiva(p);
+
+            if (isPrevActiva) { badge.classList.remove('hidden'); badge.classList.add('bg-blue-900/30', 'text-blue-400', 'border-blue-500/30'); badge.innerHTML = p.fechaLanzamiento ? `Lanzamiento: ${p.fechaLanzamiento}` : `Próximamente`; btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden', 'sm:hidden'); msgDisabled.innerText = "Disponible Próximamente"; } 
             else if (p.stock !== undefined && p.stock <= 0) { badge.classList.remove('hidden'); badge.classList.add('bg-gray-800', 'text-gray-400', 'border-gray-600'); badge.innerText = "Agotado"; btnAddCart.classList.add('hidden'); msgDisabled.classList.remove('hidden'); qtyContainer.classList.add('hidden', 'sm:hidden'); msgDisabled.innerText = "Producto Agotado"; } 
             else { btnAddCart.classList.remove('hidden'); msgDisabled.classList.add('hidden'); qtyContainer.classList.remove('hidden'); qtyContainer.classList.add('flex'); }
             
@@ -490,7 +521,7 @@
         function saveCart() { localStorage.setItem('ng_carrito', JSON.stringify(carrito)); }
 
         function agregarAlPedido() {
-            const p = window.lastViewedProduct; if (p.isPresale || (p.stock !== undefined && p.stock <= 0)) return;
+            const p = window.lastViewedProduct; if (esPreventaActiva(p) || (p.stock !== undefined && p.stock <= 0)) return;
             let t = "Única";
             if (p.hasMeasures && p.tallas && p.tallas.length > 0) { const s = document.getElementById('modal-talla'); if (!s.value) { s.classList.add('border-promo'); setTimeout(() => s.classList.remove('border-promo'), 1500); return Toast.fire({ icon: 'warning', title: 'Debes seleccionar una talla' }); } t = s.value; }
             const idx = carrito.findIndex(i => i.id === p.id && i.talla === t);
