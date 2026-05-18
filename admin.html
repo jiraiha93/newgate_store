@@ -402,7 +402,7 @@
                                 </div>
                             </div>
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div>
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Nombre de Producto <span class="text-red-500">*</span></label>
                                     <input type="text" id="new-title" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white transition-colors" required>
@@ -411,9 +411,13 @@
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Código SKU <span class="text-red-500">*</span></label>
                                     <input type="text" id="new-sku" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-white font-mono uppercase transition-colors" required>
                                 </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Categoría <span class="text-red-500">*</span></label>
+                                    <select id="new-cat" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-gray-300 transition-colors cursor-pointer rounded" required></select>
+                                </div>
                             </div>
                             
-                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div>
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="El precio real que se cobrará">Precio Final <span class="text-red-500">*</span></label>
                                     <div class="flex bg-darker border border-white/10 rounded focus-within:border-primary transition-colors overflow-hidden">
@@ -434,10 +438,6 @@
                                         <span class="bg-transparent text-[#2ebcff] px-3 py-3 border-r border-white/10 font-bold text-sm">%</span>
                                         <input type="number" id="new-discount-percent" step="1" min="0" max="99" placeholder="0" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-[#2ebcff] font-mono font-bold" oninput="calcDiscount('percent')">
                                     </div>
-                                </div>
-                                <div>
-                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">Categoría <span class="text-red-500">*</span></label>
-                                    <select id="new-cat" class="w-full bg-darker border border-white/10 px-4 py-3 text-sm focus:border-primary outline-none text-gray-300 transition-colors cursor-pointer rounded" required></select>
                                 </div>
                             </div>
 
