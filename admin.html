@@ -41,7 +41,7 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: { primary: '#d4af37', dark: '#0a0a0a', darker: '#050505', promo: '#ef4444' },
+                    colors: { primary: '#d4af37', dark: '#0a0a0a', darker: '#050505', promo: '#ef4444', success: '#22c55e' },
                     fontFamily: { sans: ['"Inter"', 'sans-serif'], serif: ['"Playfair Display"', 'serif'], graffiti: ['"Permanent Marker"', 'cursive'] }
                 }
             }
@@ -234,6 +234,10 @@
                             <div class="flex justify-between items-center mb-1 text-[10px] text-gray-400 uppercase font-bold tracking-widest">
                                 <span>Subtotal</span>
                                 <span id="pos-subtotal-display">0.00</span>
+                            </div>
+                            <div id="pos-savings-row" class="flex justify-between items-center mb-2 text-[10px] text-success uppercase font-bold tracking-widest hidden">
+                                <span>Ahorro</span>
+                                <span id="pos-savings-display">- 0.00</span>
                             </div>
                             <div id="pos-tax-row" class="flex justify-between items-center mb-2 text-[10px] text-gray-400 uppercase font-bold tracking-widest hidden">
                                 <span>Impuesto</span>
@@ -735,7 +739,9 @@
                     pctEl.value = '';
                 }
             } else if (source === 'percent') {
-                if (pctVal > 0 && pctVal < 100 && finalVal > 0) {
+                if (pctVal >= 0 && pctVal < 100 && compareVal > 0) {
+                    finalEl.value = (compareVal * (1 - (pctVal / 100))).toFixed(2);
+                } else if (pctVal >= 0 && pctVal < 100 && finalVal > 0) {
                     compareEl.value = (finalVal / (1 - (pctVal / 100))).toFixed(2);
                 } else {
                     compareEl.value = '';
@@ -1064,18 +1070,26 @@
             const displaySub = document.getElementById('pos-subtotal-display');
             const taxRow = document.getElementById('pos-tax-row');
             const displayTax = document.getElementById('pos-tax-display');
+            const savingsRow = document.getElementById('pos-savings-row');
+            const displaySavings = document.getElementById('pos-savings-display');
 
             if(posCart.length === 0) { 
                 list.innerHTML = `<div class="text-center py-10 text-gray-600 text-[10px] uppercase font-bold">Carrito vacío</div>`; 
-                displayTotal.innerText = `${config.currency||'L'}0.00`; displaySub.innerText = `0.00`; taxRow.classList.add('hidden');
+                displayTotal.innerText = `${config.currency||'L'}0.00`; displaySub.innerText = `0.00`; taxRow.classList.add('hidden'); savingsRow.classList.add('hidden');
                 return; 
             }
             
-            let subtotal = 0; let totalImpuesto = 0;
+            let subtotal = 0; let totalImpuesto = 0; let totalAhorro = 0;
             list.innerHTML = posCart.map((item, index) => {
                 const pNum = parseFloat(String(item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                const oNum = parseFloat(String(item.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || pNum;
                 const itemSub = pNum * item.cantidad; 
+                const itemOrigSub = oNum * item.cantidad;
+                
                 subtotal += itemSub;
+                if (itemOrigSub > itemSub) {
+                    totalAhorro += (itemOrigSub - itemSub);
+                }
                 
                 if(item.taxable && config.taxEnabled) {
                     totalImpuesto += itemSub * ((parseFloat(config.taxRate)||0) / 100);
@@ -1085,34 +1099,30 @@
                 let priceDisplayHtml = `<span class="text-primary font-bold text-[10px]">${config.currency||'L'}${itemSub.toFixed(2)}</span>`;
                 
                 if (discount > 0) {
-                    const origBase = parseFloat(String(item.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
-                    let isTaxable = item.taxable !== undefined ? item.taxable : !!config.taxEnabled;
-                    let origWithTax = origBase;
-                    if (config.taxEnabled && isTaxable) origWithTax += origWithTax * ((parseFloat(config.taxRate) || 0) / 100);
-                    const origSubtotal = origWithTax * item.cantidad;
-                    
                     priceDisplayHtml = `
                     <div class="flex flex-col items-end leading-tight">
-                        <span class="text-gray-500 line-through text-[8px] font-mono">${config.currency||'L'}${origSubtotal.toFixed(2)}</span>
-                        <span class="text-primary font-bold text-[10px]">${config.currency||'L'}${itemSub.toFixed(2)}</span>
+                        <span class="text-gray-500 line-through text-[8px] font-mono">${config.currency||'L'}${itemOrigSub.toFixed(2)}</span>
+                        <span class="text-success font-bold text-[11px]">${config.currency||'L'}${itemSub.toFixed(2)}</span>
                     </div>`;
                 }
 
                 return `
-                <div class="flex items-center gap-3 bg-darker border border-white/5 p-2 rounded relative">
-                    <div class="w-10 h-10 bg-dark rounded overflow-hidden shrink-0"><img src="${item.img}" class="w-full h-full object-cover"></div>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-white text-[10px] font-bold uppercase truncate">${item.titulo}</p>
-                        <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${item.talla}</span></p>
-                    </div>
-                    <div class="flex flex-col items-end gap-1">
-                        ${priceDisplayHtml}
-                        <div class="flex items-center gap-1 bg-dark px-1 py-0.5 rounded border border-white/10">
-                            <button onclick="updatePosQty(${index}, -1)" class="w-6 h-6 text-white hover:text-primary"><i class="fas fa-minus text-[8px]"></i></button>
-                            <span class="text-[10px] text-white font-bold w-4 text-center">${item.cantidad}</span>
-                            <button onclick="updatePosQty(${index}, 1)" class="w-6 h-6 text-white hover:text-primary"><i class="fas fa-plus text-[8px]"></i></button>
+                <div class="flex items-center gap-3 bg-darker border border-white/5 p-2 rounded-lg relative shadow-lg">
+                    ${discount > 0 ? `<span class="absolute -top-2 -left-2 bg-success text-white text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded shadow-lg z-10">-${discount}%</span>` : ''}
+                    <div class="w-12 h-14 bg-[#050505] rounded overflow-hidden shrink-0"><img src="${item.img}" class="w-full h-full object-cover"></div>
+                    <div class="flex-1 min-w-0 flex flex-col justify-center">
+                        <p class="text-white text-[10px] font-bold uppercase line-clamp-1 leading-tight">${item.titulo}</p>
+                        <p class="text-gray-500 text-[9px] uppercase mt-0.5 mb-1">Talla: <span class="text-white">${item.talla}</span></p>
+                        <div class="flex items-end justify-between">
+                            ${priceDisplayHtml}
+                            <div class="flex items-center gap-1 bg-dark border border-white/10 rounded px-1 h-6">
+                                <button onclick="updatePosQty(${index}, -1)" class="w-5 h-full text-white hover:text-primary flex items-center justify-center"><i class="fas fa-minus text-[8px]"></i></button>
+                                <span class="text-[10px] text-white font-bold w-4 text-center font-mono">${item.cantidad}</span>
+                                <button onclick="updatePosQty(${index}, 1)" class="w-5 h-full text-white hover:text-primary flex items-center justify-center"><i class="fas fa-plus text-[8px]"></i></button>
+                            </div>
                         </div>
                     </div>
+                    <button onclick="updatePosQty(${index}, -${item.cantidad})" class="absolute top-1 right-1 w-5 h-5 text-gray-600 hover:text-promo transition-colors bg-darker/80 rounded-full flex items-center justify-center"><i class="fas fa-times text-[10px]"></i></button>
                 </div>`;
             }).join('');
 
@@ -1121,6 +1131,13 @@
             displaySub.innerText = `${config.currency||'L'}${subtotal.toFixed(2)}`;
             displayTotal.innerText = `${config.currency||'L'}${finalTotal.toFixed(2)}`;
             
+            if (totalAhorro > 0) {
+                savingsRow.classList.remove('hidden');
+                displaySavings.innerText = `- ${config.currency||'L'}${totalAhorro.toFixed(2)}`;
+            } else {
+                savingsRow.classList.add('hidden');
+            }
+
             if (totalImpuesto > 0) {
                 taxRow.classList.remove('hidden');
                 displayTax.innerText = `${config.currency||'L'}${totalImpuesto.toFixed(2)}`;
@@ -1255,6 +1272,7 @@
                         </div>
                         <div class="text-left sm:text-right w-full sm:w-auto">
                             <span class="text-[9px] text-gray-500 font-bold block"><i class="fas fa-clock text-red-500 mr-1"></i> ${dateStr}</span>
+                            ${pedido.ahorro > 0 ? `<p class="text-success text-[10px] uppercase font-bold tracking-widest mt-1"><i class="fas fa-tags"></i> Ahorro: ${config.currency||'L'}${(pedido.ahorro).toFixed(2)}</p>` : ''}
                             <p class="text-lg text-white font-serif font-bold mt-1 inline-flex items-center gap-3">
                                 ${config.currency||'L'}${(pedido.total || 0).toFixed(2)}
                             </p>
