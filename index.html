@@ -388,15 +388,20 @@
             return base;
         }
 
-        // SURGICAL ADD: Calcular porcentaje de descuento con seguridad de tipos
-        function getDiscountPercent(precioFinal, precioOriginal) {
-            if (!precioOriginal) return 0;
+        // SURGICAL EDIT: Lógica Avanzada de Descuentos (Cálculo de Porcentaje y Ahorro monetario)
+        function getDiscountInfo(precioFinal, precioOriginal) {
+            if (!precioOriginal) return { percent: 0, savings: 0, original: 0, final: 0 };
             const finalNum = parseFloat(String(precioFinal||"0").replace(/[^0-9.-]+/g,"")) || 0;
             const origNum = parseFloat(String(precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
             if (origNum > finalNum && finalNum > 0) {
-                return Math.round((1 - (finalNum / origNum)) * 100);
+                return {
+                    percent: Math.round((1 - (finalNum / origNum)) * 100),
+                    savings: origNum - finalNum,
+                    original: origNum,
+                    final: finalNum
+                };
             }
-            return 0;
+            return { percent: 0, savings: 0, original: 0, final: 0 };
         }
 
         function init() {
@@ -534,41 +539,54 @@
             
             grid.innerHTML = filt.map(prod => {
                 const coverImg = prod.imagenes && prod.imagenes.length > 0 ? prod.imagenes[0] : (prod.imagen||'https://via.placeholder.com/400x500/1a1a1a/d4af37?text=Sin+Imagen');
-                let badgeHTML = ''; const isOut = prod.stock !== undefined && prod.stock <= 0;
+                const isOut = prod.stock !== undefined && prod.stock <= 0;
                 let btnQuickAddHTML = '';
                 
-                // SURGICAL EDIT: Lógica para Mostrar Diseño de Descuentos en Catálogo
+                // SURGICAL EDIT: Lógica UX Visual optimizada para Conversión
+                const discountInfo = getDiscountInfo(prod.precio, prod.precioOriginal);
                 let priceHtml = `<span class="text-primary font-bold whitespace-nowrap text-xs md:text-sm truncate">${getPrecioFinal(prod)}</span>`;
-                const discount = getDiscountPercent(prod.precio, prod.precioOriginal);
-                
-                if (discount > 0) {
-                    priceHtml = `
-                    <div class="flex items-center gap-2 mt-1">
-                        <span class="bg-[#2ebcff] text-dark font-bold px-2 py-0.5 rounded-full text-[9px] shadow-sm">-${discount}%</span>
-                        <span class="text-gray-500 line-through text-[10px] font-bold">${(config.currency||'L') + parseFloat(String(prod.precioOriginal).replace(/[^0-9.-]+/g,"")).toFixed(2)}</span>
-                        <span class="text-primary font-bold text-xs md:text-sm truncate">${getPrecioFinal(prod)}</span>
-                    </div>`;
-                }
+                let badges = [];
 
-                // SURGICAL EDIT: Lógica para Mostrar Próximamente con Icono
+                // 1. Apilado de Etiquetas (Badges) Seguras
                 if (prod.isPresale) {
                     const dateText = prod.fechaLanzamiento ? ` (${prod.fechaLanzamiento})` : '';
-                    badgeHTML = `<div class="status-badge bg-[#2563eb] text-white shadow-lg"><i class="fas fa-clock"></i> Próximamente${dateText}</div>`;
+                    badges.push(`<div class="bg-[#2563eb] text-white px-2 py-1 text-[9px] font-bold uppercase rounded shadow-lg flex items-center gap-1"><i class="fas fa-clock"></i> Próximamente${dateText}</div>`);
                     btnQuickAddHTML = `<button disabled class="bg-gray-800 text-gray-500 w-8 h-8 rounded shrink-0 flex items-center justify-center cursor-not-allowed" title="Próximamente"><i class="fas fa-clock text-[10px]"></i></button>`;
                 } else if (isOut) {
-                    badgeHTML = `<div class="status-badge bg-red-600 text-white shadow-lg">Agotado</div>`;
+                    badges.push(`<div class="bg-red-600 text-white px-2 py-1 text-[9px] font-bold uppercase rounded shadow-lg">Agotado</div>`);
                     btnQuickAddHTML = `<button disabled class="bg-gray-800 text-gray-500 w-8 h-8 rounded shrink-0 flex items-center justify-center cursor-not-allowed" title="Agotado"><i class="fas fa-ban text-[10px]"></i></button>`;
                 } else {
                     btnQuickAddHTML = `<button onclick="quickAdd('${prod.id}', event)" class="bg-white text-dark w-8 h-8 rounded shrink-0 flex items-center justify-center hover:bg-primary transition-colors shadow-lg" title="Añadir"><i class="fas fa-plus text-[10px]"></i></button>`;
                 }
 
+                // 2. Renderizado Condicional de Descuentos
+                if (discountInfo.percent >= 25) {
+                    badges.push(`<div class="bg-red-600 text-white px-2 py-1 text-[9px] font-bold uppercase rounded shadow-lg flex items-center gap-1"><i class="fas fa-fire"></i> ${discountInfo.percent}% OFF</div>`);
+                    priceHtml = `
+                    <div class="flex flex-col items-start leading-tight mt-1">
+                        <div class="flex items-center gap-2">
+                            <span class="text-gray-500 line-through text-[10px] font-bold">${(config.currency||'L') + discountInfo.original.toFixed(2)}</span>
+                            <span class="text-primary font-bold text-xs md:text-sm truncate">${getPrecioFinal(prod)}</span>
+                        </div>
+                        <span class="text-green-500 text-[9px] font-bold mt-0.5">Ahorras ${(config.currency||'L') + discountInfo.savings.toFixed(2)}</span>
+                    </div>`;
+                } else if (discountInfo.percent > 0) {
+                    // Descuento menor al 25% (Modo Discreto)
+                    priceHtml = `
+                    <div class="flex items-center gap-2 mt-1">
+                        <span class="text-gray-500 line-through text-[10px] font-bold">${(config.currency||'L') + discountInfo.original.toFixed(2)}</span>
+                        <span class="text-primary font-bold text-xs md:text-sm truncate">${getPrecioFinal(prod)}</span>
+                    </div>`;
+                }
+
+                const badgesWrapper = badges.length > 0 ? `<div class="absolute top-2 left-2 flex flex-col gap-1 z-10">${badges.join('')}</div>` : '';
                 const isFav = wishlist.includes(prod.id);
                 const btnFavHTML = `<button onclick="toggleWishlist('${prod.id}', event)" class="absolute top-2 right-2 w-8 h-8 md:w-9 md:h-9 rounded-full flex items-center justify-center transition-all z-20 ${isFav ? 'bg-white/30 text-white backdrop-blur-sm opacity-100 shadow-lg' : 'bg-darker/40 text-white hover:bg-white/20 opacity-0 group-hover:opacity-100 backdrop-blur-sm'}"><i class="${isFav ? 'fas' : 'far'} fa-heart text-[12px] md:text-[14px]"></i></button>`;
                 
                 return `
                 <div class="gallery-item group cursor-pointer animate-in fade-in duration-500 flex flex-col h-full bg-darker border border-white/5 rounded-lg shadow-xl hover:border-primary/30 transition-colors ${isOut ? 'opacity-60' : ''}" onclick="openModalById('${prod.id}')">
                     <div class="relative aspect-[3/4] overflow-hidden rounded-t-lg">
-                        ${badgeHTML} ${btnFavHTML}
+                        ${badgesWrapper} ${btnFavHTML}
                         <img src="${coverImg}" loading="lazy" onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\\'http://www.w3.org/2000/svg\\' width=\\'400\\' height=\\'500\\' viewBox=\\'0 0 400 500\\'%3E%3Crect width=\\'400\\' height=\\'500\\' fill=\\'%231a1a1a\\'/%3E%3Ctext x=\\'50%25\\' y=\\'50%25\\' dominant-baseline=\\'middle\\' text-anchor=\\'middle\\' font-family=\\'sans-serif\\' font-size=\\'24\\' font-weight=\\'bold\\' fill=\\'%23d4af37\\'%3ESIN IMAGEN%3C/text%3E%3C/svg%3E';" alt="${prod.titulo}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 ${isOut ? 'grayscale' : ''}">
                         <div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
                     </div>
@@ -649,13 +667,20 @@
             document.getElementById('modal-title').innerText = p.titulo; document.getElementById('modal-sku-display').innerText = p.sku ? `SKU: ${p.sku}` : '';
             document.getElementById('modal-desc').innerText = p.descripcion; document.getElementById('modal-cat').innerText = p.categoria || 'General';
             
-            // SURGICAL EDIT: Actualización del bloque de Precio en el Modal para visualizar Ofertas
-            const discount = getDiscountPercent(p.precio, p.precioOriginal);
-            if (discount > 0) {
+            // SURGICAL EDIT: Actualización visual de jerarquía en el Modal de Producto
+            const discountInfo = getDiscountInfo(p.precio, p.precioOriginal);
+            if (discountInfo.percent >= 25) {
                 document.getElementById('modal-price').innerHTML = `
                     <div class="flex items-center gap-3 mb-1">
-                        <span class="bg-[#2ebcff] text-dark font-bold px-3 py-1 rounded-full text-xs">-${discount}%</span>
-                        <span class="text-gray-500 line-through text-lg font-bold">${(config.currency||'L') + parseFloat(String(p.precioOriginal).replace(/[^0-9.-]+/g,"")).toFixed(2)}</span>
+                        <span class="bg-red-600 text-white font-bold px-3 py-1 rounded text-[10px] shadow-lg flex items-center gap-1"><i class="fas fa-fire"></i> ${discountInfo.percent}% OFF</span>
+                        <span class="text-gray-500 line-through text-lg font-bold">${(config.currency||'L') + discountInfo.original.toFixed(2)}</span>
+                    </div>
+                    <span class="text-3xl md:text-4xl font-bold text-primary block mt-1">${getPrecioFinal(p)}</span>
+                    <span class="text-green-500 text-sm font-bold block mt-1">¡Ahorras ${(config.currency||'L') + discountInfo.savings.toFixed(2)}!</span>`;
+            } else if (discountInfo.percent > 0) {
+                document.getElementById('modal-price').innerHTML = `
+                    <div class="flex items-center gap-3 mb-1">
+                        <span class="text-gray-500 line-through text-lg font-bold">${(config.currency||'L') + discountInfo.original.toFixed(2)}</span>
                     </div>
                     <span class="text-3xl md:text-4xl font-bold text-primary block mt-1">${getPrecioFinal(p)}</span>`;
             } else {
@@ -784,14 +809,13 @@
                 const subtotalItem = finalPriceNum * item.cantidad; 
                 total += subtotalItem;
                 
-                // SURGICAL EDIT: Visualizar descuento en el carrito del cliente (Opcional visual)
-                const discount = getDiscountPercent(item.precio, item.precioOriginal);
+                // SURGICAL EDIT: Visualizar descuento en el carrito respetando color Dorado (Primary)
+                const discountInfo = getDiscountInfo(item.precio, item.precioOriginal);
                 let itemPriceHtml = `<span class="text-primary text-[11px] font-bold">${config.currency||'L'}${subtotalItem.toFixed(2)}</span>`;
                 
-                if (discount > 0) {
-                    const origBase = parseFloat(String(item.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                if (discountInfo.percent > 0) {
                     let isTaxable = item.taxable !== undefined ? item.taxable : !!config.taxEnabled;
-                    let origWithTax = origBase;
+                    let origWithTax = discountInfo.original;
                     if (config.taxEnabled && isTaxable) origWithTax += origWithTax * ((parseFloat(config.taxRate) || 0) / 100);
                     const origSubtotal = origWithTax * item.cantidad;
                     
@@ -861,12 +885,10 @@
                 totalImpuesto += (itemFinalTotal - itemSubBase);
                 total += itemFinalTotal;
 
-                // SURGICAL EDIT: Mandar visualización de oferta (Ahorro) en el mensaje de Whatsapp
-                const discount = getDiscountPercent(item.precio, item.precioOriginal);
-                if (discount > 0) {
-                    const origBase = parseFloat(String(item.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                const discountInfo = getDiscountInfo(item.precio, item.precioOriginal);
+                if (discountInfo.percent > 0) {
                     let isTaxable = item.taxable !== undefined ? item.taxable : !!config.taxEnabled;
-                    let origWithTax = origBase;
+                    let origWithTax = discountInfo.original;
                     if (config.taxEnabled && isTaxable) origWithTax += origWithTax * ((parseFloat(config.taxRate) || 0) / 100);
                     const origSubtotal = origWithTax * item.cantidad;
 
@@ -878,14 +900,18 @@
             
             msg += `\n💵 *TOTAL FINAL: ${config.currency||'L'}${total.toFixed(2)}*\n`; if(m) msg += `\n💬 *Mensaje:*\n_${m}_\n`;
 
+            // SURGICAL EDIT: Clonación profunda segura para purgar valores `undefined` y prevenir Crash fatal de Firebase
+            const safeCarrito = JSON.parse(JSON.stringify(carrito));
+            
             const pedidoData = { 
                 idPedido: orderId, cliente: n || 'Desconocido', mensaje: m, 
-                items: carrito, subtotal: subtotal, impuesto: totalImpuesto, total: total, 
+                items: safeCarrito, subtotal: subtotal, impuesto: totalImpuesto, total: total, 
                 estado: 'pendiente', createdAt: firebase.firestore.FieldValue.serverTimestamp() 
             };
+            
             db.collection("pedidos").add(pedidoData).catch(error => console.error("Error al guardar en Firebase", error));
             
-            const historialLocal = JSON.parse(localStorage.getItem('ng_pedidos') || '[]'); historialLocal.push({ idPedido: orderId, fecha: new Date().toISOString(), items: carrito, total: total }); localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
+            const historialLocal = JSON.parse(localStorage.getItem('ng_pedidos') || '[]'); historialLocal.push({ idPedido: orderId, fecha: new Date().toISOString(), items: safeCarrito, total: total }); localStorage.setItem('ng_pedidos', JSON.stringify(historialLocal));
 
             Toast.fire({ icon: 'success', title: 'Pedido Procesado' });
             carrito = []; saveCart(); renderCarrito(); document.getElementById('mensaje').value = ''; document.getElementById('cliente-nombre').value = ''; btnText.innerText = originalText;
