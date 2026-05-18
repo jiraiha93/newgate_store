@@ -342,13 +342,12 @@
                                 <div class="flex items-center justify-between sm:justify-start gap-4 border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0">
                                     <span class="text-[9px] uppercase tracking-widest text-blue-400 font-bold">Modo Preventa</span>
                                     <label class="switch switch-blue">
-                                        <!-- SURGICAL EDIT: Al activar preventa mostramos el selector de fecha -->
-                                        <input type="checkbox" id="toggle-presale" onchange="document.getElementById('release-date-container').style.display = this.checked ? 'block' : 'none'">
+                                        <input type="checkbox" id="toggle-presale">
                                         <span class="slider"></span>
                                     </label>
                                 </div>
-                                <!-- SURGICAL ADD: Contenedor para la Fecha de Lanzamiento -->
-                                <div id="release-date-container" style="display:none;" class="border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0 w-full sm:w-auto">
+                                <!-- SURGICAL EDIT: Siempre visible sin condicional display:none -->
+                                <div id="release-date-container" class="border-t sm:border-t-0 sm:border-l border-white/5 pt-4 sm:pt-0 sm:pl-4 mt-2 sm:mt-0 w-full sm:w-auto">
                                     <label class="text-[9px] uppercase tracking-widest text-gray-500 font-bold block mb-1">Fecha Lanzamiento</label>
                                     <input type="date" id="new-release-date" class="bg-dark border border-white/10 px-2 py-1 text-xs outline-none focus:border-blue-400 text-white rounded cursor-pointer [color-scheme:dark]">
                                 </div>
@@ -372,21 +371,27 @@
                                 </div>
                             </div>
                             
-                            <!-- SURGICAL EDIT: De md:grid-cols-2 a md:grid-cols-3 para acomodar el Precio de Oferta -->
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <!-- SURGICAL EDIT: Implementación de Columna de Porcentaje (%) -->
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                                 <div>
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="El precio real que se cobrará">Precio Final <span class="text-red-500">*</span></label>
                                     <div class="flex bg-darker border border-white/10 rounded focus-within:border-primary transition-colors overflow-hidden">
                                         <span id="form-currency-display" class="bg-transparent text-primary px-3 py-3 border-r border-white/10 font-bold text-sm">L</span>
-                                        <input type="number" id="new-price" step="0.01" min="0" placeholder="0.00" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-white font-mono" required>
+                                        <input type="number" id="new-price" step="0.01" min="0" placeholder="0.00" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-white font-mono" oninput="calcDiscount('price')" required>
                                     </div>
                                 </div>
-                                <!-- SURGICAL ADD: Input visual para precio original / tachado -->
                                 <div>
                                     <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold" title="Si es mayor al precio final, se mostrará en oferta">Precio Anterior</label>
                                     <div class="flex bg-darker border border-white/10 rounded focus-within:border-primary transition-colors overflow-hidden">
                                         <span id="form-currency-display-compare" class="bg-transparent text-gray-500 px-3 py-3 border-r border-white/10 font-bold text-sm">L</span>
-                                        <input type="number" id="new-price-compare" step="0.01" min="0" placeholder="0.00" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-gray-400 font-mono">
+                                        <input type="number" id="new-price-compare" step="0.01" min="0" placeholder="0.00" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-gray-400 font-mono" oninput="calcDiscount('compare')">
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="text-[9px] uppercase text-gray-500 mb-1 block font-bold">% Dto.</label>
+                                    <div class="flex bg-darker border border-white/10 rounded focus-within:border-primary transition-colors overflow-hidden">
+                                        <span class="bg-transparent text-[#2ebcff] px-3 py-3 border-r border-white/10 font-bold text-sm">%</span>
+                                        <input type="number" id="new-discount-percent" step="1" min="0" max="99" placeholder="0" class="w-full bg-transparent px-4 py-3 text-sm outline-none text-[#2ebcff] font-mono font-bold" oninput="calcDiscount('percent')">
                                     </div>
                                 </div>
                                 <div>
@@ -668,7 +673,41 @@
         let activeModule = null; 
         let listenersInitialized = { pos: false, admin: false };
 
-        // Idle Timer logic global (Modificado para mejor respuesta en móviles)
+        // SURGICAL ADD: Lógica de Calculadora de Descuentos
+        function calcDiscount(source) {
+            const finalEl = document.getElementById('new-price');
+            const compareEl = document.getElementById('new-price-compare');
+            const pctEl = document.getElementById('new-discount-percent');
+            
+            const finalVal = parseFloat(finalEl.value) || 0;
+            const compareVal = parseFloat(compareEl.value) || 0;
+            const pctVal = parseFloat(pctEl.value) || 0;
+
+            if (source === 'compare' || source === 'price') {
+                if (compareVal > finalVal && finalVal > 0) {
+                    pctEl.value = Math.round((1 - (finalVal / compareVal)) * 100);
+                } else {
+                    pctEl.value = '';
+                }
+            } else if (source === 'percent') {
+                if (pctVal > 0 && pctVal < 100 && finalVal > 0) {
+                    compareEl.value = (finalVal / (1 - (pctVal / 100))).toFixed(2);
+                } else {
+                    compareEl.value = '';
+                }
+            }
+        }
+
+        // Utilidad global de Descuentos para Admin y Facturas POS
+        function getDiscountPercent(precioFinal, precioOriginal) {
+            if (!precioOriginal) return 0;
+            const finalNum = parseFloat(String(precioFinal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+            const origNum = parseFloat(String(precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+            if (origNum > finalNum && finalNum > 0) return Math.round((1 - (finalNum / origNum)) * 100);
+            return 0;
+        }
+
+        // Idle Timer logic global
         let lastActivityTime = Date.now();
         let idleInterval;
         let systemLocked = false;
@@ -991,12 +1030,30 @@
             
             let subtotal = 0; let totalImpuesto = 0;
             list.innerHTML = posCart.map((item, index) => {
-                const pNum = parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                const pNum = parseFloat(String(item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
                 const itemSub = pNum * item.cantidad; 
                 subtotal += itemSub;
                 
                 if(item.taxable && config.taxEnabled) {
                     totalImpuesto += itemSub * ((parseFloat(config.taxRate)||0) / 100);
+                }
+
+                const discount = getDiscountPercent(item.precio, item.precioOriginal);
+                let priceDisplayHtml = `<span class="text-primary font-bold text-[10px]">${config.currency||'L'}${itemSub.toFixed(2)}</span>`;
+                
+                // SURGICAL ADD: Mostrar descuento tachado dentro de la terminal POS 
+                if (discount > 0) {
+                    const origBase = parseFloat(String(item.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                    let isTaxable = item.taxable !== undefined ? item.taxable : !!config.taxEnabled;
+                    let origWithTax = origBase;
+                    if (config.taxEnabled && isTaxable) origWithTax += origWithTax * ((parseFloat(config.taxRate) || 0) / 100);
+                    const origSubtotal = origWithTax * item.cantidad;
+                    
+                    priceDisplayHtml = `
+                    <div class="flex flex-col items-end leading-tight">
+                        <span class="text-gray-500 line-through text-[8px] font-mono">${config.currency||'L'}${origSubtotal.toFixed(2)}</span>
+                        <span class="text-primary font-bold text-[10px]">${config.currency||'L'}${itemSub.toFixed(2)}</span>
+                    </div>`;
                 }
 
                 return `
@@ -1007,7 +1064,7 @@
                         <p class="text-gray-500 text-[9px] uppercase">Talla: <span class="text-white">${item.talla}</span></p>
                     </div>
                     <div class="flex flex-col items-end gap-1">
-                        <span class="text-primary font-bold text-[10px]">${config.currency||'L'}${itemSub.toFixed(2)}</span>
+                        ${priceDisplayHtml}
                         <div class="flex items-center gap-1 bg-dark px-1 py-0.5 rounded border border-white/10">
                             <button onclick="updatePosQty(${index}, -1)" class="w-6 h-6 text-white hover:text-primary"><i class="fas fa-minus text-[8px]"></i></button>
                             <span class="text-[10px] text-white font-bold w-4 text-center">${item.cantidad}</span>
@@ -1044,7 +1101,7 @@
             
             let subtotal = 0; let impuesto = 0;
             posCart.forEach(item => {
-                const itemSub = (parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,""))||0) * item.cantidad;
+                const itemSub = (parseFloat(String(item.precio||"0").replace(/[^0-9.-]+/g,""))||0) * item.cantidad;
                 subtotal += itemSub;
                 if(item.taxable && config.taxEnabled) impuesto += itemSub * ((parseFloat(config.taxRate)||0) / 100);
             });
@@ -1228,7 +1285,7 @@
             const pedido = pedidosList.find(p => p.id === docId); if (!pedido) return;
             if (tipo === 'pedido') {
                 let texto = `🔥 *PEDIDO: ${pedido.idPedido || 'S/N'}*\n\n👤 *Cliente:* ${pedido.cliente}\n\n🛍️ *PRODUCTOS:*\n`;
-                (pedido.items || []).forEach((item, index) => { const precioNum = parseFloat((item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0; texto += `${index + 1}. [x${item.cantidad}] ${item.titulo} - Talla: ${item.talla} | ${config.currency||'L'}${(precioNum * item.cantidad).toFixed(2)}\n`; });
+                (pedido.items || []).forEach((item, index) => { const precioNum = parseFloat(String(item.precio||"0").replace(/[^0-9.-]+/g,"")) || 0; texto += `${index + 1}. [x${item.cantidad}] ${item.titulo} - Talla: ${item.talla} | ${config.currency||'L'}${(precioNum * item.cantidad).toFixed(2)}\n`; });
                 texto += `\n💵 *SUBTOTAL:* ${config.currency||'L'}${(pedido.subtotal || pedido.total).toFixed(2)}\n`;
                 if(pedido.impuesto > 0) texto += `🧾 *IMPUESTO:* ${config.currency||'L'}${(pedido.impuesto).toFixed(2)}\n`;
                 texto += `💰 *TOTAL A PAGAR: ${config.currency||'L'}${(pedido.total || 0).toFixed(2)}*\n📌 *Estado:* PENDIENTE`;
@@ -1237,7 +1294,18 @@
                 Toast.fire({ icon: 'info', title: 'Generando imagen de factura...' });
                 const dateStr = (pedido.despachadoAt && typeof pedido.despachadoAt.toDate === 'function') ? new Date(pedido.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
                 const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO'; const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
-                const itemsHtml = (pedido.items || []).map(i => `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px; color: #000;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td><td style="text-align: center; font-size: 12px; color: #000;">${i.cantidad}</td><td style="text-align: right; font-size: 12px; color: #000;">${config.currency||'L'}${((parseFloat((i.precio||"0").replace(/[^0-9.-]+/g,""))||0) * i.cantidad).toFixed(2)}</td></tr>`).join('');
+                
+                // SURGICAL ADD: Reflejar descuento en imagen de la factura POS
+                const itemsHtml = (pedido.items || []).map(i => {
+                    const finalP = parseFloat(String(i.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                    const discount = getDiscountPercent(i.precio, i.precioOriginal);
+                    let discountHtml = '';
+                    if (discount > 0) {
+                        const origBase = parseFloat(String(i.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                        discountHtml = `<br><span style="color:#999; text-decoration: line-through;">${config.currency||'L'}${origBase.toFixed(2)} c/u</span>`;
+                    }
+                    return `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px; color: #000;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small>${discountHtml}</td><td style="text-align: center; font-size: 12px; color: #000;">${i.cantidad}</td><td style="text-align: right; font-size: 12px; color: #000;">${config.currency||'L'}${(finalP * i.cantidad).toFixed(2)}</td></tr>`;
+                }).join('');
                 
                 let extraTotals = '';
                 if(pedido.impuesto > 0) {
@@ -1485,7 +1553,18 @@
             const f = pedidosList.find(p => p.id === docId); if(!f) return;
             const dateStr = (f.despachadoAt && f.despachadoAt.toDate) ? new Date(f.despachadoAt.toDate()).toLocaleString() : new Date().toLocaleString();
             const invHeader = config.invoiceHeader || 'STREETWEAR EXCLUSIVO'; const invFooter = config.invoiceFooter || '¡Gracias por preferir el asfalto!<br>IG: @newgate';
-            const itemsHtml = (f.items || []).map(i => `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small></td><td style="text-align: center; font-size: 12px;">${i.cantidad}</td><td style="text-align: right; font-size: 12px;">${config.currency||'L'}${((parseFloat((i.precio||"0").replace(/[^0-9.-]+/g,""))||0) * i.cantidad).toFixed(2)}</td></tr>`).join('');
+            
+            // SURGICAL ADD: Reflejar descuento en impresión POS térmica
+            const itemsHtml = (f.items || []).map(i => {
+                const finalP = parseFloat(String(i.precio||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                const discount = getDiscountPercent(i.precio, i.precioOriginal);
+                let discountHtml = '';
+                if (discount > 0) {
+                    const origBase = parseFloat(String(i.precioOriginal||"0").replace(/[^0-9.-]+/g,"")) || 0;
+                    discountHtml = `<br><span style="color:#999; text-decoration: line-through;">${config.currency||'L'}${origBase.toFixed(2)} c/u</span>`;
+                }
+                return `<tr style="border-bottom: 1px solid #ddd;"><td style="padding: 8px 0; font-size: 12px;">${i.titulo} <br><small style="color:#555;" class="notranslate" translate="no">Talla: ${i.talla}</small>${discountHtml}</td><td style="text-align: center; font-size: 12px;">${i.cantidad}</td><td style="text-align: right; font-size: 12px;">${config.currency||'L'}${(finalP * i.cantidad).toFixed(2)}</td></tr>`;
+            }).join('');
             
             let extraTotals = '';
             if(f.impuesto > 0) {
@@ -1623,17 +1702,16 @@
             if (p.categoria) document.getElementById('new-cat').value = p.categoria;
             
             const pPrice = p.precio || "0";
-            const match = pPrice.match(/^([^0-9.]+)?([0-9.]+)/);
+            const match = String(pPrice).match(/^([^0-9.]+)?([0-9.]+)/);
             if(match) { document.getElementById('new-price').value = parseFloat(match[2]); } else { document.getElementById('new-price').value = 0; }
 
-            // SURGICAL ADD: Restaurar input precio antiguo y fecha de lanzamiento
             const pCompare = p.precioOriginal || "0";
-            const matchCmp = pCompare.match(/^([^0-9.]+)?([0-9.]+)/);
+            const matchCmp = String(pCompare).match(/^([^0-9.]+)?([0-9.]+)/);
             if(matchCmp) { document.getElementById('new-price-compare').value = parseFloat(matchCmp[2]); } else { document.getElementById('new-price-compare').value = ""; }
+            calcDiscount('compare');
             
             document.getElementById('new-release-date').value = p.fechaLanzamiento || "";
             document.getElementById('toggle-presale').checked = !!p.isPresale;
-            document.getElementById('release-date-container').style.display = p.isPresale ? 'block' : 'none';
 
             document.getElementById('new-stock').value = p.stock !== undefined ? p.stock : 0; 
             document.getElementById('toggle-taxable').checked = p.taxable !== undefined ? p.taxable : !!config.taxEnabled;
@@ -1657,10 +1735,9 @@
             document.getElementById('new-price').value = ""; document.getElementById('new-desc').value = ""; 
             document.getElementById('new-stock').value = "0"; document.getElementById('toggle-presale').checked = false; 
             
-            // SURGICAL ADD: Resetear nuevos campos
             document.getElementById('new-price-compare').value = ""; 
+            document.getElementById('new-discount-percent').value = "";
             document.getElementById('new-release-date').value = ""; 
-            document.getElementById('release-date-container').style.display = 'none';
 
             document.getElementById('toggle-taxable').checked = !!config.taxEnabled; document.getElementById('toggle-measures').checked = true; toggleMeasuresVisibility();
             selectedBase64Imgs = []; renderThumbnails(); currentFormSizes = ["S", "M", "L", "XL"]; currentFormColumns = ["Pecho", "Largo", "Ancho"]; renderMedidasForm();
