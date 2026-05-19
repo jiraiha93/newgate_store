@@ -158,7 +158,7 @@
     <div id="product-modal" class="modal-overlay z-[250]" onclick="closeModal(event)">
         <button onclick="closeModal()" class="absolute top-4 right-4 md:top-6 md:right-6 text-white hover:text-primary text-2xl z-[300] transition-colors bg-darker/90 backdrop-blur-md border border-white/10 w-12 h-12 rounded-full flex items-center justify-center shadow-2xl cursor-pointer"><i class="fas fa-times"></i></button>
 
-        <div class="modal-content animate-in fade-in zoom-in duration-300 !max-w-5xl rounded-lg overflow-y-auto overflow-x-hidden" onclick="event.stopPropagation()">
+        <div class="modal-content animate-in fade-in zoom-in duration-300 !max-w-5xl rounded-lg overflow-y-auto overflow-x-hidden overscroll-none" onclick="event.stopPropagation()">
             <div class="grid grid-cols-1 lg:grid-cols-2">
                 <div id="modal-img-container" class="h-[300px] sm:h-[400px] lg:h-[600px] bg-darker flex flex-col items-center justify-center relative group select-none" ontouchstart="handleTouchStart(event)" ontouchend="handleTouchEnd(event)">
                     <div id="modal-badges-container" class="absolute top-4 left-4 z-30 flex flex-col gap-2"></div>
@@ -169,7 +169,7 @@
                     <div id="carousel-dots" class="absolute bottom-4 flex justify-center w-full space-x-2 z-20 bg-darker/30 py-2 backdrop-blur-sm rounded-full mx-auto w-max px-4"></div>
                 </div>
 
-                <div class="p-6 lg:p-10 flex flex-col relative bg-[#0a0a0a] lg:max-h-[600px] lg:overflow-y-auto scrollbar-hide">
+                <div class="p-6 lg:p-10 flex flex-col relative bg-[#0a0a0a] lg:max-h-[600px] lg:overflow-y-auto scrollbar-hide overscroll-none">
                     
                     <!-- CAMBIO 3: REORGANIZACIÓN DEL ENCABEZADO -->
                     <div class="flex justify-between items-start mb-1">
@@ -508,13 +508,14 @@
                 tallaC.classList.remove('hidden'); document.getElementById('modal-talla').innerHTML = '<option value="" disabled selected>Elegir Talla...</option>' + p.tallas.map(t => `<option value="${t}" class="notranslate" translate="no">${t}</option>`).join(''); document.getElementById('modal-talla').classList.remove('border-promo');
             } else { measuresC.classList.add('hidden'); tallaC.classList.add('hidden'); }
             document.getElementById('product-modal').classList.add('active');
+            document.body.classList.add('overflow-hidden');
         }
 
         function updateQuantity(c) { productQuantity += c; if(productQuantity < 1) productQuantity = 1; if(productQuantity > 20) productQuantity = 20; document.getElementById('modal-quantity').innerText = productQuantity; }
         function handleTouchStart(e) { touchStartX = e.changedTouches[0].screenX; } function handleTouchEnd(e) { touchEndX = e.changedTouches[0].screenX; if(currentModalImages.length>1) { if(touchEndX < touchStartX - 50) changeImage(1); if(touchEndX > touchStartX + 50) changeImage(-1); } }
         function shareProduct() { const url = window.location.href; const sText = config.shareText || '¡Mira este drop!'; if (navigator.share) navigator.share({ title: `NEW GATE: ${window.lastViewedProduct.titulo}`, text: sText, url: url }).catch(e=>console.log(e)); else { navigator.clipboard.writeText(`${url}`).then(() => Toast.fire({ icon: 'success', title: 'Enlace copiado' })); } }
-        function closeModal(e) { window.history.pushState({}, '', window.location.pathname); document.getElementById('product-modal').classList.remove('active'); }
-        window.addEventListener('popstate', () => { const p = new URLSearchParams(window.location.search); const id = p.get('producto'); if(id) openModalById(id); else document.getElementById('product-modal').classList.remove('active'); });
+        function closeModal(e) { window.history.pushState({}, '', window.location.pathname); document.getElementById('product-modal').classList.remove('active'); document.body.classList.remove('overflow-hidden'); }
+        window.addEventListener('popstate', () => { const p = new URLSearchParams(window.location.search); const id = p.get('producto'); if(id) openModalById(id); else { document.getElementById('product-modal').classList.remove('active'); document.body.classList.remove('overflow-hidden'); } });
 
         function changeImage(d) { currentImageIndex += d; if (currentImageIndex >= currentModalImages.length) currentImageIndex = 0; if (currentImageIndex < 0) currentImageIndex = currentModalImages.length - 1; updateCarouselView(); }
         function updateCarouselView() { const img = document.getElementById('modal-img'); const l = document.getElementById('modal-img-loader'); img.style.opacity = 0; l.classList.remove('hidden'); const nImg = new Image(); nImg.src = currentModalImages[currentImageIndex]; nImg.onerror = () => { img.src = "https://via.placeholder.com/400x500/1a1a1a/d4af37?text=Error"; l.classList.add('hidden'); img.style.opacity = 1; }; nImg.onload = () => { img.src = nImg.src; l.classList.add('hidden'); img.style.opacity = 1; }; const p = document.getElementById('btn-prev-img'), n = document.getElementById('btn-next-img'), dots = document.getElementById('carousel-dots'); if (currentModalImages.length > 1) { p.classList.remove('hidden'); n.classList.remove('hidden'); dots.innerHTML = currentModalImages.map((_, i) => `<span class="h-1.5 rounded-full transition-all duration-300 ${i === currentImageIndex ? 'bg-primary w-6' : 'bg-white/30 w-2'}"></span>`).join(''); } else { p.classList.add('hidden'); n.classList.add('hidden'); dots.innerHTML = ''; } }
